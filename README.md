@@ -3,15 +3,15 @@ swisscom-mobileid-cmd
 
 Mobile ID command line tools
 
-* bash
+## bash
 
 Contains a script to invoke the Signature Request service.
 
-* freeradius
+## freeradius
 
 Wrapper script for rlm_exec module.
 
-* PowerShell
+## PowerShell
 
 Contains a script to invoke the Signature Request service.
 Requires PowerShell 2.0 or higher as it contains an encapsulated C# class.
