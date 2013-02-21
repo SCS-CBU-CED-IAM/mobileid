@@ -1,5 +1,5 @@
 #!/bin/sh
-# mobileid-sign.sh - 1.3
+# mobileid-sign.sh - 1.4
 #
 # Generic script using wget to invoke Swisscom Mobile ID service.
 # Dependencies: wget, openssl, base64, sed
@@ -13,6 +13,7 @@
 #                  Optional parameters for language, debugging and verbose
 #  1.3 17.10.2012: Timeout settings for process and request
 #                  Mandatory language
+#  1.4 21.2.2013:  Removal of the optional backend signature validation
 
 # Check command line
 DEBUG=
@@ -52,7 +53,6 @@ OCSP_URL=http://ocsp.swissdigicert.ch/sdcs-rubin2
 # Create temporary SOAP request
 #  Synchron with timeout
 #  Signature format in PKCS7
-#  Signature verification done by the service
 RANDOM=$$					# Seeds the random number generator from PID of script
 AP_INSTANT=$(date +%Y-%m-%dT%H:%M:%S)		# Define instant and transaction id
 AP_TRANSID=AP.TEST.$((RANDOM%89999+10000)).$((RANDOM%8999+1000))
@@ -86,11 +86,6 @@ cat > $SOAP_REQ <<End
           <mss:mssURI>http://mid.swisscom.ch/MID/v1/AuthProfile1</mss:mssURI>
         </mss:SignatureProfile>
         <mss:AdditionalServices>
-          <mss:Service>
-            <mss:Description>
-              <mss:mssURI>http://uri.etsi.org/TS102204/v1.1.2#validate</mss:mssURI>
-            </mss:Description>
-          </mss:Service>
           <mss:Service>
             <mss:Description>
               <mss:mssURI>http://mss.ficom.fi/TS102204/v1.0.0#userLang</mss:mssURI>
