@@ -41,6 +41,9 @@ CALLED_STATION_ID=`eval echo $CALLED_STATION_ID`
 X_MSS_LANGUAGE=`eval echo $X_MSS_LANGUAGE`
 X_MSS_MESSAGE=`eval echo $X_MSS_MESSAGE`
 
+# Remove spaces in CALLED_STATION_ID
+CALLED_STATION_ID="${CALLED_STATION_ID//[[:space:]]/}"
+
 # Call the MID SOAP bash script
 $PWD/mobileid-sign.sh $CALLED_STATION_ID "$X_MSS_MESSAGE" $X_MSS_LANGUAGE
 
