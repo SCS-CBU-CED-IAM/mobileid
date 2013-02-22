@@ -36,16 +36,18 @@
 # Get current path
 PWD=$(dirname $0)
 
-# Remove quote from string
-CALLED_STATION_ID=`eval echo $CALLED_STATION_ID`
+# Remove quote and all spaces
+CALLED_STATION_ID=`eval echo $CALLED_STATION_ID|sed -e "s/ //g"`
+# Remove quote from others
 X_MSS_LANGUAGE=`eval echo $X_MSS_LANGUAGE`
 X_MSS_MESSAGE=`eval echo $X_MSS_MESSAGE`
 
-# Remove spaces in CALLED_STATION_ID
-CALLED_STATION_ID="${CALLED_STATION_ID//[[:space:]]/}"
-
 # Call the MID SOAP bash script
-$PWD/mobileid-sign.sh $CALLED_STATION_ID "$X_MSS_MESSAGE" $X_MSS_LANGUAGE
+if [ -e $PWD/mobileid-sign.sh ]; then
+    $PWD/mobileid-sign.sh $CALLED_STATION_ID "$X_MSS_MESSAGE" $X_MSS_LANGUAGE
+  else
+    echo "MID SOAP bash script not found in $PWD"
+fi
 
 # Success and error handling according to freeradius rlm_exec
 if [ "$?" = "0" ]; then exit 0 ; fi	# Success
