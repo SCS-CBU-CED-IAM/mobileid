@@ -1,5 +1,5 @@
-swisscom-mobileid-cmd
-=====================
+mobileid-cmd
+============
 
 Mobile ID command line tools
 
