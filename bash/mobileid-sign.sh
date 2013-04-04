@@ -18,10 +18,14 @@
 # Check command line
 DEBUG=
 VERBOSE=
-while getopts "dv" opt; do			# Parse the options
+# Use wget by default
+REQTOOL=wget
+while getopts "dvwc" opt; do			# Parse the options
   case $opt in
-    d) DEBUG=1 ;;					# Debug
-    v) VERBOSE=1 ;;					# Verbose
+    d) DEBUG=1 ;;				# Debug
+    v) VERBOSE=1 ;;				# Verbose
+    c) REQTOOL=curl ;;				# Use curl
+    w) REQTOOL=wget ;;				# Use wget
   esac
   shift
 done
@@ -31,6 +35,8 @@ then
   echo "Usage: $0 <args> mobileNumber \"Message to be signed\" userlang"
   echo "  -v       - verbose output"
   echo "  -d       - debug mode"
+  echo "  -c       - Use curl to do the SOAP request"
+  echo "  -w       - Use wget to do the SOAP request (default)"
   echo "  userlang - user language (one of en, de, fr, it)"
   echo
   echo "  Example $0 -v +41792080350 \"Do you want to login to corporate VPN?\" en"
@@ -38,9 +44,9 @@ then
   exit 1
 fi
 
-# Swisscom Mobile ID Credentials
 PWD=$(dirname $0)				# Get the Path of the script
 
+# Swisscom Mobile ID Credentials
 CERT_FILE=$PWD/mycert.crt			# The certificate that is allowed to access the service
 CERT_KEY=$PWD/mycert.key			# The related key of the certificate
 AP_ID=http://iam.swisscom.ch			# AP UserID provided by Swisscom
@@ -106,15 +112,28 @@ End
 SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_SignaturePort
 SOAP_ACTION=#MSS_Signature
 OPTIONS="--debug --connect-timeout=$TIMEOUT_CON"
-wget --post-file=$SOAP_REQ --header="Content-Type: text/xml" --header="SOAPAction: \"$SOAP_ACTION\"" \
+if [ "$REQTOOL" = 'wget' ]; then
+  wget --post-file=$SOAP_REQ --header="Content-Type: text/xml" --header="SOAPAction: \"$SOAP_ACTION\"" \
      --ca-certificate=$CERT_CA \
      --certificate=$CERT_FILE --private-key=$CERT_KEY \
      --output-document=$SOAP_REQ.res --output-file=$SOAP_REQ.log \
      $OPTIONS $SOAP_URL > /dev/null 2>&1
+  # Not relevant for wget as failures return !=0 exitcode anyway
+  http_code=000
+elif [ "$REQTOOL" = 'curl' ]; then
+  http_code=$(curl --write-out '%{http_code}\n' --sslv3 --silent --data "@${SOAP_REQ}" --header "Content-Type: text/xml" --header "SOAPAction: \"$SOAP_ACTION\"" \
+                   --cert $CERT_FILE --cacert $CERT_CA --key $CERT_KEY \
+                   --output $SOAP_REQ.res --trace $SOAP_REQ.log \
+                   $SOAP_URL
+  )
+else
+  echo "Unsupported request tool '$REQTOOL'" >&2
+  exit 1
+fi
 
 # Results
 export RC=$?
-if [ "$RC" = "0" ]; then
+if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
   # Parse the response xml
   RES_TRANSID=$(sed -n -e 's/.*AP_TransID="\(.*\)" AP_.*/\1/p' $SOAP_REQ.res)
   RES_MSISDNID=$(sed -n -e 's/.*<mss:MSISDN>\(.*\)<\/mss:MSISDN>.*/\1/p' $SOAP_REQ.res)
@@ -173,7 +192,8 @@ if [ "$RC" = "0" ]; then
  else
   export RC=2						# Force error code higher than 1
   if [ "$VERBOSE" = "1" ]; then				# Verbose details
-    RES_DETAIL=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $SOAP_REQ.log)
+    [ "$REQTOOL" = 'curl' ] && fail_file="$SOAP_REQ.res" || fail_file="$SOAP_REQ.log"
+    RES_DETAIL=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $fail_file)
     echo "FAILED with $RES_DETAIL and exit $RC"
   fi
 fi
