@@ -59,11 +59,12 @@ fi
 
 PWD=$(dirname $0)				# Get the Path of the script
 
-# Swisscom Mobile ID Credentials
+# Swisscom Mobile ID credentials
 CERT_FILE=$PWD/mycert.crt			# The certificate that is allowed to access the service
 CERT_KEY=$PWD/mycert.key			# The related key of the certificate
-
 AP_PWD=disabled					# AP Password must be present but is not validated
+
+# Swisscom SDCS elements
 CERT_CA=$PWD/swisscom-ca.crt                    # Bag file with the server/client issuing and root certifiates
 OCSP_CERT=$PWD/swisscom-ocsp.crt		# OCSP information of the signers certificate
 OCSP_URL=http://ocsp.swissdigicert.ch/sdcs-rubin2
@@ -221,7 +222,7 @@ if [ "$DEBUG" = "" ]; then
   [ -f $SOAP_REQ.sig.cert.check ] && rm $SOAP_REQ.sig.cert.check
   [ -f $SOAP_REQ.sig.txt ] && rm $SOAP_REQ.sig.txt
  else
-  [ -f $SOAP_REQ.log ] && echo "$SOAP_REQ.log" && cat $SOAP_REQ.log
+  [ -f $SOAP_REQ.log ] && echo "$SOAP_REQ.log" && cat $SOAP_REQ.log | grep '==\|error'
   [ -f $SOAP_REQ.res ] && echo "$SOAP_REQ.res" && cat $SOAP_REQ.res
 fi
 
