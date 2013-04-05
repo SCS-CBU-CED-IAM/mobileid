@@ -134,7 +134,7 @@ http_code=$(curl --write-out '%{http_code}\n' --sslv3 --silent --data "@${SOAP_R
     --cert $CERT_FILE --cacert $CERT_CA --key $CERT_KEY \
     --output $SOAP_REQ.res --trace $SOAP_REQ.log \
     --connect-timeout $TIMEOUT_CON \
-    $SOAP_URL
+    $SOAP_URL)
 
 # Results
 export RC=$?
