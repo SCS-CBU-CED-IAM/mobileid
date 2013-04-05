@@ -15,6 +15,23 @@
 #                  Mandatory language
 #  1.4 21.2.2013:  Removal of the optional backend signature validation
 
+######################################################################
+# User configurable options
+######################################################################
+
+# AP_ID used to identify to Mobile ID (provided by Swisscom)
+AP_ID=http://iam.swisscom.ch
+
+# SOAP URL to access Mobile ID
+SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_SignaturePort     # via Internet
+
+# Tool to use for the SOAP request (wget or curl)
+REQTOOL=wget
+
+######################################################################
+# There should be no need to change anything below
+######################################################################
+
 error()
 {
     echo "$@" >&2
@@ -24,8 +41,6 @@ error()
 # Check command line
 DEBUG=
 VERBOSE=
-# Use wget by default
-REQTOOL=wget
 while getopts "dvwc" opt; do			# Parse the options
   case $opt in
     d) DEBUG=1 ;;				# Debug
@@ -55,7 +70,6 @@ PWD=$(dirname $0)				# Get the Path of the script
 # Swisscom Mobile ID Credentials
 CERT_FILE=$PWD/mycert.crt			# The certificate that is allowed to access the service
 CERT_KEY=$PWD/mycert.key			# The related key of the certificate
-AP_ID=http://iam.swisscom.ch			# AP UserID provided by Swisscom
 
 AP_PWD=disabled					# AP Password must be present but is not validated
 CERT_CA=$PWD/swisscom-ca.crt                    # Bag file with the server/client issuing and root certifiates
@@ -121,10 +135,9 @@ End
 [ -r "${OCSP_CERT}" ] || error "OCSP Certificate file ($OCSP_CERT) missing or not readable"
 
 # Set the wget options and call the service
-SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_SignaturePort
 SOAP_ACTION=#MSS_Signature
-OPTIONS="--debug --connect-timeout=$TIMEOUT_CON"
 if [ "$REQTOOL" = 'wget' ]; then
+  OPTIONS="--debug --connect-timeout=$TIMEOUT_CON"
   wget --post-file=$SOAP_REQ --header="Content-Type: text/xml" --header="SOAPAction: \"$SOAP_ACTION\"" \
      --ca-certificate=$CERT_CA \
      --certificate=$CERT_FILE --private-key=$CERT_KEY \
@@ -136,6 +149,7 @@ elif [ "$REQTOOL" = 'curl' ]; then
   http_code=$(curl --write-out '%{http_code}\n' --sslv3 --silent --data "@${SOAP_REQ}" --header "Content-Type: text/xml" --header "SOAPAction: \"$SOAP_ACTION\"" \
                    --cert $CERT_FILE --cacert $CERT_CA --key $CERT_KEY \
                    --output $SOAP_REQ.res --trace $SOAP_REQ.log \
+                   --connect-timeout $TIMEOUT_CON \
                    $SOAP_URL
   )
 else
