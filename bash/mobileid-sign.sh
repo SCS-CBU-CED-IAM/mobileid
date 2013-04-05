@@ -129,10 +129,11 @@ End
 # Call the service
 SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_SignaturePort
 SOAP_ACTION=#MSS_Signature
-
-http_code=$(curl --write-out '%{http_code}\n' --sslv3 --silent --data "@${SOAP_REQ}" --header "Content-Type: text/xml" --header "SOAPAction: \"$SOAP_ACTION\"" \
+CURL_OPTIONS="--sslv3 --silent"
+http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
+    --data "@${SOAP_REQ}" --header "Content-Type: text/xml; charset=utf-8" --header "SOAPAction: \"$SOAP_ACTION\"" \
     --cert $CERT_FILE --cacert $CERT_CA --key $CERT_KEY \
-    --output $SOAP_REQ.res --trace $SOAP_REQ.log \
+    --output $SOAP_REQ.res --trace-ascii $SOAP_REQ.log \
     --connect-timeout $TIMEOUT_CON \
     $SOAP_URL)
 
@@ -198,11 +199,14 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
     echo    "    Status details : $RES_ST"
   fi
  else
-  export RC=2						# Force error code higher than 1
   if [ "$VERBOSE" = "1" ]; then				# Verbose details
-    RES_VALUE=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $SOAP_REQ.res)
-    RES_DETAIL=$(sed -n -e 's/.*<ns1:detail.*>\(.*\)<\/ns1:detail>.*/\1/p' $SOAP_REQ.res)
-    echo "FAILED with $RES_VALUE ($RES_DETAIL) and exit $RC"
+    echo "curl failed with $RC"
+    if [ -s $SOAP_REQ.res ]; then                               # Response from the service
+      RES_VALUE=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $SOAP_REQ.res)
+      RES_DETAIL=$(sed -n -e 's/.*<ns1:detail.*>\(.*\)<\/ns1:detail>.*/\1/p' $SOAP_REQ.res)
+      echo "FAILED with $RES_VALUE ($RES_DETAIL) and exit $RC"
+    fi
+    export RC=2						# Force returned error code
   fi
 fi
 
