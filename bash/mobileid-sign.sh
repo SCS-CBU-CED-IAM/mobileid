@@ -28,10 +28,11 @@ AP_ID=http://iam.swisscom.ch
 # There should be no need to change anything below
 ######################################################################
 
+# Error function
 error()
 {
-  if [ "$VERBOSE" = "1" ]; then echo "$@" >&2 ; fi
-  exit 1
+  [ "$VERBOSE" = "1" ] && echo "$@" >&2         # Verbose details
+  exit 1                                        # Exit
 }
 
 # Check command line
@@ -45,8 +46,7 @@ while getopts "dv" opt; do			# Parse the options
   shift
 done
 
-if [ $# -lt 3 ]					# Parse the rest of the arguments
-then
+if [ $# -lt 3 ]; then				# Parse the rest of the arguments
   echo "Usage: $0 <args> mobileNumber \"Message to be signed\" userlang"
   echo "  -v       - verbose output"
   echo "  -d       - debug mode"
