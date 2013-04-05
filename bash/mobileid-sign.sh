@@ -200,9 +200,10 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
     echo    "    Status details : $RES_ST"
   fi
  else
+  CURL_ERR=$RC                                          # Keep related error
+  export RC=2                                           # Force returned error code
   if [ "$VERBOSE" = "1" ]; then				# Verbose details
-    [ $RC != "0" ] && echo "curl failed with $RC"               # Curl error
-    export RC=2                                                 # Force returned error code
+    [ $RC != "0" ] && echo "curl failed with $CURL_ERR"         # Curl error
     if [ -s $SOAP_REQ.res ]; then                               # Response from the service
       RES_VALUE=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $SOAP_REQ.res)
       RES_DETAIL=$(sed -n -e 's/.*<ns1:detail.*>\(.*\)<\/ns1:detail>.*/\1/p' $SOAP_REQ.res)
