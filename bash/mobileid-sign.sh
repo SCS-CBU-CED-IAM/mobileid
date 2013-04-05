@@ -30,7 +30,7 @@ AP_ID=http://iam.swisscom.ch
 
 error()
 {
-  echo "$@" >&2
+  if [ "$VERBOSE" = "1" ]; then echo "$@" >&2 ; fi
   exit 1
 }
 
@@ -222,8 +222,8 @@ if [ "$DEBUG" = "" ]; then
   [ -f $SOAP_REQ.sig.cert.check ] && rm $SOAP_REQ.sig.cert.check
   [ -f $SOAP_REQ.sig.txt ] && rm $SOAP_REQ.sig.txt
  else
-  [ -f $SOAP_REQ.log ] && echo "$SOAP_REQ.log" && cat $SOAP_REQ.log | grep '==\|error'
-  [ -f $SOAP_REQ.res ] && echo "$SOAP_REQ.res" && cat $SOAP_REQ.res
+  [ -f $SOAP_REQ.log ] && echo "\n>>> $SOAP_REQ.log <<<" && cat $SOAP_REQ.log | grep '==\|error'
+  [ -f $SOAP_REQ.res ] && echo "\n>>> $SOAP_REQ.res <<<" && cat $SOAP_REQ.res
 fi
 
 exit $RC
