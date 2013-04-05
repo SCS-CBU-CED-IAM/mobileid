@@ -1,8 +1,8 @@
 #!/bin/sh
-# mobileid-sign.sh - 1.4
+# mobileid-sign.sh - 1.5
 #
 # Generic script using wget to invoke Swisscom Mobile ID service.
-# Dependencies: wget, openssl, base64, sed
+# Dependencies: curl, openssl, base64, sed
 #
 # Change Log:
 #  1.0 13.09.2012: Initial version with signature validation
@@ -14,7 +14,7 @@
 #  1.3 17.10.2012: Timeout settings for process and request
 #                  Mandatory language
 #  1.4 21.2.2013:  Removal of the optional backend signature validation
-#  1.5 5.4.2013:   curl as alternative to wget
+#  1.5 5.4.2013:   Switching from wegt to curl
 #                  Better error handling
 
 ######################################################################
@@ -24,20 +24,14 @@
 # AP_ID used to identify to Mobile ID (provided by Swisscom)
 AP_ID=http://iam.swisscom.ch
 
-# SOAP URL to access Mobile ID
-SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_SignaturePort     # via Internet
-
-# Tool to use for the SOAP request (wget or curl)
-REQTOOL=wget
-
 ######################################################################
 # There should be no need to change anything below
 ######################################################################
 
 error()
 {
-    echo "$@" >&2
-    exit 1
+  echo "$@" >&2
+  exit 1
 }
 
 # Check command line
@@ -132,27 +126,15 @@ End
 [ -r "${CERT_FILE}" ] || error "SSL certificate file ($CERT_FILE) missing or not readable"
 [ -r "${OCSP_CERT}" ] || error "OCSP certificate file ($OCSP_CERT) missing or not readable"
 
-# Set the wget options and call the service
+# Call the service
+SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_SignaturePort
 SOAP_ACTION=#MSS_Signature
-if [ "$REQTOOL" = 'wget' ]; then
-  OPTIONS="--debug --connect-timeout=$TIMEOUT_CON"
-  wget --post-file=$SOAP_REQ --header="Content-Type: text/xml" --header="SOAPAction: \"$SOAP_ACTION\"" \
-     --ca-certificate=$CERT_CA \
-     --certificate=$CERT_FILE --private-key=$CERT_KEY \
-     --output-document=$SOAP_REQ.res --output-file=$SOAP_REQ.log \
-     $OPTIONS $SOAP_URL > /dev/null 2>&1
-  # Not relevant for wget as failures return !=0 exitcode anyway
-  http_code=000
-elif [ "$REQTOOL" = 'curl' ]; then
-  http_code=$(curl --write-out '%{http_code}\n' --sslv3 --silent --data "@${SOAP_REQ}" --header "Content-Type: text/xml" --header "SOAPAction: \"$SOAP_ACTION\"" \
-                   --cert $CERT_FILE --cacert $CERT_CA --key $CERT_KEY \
-                   --output $SOAP_REQ.res --trace $SOAP_REQ.log \
-                   --connect-timeout $TIMEOUT_CON \
-                   $SOAP_URL
-  )
-else
-  error "Unsupported request tool '$REQTOOL' specified"
-fi
+
+http_code=$(curl --write-out '%{http_code}\n' --sslv3 --silent --data "@${SOAP_REQ}" --header "Content-Type: text/xml" --header "SOAPAction: \"$SOAP_ACTION\"" \
+    --cert $CERT_FILE --cacert $CERT_CA --key $CERT_KEY \
+    --output $SOAP_REQ.res --trace $SOAP_REQ.log \
+    --connect-timeout $TIMEOUT_CON \
+    $SOAP_URL
 
 # Results
 export RC=$?
@@ -218,9 +200,8 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
  else
   export RC=2						# Force error code higher than 1
   if [ "$VERBOSE" = "1" ]; then				# Verbose details
-    [ "$REQTOOL" = 'curl' ] && fail_file="$SOAP_REQ.res" || fail_file="$SOAP_REQ.log"          # File to find the SOAP fault (HTTP Status 500) output
-    RES_VALUE=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $fail_file)
-    RES_DETAIL=$(sed -n -e 's/.*<ns1:detail.*>\(.*\)<\/ns1:detail>.*/\1/p' $fail_file)
+    RES_VALUE=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $SOAP_REQ.res)
+    RES_DETAIL=$(sed -n -e 's/.*<ns1:detail.*>\(.*\)<\/ns1:detail>.*/\1/p' $SOAP_REQ.res)
     echo "FAILED with $RES_VALUE ($RES_DETAIL) and exit $RC"
   fi
 fi
