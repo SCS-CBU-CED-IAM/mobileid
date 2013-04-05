@@ -14,6 +14,8 @@
 #  1.3 17.10.2012: Timeout settings for process and request
 #                  Mandatory language
 #  1.4 21.2.2013:  Removal of the optional backend signature validation
+#  1.5 5.4.2013:   curl as alternative to wget
+#                  Better error handling
 
 ######################################################################
 # User configurable options
@@ -41,12 +43,10 @@ error()
 # Check command line
 DEBUG=
 VERBOSE=
-while getopts "dvwc" opt; do			# Parse the options
+while getopts "dv" opt; do			# Parse the options
   case $opt in
     d) DEBUG=1 ;;				# Debug
     v) VERBOSE=1 ;;				# Verbose
-    c) REQTOOL=curl ;;				# Use curl
-    w) REQTOOL=wget ;;				# Use wget
   esac
   shift
 done
@@ -56,8 +56,6 @@ then
   echo "Usage: $0 <args> mobileNumber \"Message to be signed\" userlang"
   echo "  -v       - verbose output"
   echo "  -d       - debug mode"
-  echo "  -c       - Use curl to do the SOAP request"
-  echo "  -w       - Use wget to do the SOAP request (default)"
   echo "  userlang - user language (one of en, de, fr, it)"
   echo
   echo "  Example $0 -v +41792080350 \"Do you want to login to corporate VPN?\" en"
@@ -131,8 +129,8 @@ End
 # Check existence of needed files
 [ -r "${CERT_CA}" ]   || error "CA certificate/chain file ($CERT_CA) missing or not readable"
 [ -r "${CERT_KEY}" ]  || error "SSL key file ($CERT_KEY) missing or not readable"
-[ -r "${CERT_FILE}" ] || error "SSL Certificate file ($CERT_FILE) missing or not readable"
-[ -r "${OCSP_CERT}" ] || error "OCSP Certificate file ($OCSP_CERT) missing or not readable"
+[ -r "${CERT_FILE}" ] || error "SSL certificate file ($CERT_FILE) missing or not readable"
+[ -r "${OCSP_CERT}" ] || error "OCSP certificate file ($OCSP_CERT) missing or not readable"
 
 # Set the wget options and call the service
 SOAP_ACTION=#MSS_Signature
