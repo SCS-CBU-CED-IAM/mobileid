@@ -7,9 +7,47 @@ Mobile ID command line tools
 
 Contains a script to invoke the Signature Request service.
 
+```
+Usage: ./mobileid-sign.sh <args> mobileNumber "Message to be signed" userlang
+  -v       - verbose output
+  -d       - debug mode
+  userlang - user language (one of en, de, fr, it)
+
+  Example ./mobileid-sign.sh -v +41792080350 "Do you want to login to corporate VPN?" en
+```
+
+
 The files `mycert.crt`and `mycert.key` are placeholders without any valid content. Be sure to adjust them with your client certificate content in order to connect to the Mobile ID service.
 
 Refer to the "Mobile ID - SOAP client reference guide" document from Swisscom for more details.
+
+
+Example of verbose outputs:
+```
+./mobileid-sign.sh -v +41792080350 "Hello" en
+OK with following details and checks:
+ 1) Transaction ID : AP.TEST.34309.7311 -> same as in request
+ 2) Signed by      : +41792080350 -> same as in request
+ 3) Time to sign   : <Not verified>
+ 4) Signer         : subject= /serialNumber=MIDCHE3QWAXYEAA2/CN=MIDCHE3QWAXYEAA2:PN/C=CH -> OCSP check: good
+ 5) Signed Data    : Hello -> Decode and verify: success and same as in request
+ 6) Status code    : 500 with exit 0
+    Status details : SIGNATURE
+```
+
+```
+./mobileid-sign.sh -v +41792204080 "Hello" en
+FAILED with mss:_105 (Unknown user) and exit 2
+
+./mobileid-sign.sh -v +4179220408012312312 "Hello" en
+FAILED with mss:_104 (Wrong SSL credentials) and exit 2
+
+./mobileid-sign.sh -v +4179220408012312312 "Hello" en
+FAILED with mss:_101 (Illegal msisdn) and exit 2
+
+./mobileid-sign.sh -v +41792080350 "Hello" en
+FAILED with mss:_401 (User Cancelled the request) and exit 2
+```
 
 
 ## freeradius

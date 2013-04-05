@@ -173,7 +173,7 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
   openssl smime -verify -inform DER -in $SOAP_REQ.sig.decoded -out $SOAP_REQ.sig.txt -CAfile $CERT_CA -purpose sslclient > /dev/null 2>&1
   if [ "$?" = "0" ]; then				# Decoding without any error
     RES_MSG=$(cat $SOAP_REQ.sig.txt)                    	# Decoded message is in this file
-    RES_MSG_STATUS="sucess"					# Details of verification
+    RES_MSG_STATUS="success"					# Details of verification
    else							# -> error in decoding
     RES_MSG=$(cat $SOAP_REQ.sig.txt)                      	# Decoded message is in this file
     RES_MSG_STATUS="failed, status $?"				# Details of verification
