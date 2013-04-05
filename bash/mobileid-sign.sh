@@ -15,6 +15,12 @@
 #                  Mandatory language
 #  1.4 21.2.2013:  Removal of the optional backend signature validation
 
+error()
+{
+    echo "$@" >&2
+    exit 1
+}
+
 # Check command line
 DEBUG=
 VERBOSE=
@@ -108,6 +114,12 @@ cat > $SOAP_REQ <<End
 </soapenv:Envelope>
 End
 
+# Check existence of needed files
+[ -r "${CERT_CA}" ]   || error "CA certificate/chain file ($CERT_CA) missing or not readable"
+[ -r "${CERT_KEY}" ]  || error "SSL key file ($CERT_KEY) missing or not readable"
+[ -r "${CERT_FILE}" ] || error "SSL Certificate file ($CERT_FILE) missing or not readable"
+[ -r "${OCSP_CERT}" ] || error "OCSP Certificate file ($OCSP_CERT) missing or not readable"
+
 # Set the wget options and call the service
 SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_SignaturePort
 SOAP_ACTION=#MSS_Signature
@@ -127,8 +139,7 @@ elif [ "$REQTOOL" = 'curl' ]; then
                    $SOAP_URL
   )
 else
-  echo "Unsupported request tool '$REQTOOL'" >&2
-  exit 1
+  error "Unsupported request tool '$REQTOOL' specified"
 fi
 
 # Results
@@ -141,11 +152,14 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
   RES_ST=$(sed -n -e 's/.*<mss:StatusMessage>\(.*\)<\/mss:StatusMessage>.*/\1/p' $SOAP_REQ.res)
            sed -n -e 's/.*<mss:Base64Signature>\(.*\)<\/mss:Base64Signature>.*/\1/p' $SOAP_REQ.res > $SOAP_REQ.sig
 
+  [ -s "${SOAP_REQ}.sig" ] || error "No Base64Signature found"
   # Decode the signature
   base64 --decode  $SOAP_REQ.sig > $SOAP_REQ.sig.decoded
+  [ -s "${SOAP_REQ}.sig.decoded" ] || error "Unable to decode Base64Signature"
 
   # Extract the signers certificate
   openssl pkcs7 -inform der -in $SOAP_REQ.sig.decoded -out $SOAP_REQ.sig.cert -print_certs
+  [ -s "${SOAP_REQ}.sig.cert" ] || error "Unable to extract signers certificate from siganture"
   RES_ID_CERT=$(openssl x509 -subject -noout -in $SOAP_REQ.sig.cert)
 
   # and verify the revocation status over ocsp
@@ -192,9 +206,10 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
  else
   export RC=2						# Force error code higher than 1
   if [ "$VERBOSE" = "1" ]; then				# Verbose details
-    [ "$REQTOOL" = 'curl' ] && fail_file="$SOAP_REQ.res" || fail_file="$SOAP_REQ.log"
-    RES_DETAIL=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $fail_file)
-    echo "FAILED with $RES_DETAIL and exit $RC"
+    [ "$REQTOOL" = 'curl' ] && fail_file="$SOAP_REQ.res" || fail_file="$SOAP_REQ.log"          # File to find the SOAP fault (HTTP Status 500) output
+    RES_VALUE=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $fail_file)
+    RES_DETAIL=$(sed -n -e 's/.*<ns1:detail.*>\(.*\)<\/ns1:detail>.*/\1/p' $fail_file)
+    echo "FAILED with $RES_VALUE ($RES_DETAIL) and exit $RC"
   fi
 fi
 
