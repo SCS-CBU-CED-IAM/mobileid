@@ -5,15 +5,35 @@ Mobile ID command line tools
 
 ## bash
 
-Contains a script to invoke the Signature Request service.
+Contains a script to invoke the Signature Request and one to invoke the Receipt Request.
 
 ```
-Usage: ./mobileid-sign.sh <args> mobileNumber "Message to be signed" userlang
+Usage: ./mobileid-sign.sh <args> mobile "message" userlang <receipt>
   -v       - verbose output
   -d       - debug mode
+  -e       - encrypted receipt
+  mobile   - mobile number
+  message  - message to be signed
   userlang - user language (one of en, de, fr, it)
+  receipt  - optional success receipt message
 
   Example ./mobileid-sign.sh -v +41792080350 "Do you want to login to corporate VPN?" en
+          ./mobileid-sign.sh -v +41792080350 "Do you want to login to corporate VPN?" en "Successfull login into VPN"
+          ./mobileid-sign.sh -v -e +41792080350 "Do you need a new password?" en "Password: 123456"
+```
+
+```
+Usage: ./mobileid-receipt.sh <args> mobile transID "msg" <pubCert>
+  -v       - verbose output
+  -d       - debug mode
+  mobile   - mobile number
+  transID  - transaction id
+  msg      - message to be displayed
+  pubCert  - optional public certificate file to encode the message
+
+  Example ./mobileid-receipt.sh -v +41792080350 h29ah1 "All fine"
+          ./mobileid-receipt.sh -v +41792080350 h29ah1 "Password: 123456" /tmp/_tmp.8OVlwv.sig.cert
+
 ```
 
 
