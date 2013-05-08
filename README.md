@@ -23,13 +23,13 @@ Usage: ./mobileid-sign.sh <args> mobile "message" userlang <receipt>
 ```
 
 ```
-Usage: ./mobileid-receipt.sh <args> mobile transID "msg" <pubCert>
+Usage: ./mobileid-receipt.sh <args> mobile transID "message" <pubCert>
   -v       - verbose output
   -d       - debug mode
   mobile   - mobile number
   transID  - transaction id
-  msg      - message to be displayed
-  pubCert  - optional public certificate file to encode the message
+  message  - message to be displayed
+  pubCert  - optional public certificate file of the mobile user to encode the message
 
   Example ./mobileid-receipt.sh -v +41792080350 h29ah1 "All fine"
           ./mobileid-receipt.sh -v +41792080350 h29ah1 "Password: 123456" /tmp/_tmp.8OVlwv.sig.cert

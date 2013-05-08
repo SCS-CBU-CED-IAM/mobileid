@@ -5,7 +5,7 @@
 # Dependencies: curl, openssl, base64, sed
 #
 # Change Log:
-#  1.0 13.09.2012: Initial version with signature validation
+#  1.0 8.5.2013: Initial version
 
 ######################################################################
 # User configurable options
@@ -37,13 +37,13 @@ while getopts "dv" opt; do			# Parse the options
 done
 
 if [ $# -lt 3 ]; then				# Parse the rest of the arguments
-  echo "Usage: $0 <args> mobile transID \"msg\" <pubCert>"
+  echo "Usage: $0 <args> mobile transID \"message\" <pubCert>"
   echo "  -v       - verbose output"
   echo "  -d       - debug mode"
   echo "  mobile   - mobile number"
   echo "  transID  - transaction id"
-  echo "  msg      - message to be displayed"
-  echo "  pubCert  - optional public certificate file to encode the message"
+  echo "  message  - message to be displayed"
+  echo "  pubCert  - optional public certificate file of the mobile user to encode the message"
   echo
   echo "  Example $0 -v +41792080350 h29ah1 \"All fine\""
   echo "          $0 -v +41792080350 h29ah1 \"Password: 123456\" /tmp/_tmp.8OVlwv.sig.cert"
