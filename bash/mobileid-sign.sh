@@ -16,6 +16,7 @@
 #  1.4 21.2.2013:  Removal of the optional backend signature validation
 #  1.5 5.4.2013:   Switching from wegt to curl
 #                  Better error handling
+#  1.6 8.5.2013:   Options for sending normal/encrypted receipt
 
 ######################################################################
 # User configurable options
@@ -38,21 +39,29 @@ error()
 # Check command line
 DEBUG=
 VERBOSE=
-while getopts "dv" opt; do			# Parse the options
+ENCRYPT=
+while getopts "dve" opt; do			# Parse the options
   case $opt in
     d) DEBUG=1 ;;				# Debug
     v) VERBOSE=1 ;;				# Verbose
+    e) ENCRYPT=1 ;;				# Encrypt receipt
   esac
   shift
 done
 
 if [ $# -lt 3 ]; then				# Parse the rest of the arguments
-  echo "Usage: $0 <args> mobileNumber \"Message to be signed\" userlang"
+  echo "Usage: $0 <args> mobile \"message\" userlang <receipt>"
   echo "  -v       - verbose output"
   echo "  -d       - debug mode"
+  echo "  -e       - encrypted receipt"
+  echo "  mobile   - mobile number"
+  echo "  message  - message to be signed"
   echo "  userlang - user language (one of en, de, fr, it)"
+  echo "  receipt  - optional success receipt message"
   echo
   echo "  Example $0 -v +41792080350 \"Do you want to login to corporate VPN?\" en"
+  echo "          $0 -v +41792080350 \"Do you want to login to corporate VPN?\" en \"Successfull login into VPN\""
+  echo "          $0 -v -e +41792080350 \"Do you need a new password?\" en \"Password: 123456\""
   echo 
   exit 1
 fi
@@ -147,6 +156,7 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
   RES_RC=$(sed -n -e 's/.*<mss:StatusCode Value="\(.*\)"\/>.*/\1/p' $SOAP_REQ.res)
   RES_ST=$(sed -n -e 's/.*<mss:StatusMessage>\(.*\)<\/mss:StatusMessage>.*/\1/p' $SOAP_REQ.res)
            sed -n -e 's/.*<mss:Base64Signature>\(.*\)<\/mss:Base64Signature>.*/\1/p' $SOAP_REQ.res > $SOAP_REQ.sig
+  RES_MSSPID=$(sed -n -e 's/.*MSSP_TransID="\(.*\)" xmlns:mss.*/\1/p' $SOAP_REQ.res)
 
   [ -s "${SOAP_REQ}.sig" ] || error "No Base64Signature found"
   # Decode the signature
@@ -187,9 +197,10 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
   if [ "$RES_ID" = "503" ]; then export RC=1 ; fi	# Invalid signature
 
   if [ "$VERBOSE" = "1" ]; then				# Verbose details
-    echo "OK with following details and checks:"
+    echo "$SOAP_ACTION OK with following details and checks:"
     echo -n " 1) Transaction ID : $RES_TRANSID"
       if [ "$RES_TRANSID" = "$AP_TRANSID" ] ; then echo " -> same as in request" ; else echo " -> different as in request!" ; fi
+    echo    "    MSSP TransID   : $RES_MSSPID"
     echo -n " 2) Signed by      : $RES_MSISDNID"
       if [ "$RES_MSISDNID" = "$SEND_TO" ] ; then echo " -> same as in request" ; else echo " -> different as in request!" ; fi
     echo    " 3) Time to sign   : <Not verified>"
@@ -199,6 +210,17 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
     echo    " 6) Status code    : $RES_RC with exit $RC"
     echo    "    Status details : $RES_ST"
   fi
+
+  if [ "$4" != "" ]; then                               # Send a receipt?
+    OPTS=
+    if [ "$VERBOSE" = "1" ]; then OPTS="$OPTS -v" ; fi          # Keep the options
+    if [ "$DEBUG"   = "1" ]; then OPTS="$OPTS -d" ; fi
+    if [ "$ENCRYPT" = "1" ]; then                               # Encrypted?
+      $PWD/mobileid-receipt.sh $OPTS $SEND_TO $RES_MSSPID "$4" $SOAP_REQ.sig.cert
+    else                                                        # -> normal
+      $PWD/mobileid-receipt.sh $OPTS $SEND_TO $RES_MSSPID "$4"
+    fi
+  fi
  else
   CURL_ERR=$RC                                          # Keep related error
   export RC=2                                           # Force returned error code
@@ -207,7 +229,7 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
     if [ -s $SOAP_REQ.res ]; then                               # Response from the service
       RES_VALUE=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $SOAP_REQ.res)
       RES_DETAIL=$(sed -n -e 's/.*<ns1:detail.*>\(.*\)<\/ns1:detail>.*/\1/p' $SOAP_REQ.res)
-      echo "FAILED with $RES_VALUE ($RES_DETAIL) and exit $RC"
+      echo "$SOAP_ACTION FAILED with $RES_VALUE ($RES_DETAIL) and exit $RC"
     fi
   fi
 fi
