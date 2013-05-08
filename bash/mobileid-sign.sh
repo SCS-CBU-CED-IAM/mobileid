@@ -1,5 +1,5 @@
 #!/bin/sh
-# mobileid-sign.sh - 1.5
+# mobileid-sign.sh - 1.6
 #
 # Generic script using wget to invoke Swisscom Mobile ID service.
 # Dependencies: curl, openssl, base64, sed
@@ -13,10 +13,10 @@
 #                  Optional parameters for language, debugging and verbose
 #  1.3 17.10.2012: Timeout settings for process and request
 #                  Mandatory language
-#  1.4 21.2.2013:  Removal of the optional backend signature validation
-#  1.5 5.4.2013:   Switching from wegt to curl
+#  1.4 21.02.2013: Removal of the optional backend signature validation
+#  1.5 05.04.2013: Switching from wegt to curl
 #                  Better error handling
-#  1.6 8.5.2013:   Options for sending normal/encrypted receipt
+#  1.6 08.05.2013: Options for sending normal/encrypted receipt
 
 ######################################################################
 # User configurable options

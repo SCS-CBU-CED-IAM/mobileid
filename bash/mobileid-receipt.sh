@@ -5,7 +5,7 @@
 # Dependencies: curl, openssl, base64, sed
 #
 # Change Log:
-#  1.0 8.5.2013: Initial version
+#  1.0 08.05.2013: Initial version
 
 ######################################################################
 # User configurable options
