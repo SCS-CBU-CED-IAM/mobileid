@@ -226,7 +226,7 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
   export RC=2                                           # Force returned error code
   if [ "$VERBOSE" = "1" ]; then				# Verbose details
     [ $CURL_ERR != "0" ] && echo "curl failed with $CURL_ERR"   # Curl error
-    if [ -s $SOAP_REQ.res ]; then                               # Response from the service
+    if [ -s "${SOAP_REQ}.res" ]; then                           # Response from the service
       RES_VALUE=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $SOAP_REQ.res)
       RES_DETAIL=$(sed -n -e 's/.*<ns1:detail.*>\(.*\)<\/ns1:detail>.*/\1/p' $SOAP_REQ.res)
       echo "$SOAP_ACTION FAILED with $RES_VALUE ($RES_DETAIL) and exit $RC"
@@ -236,17 +236,17 @@ fi
 
 # Cleanups if not DEBUG mode
 if [ "$DEBUG" = "" ]; then
-  [ -f $SOAP_REQ ] && rm $SOAP_REQ
-  [ -f $SOAP_REQ.log ] && rm $SOAP_REQ.log
-  [ -f $SOAP_REQ.res ] && rm $SOAP_REQ.res
-  [ -f $SOAP_REQ.sig ] && rm $SOAP_REQ.sig
-  [ -f $SOAP_REQ.sig.decoded ] && rm $SOAP_REQ.sig.decoded
-  [ -f $SOAP_REQ.sig.cert ] && rm $SOAP_REQ.sig.cert
-  [ -f $SOAP_REQ.sig.cert.check ] && rm $SOAP_REQ.sig.cert.check
-  [ -f $SOAP_REQ.sig.txt ] && rm $SOAP_REQ.sig.txt
+  [ -f "$SOAP_REQ" ] && rm $SOAP_REQ
+  [ -f "$SOAP_REQ.log" ] && rm $SOAP_REQ.log
+  [ -f "$SOAP_REQ.res" ] && rm $SOAP_REQ.res
+  [ -f "$SOAP_REQ.sig" ] && rm $SOAP_REQ.sig
+  [ -f "$SOAP_REQ.sig.decoded" ] && rm $SOAP_REQ.sig.decoded
+  [ -f "$SOAP_REQ.sig.cert" ] && rm $SOAP_REQ.sig.cert
+  [ -f "$SOAP_REQ.sig.cert.check" ] && rm $SOAP_REQ.sig.cert.check
+  [ -f "$SOAP_REQ.sig.txt" ] && rm $SOAP_REQ.sig.txt
  else
-  [ -f $SOAP_REQ.log ] && echo "\n>>> $SOAP_REQ.log <<<" && cat $SOAP_REQ.log | grep '==\|error'
-  [ -f $SOAP_REQ.res ] && echo "\n>>> $SOAP_REQ.res <<<" && cat $SOAP_REQ.res
+  [ -f "$SOAP_REQ.log" ] && echo "\n>>> $SOAP_REQ.log <<<" && cat $SOAP_REQ.log | grep '==\|error'
+  [ -f "$SOAP_REQ.res" ] && echo "\n>>> $SOAP_REQ.res <<<" && cat $SOAP_REQ.res
 fi
 
 exit $RC
