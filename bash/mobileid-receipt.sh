@@ -75,7 +75,8 @@ PUB_CERT=$4					# Public certificate for optional encryption
 # Define the message and format
 MSG_TYPE='MimeType="text/plain" Encoding="UTF-8"'
 MSG_TXT=$3
-if [ -e "$PUB_CERT" ]; then			# Message to be encrypted
+if [ "$PUB_CERT" != "" ]; then			# Message to be encrypted
+  [ -r "${PUB_CERT}" ] || error "Public certificate for encoding the message ($PUB_CERT) missing or not readable"
   MSG_TYPE='MimeType="application/alauda-rsamessage" Encoding="BASE64"'
   echo $MSG_TXT > $SOAP_REQ.msg
   openssl rsautl -encrypt -inkey $PUB_CERT -in $SOAP_REQ.msg -out $SOAP_REQ.msg.enc -certin > /dev/null 2>&1
@@ -160,6 +161,7 @@ if [ "$DEBUG" = "" ]; then
   [ -f "$SOAP_REQ.msg" ] && rm $SOAP_REQ.msg
   [ -f "$SOAP_REQ.msg.enc" ] && rm $SOAP_REQ.msg.enc
  else
+  [ -f "$SOAP_REQ" ] && echo "\n>>> $SOAP_REQ <<<" && cat $SOAP_REQ
   [ -f "$SOAP_REQ.log" ] && echo "\n>>> $SOAP_REQ.log <<<" && cat $SOAP_REQ.log | grep '==\|error'
   [ -f "$SOAP_REQ.res" ] && echo "\n>>> $SOAP_REQ.res <<<" && cat $SOAP_REQ.res
 fi

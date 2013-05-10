@@ -210,17 +210,6 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
     echo    " 6) Status code    : $RES_RC with exit $RC"
     echo    "    Status details : $RES_ST"
   fi
-
-  if [ "$4" != "" ]; then                               # Send a receipt?
-    OPTS=
-    if [ "$VERBOSE" = "1" ]; then OPTS="$OPTS -v" ; fi          # Keep the options
-    if [ "$DEBUG"   = "1" ]; then OPTS="$OPTS -d" ; fi
-    if [ "$ENCRYPT" = "1" ]; then                               # Encrypted?
-      $PWD/mobileid-receipt.sh $OPTS $SEND_TO $RES_MSSPID "$4" $SOAP_REQ.sig.cert
-    else                                                        # -> normal
-      $PWD/mobileid-receipt.sh $OPTS $SEND_TO $RES_MSSPID "$4"
-    fi
-  fi
  else
   CURL_ERR=$RC                                          # Keep related error
   export RC=2                                           # Force returned error code
@@ -234,6 +223,25 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
   fi
 fi
 
+# Debug details
+if [ "$DEBUG" != "" ]; then
+  [ -f "$SOAP_REQ" ] && echo "\n>>> $SOAP_REQ <<<" && cat $SOAP_REQ
+  [ -f "$SOAP_REQ.log" ] && echo "\n>>> $SOAP_REQ.log <<<" && cat $SOAP_REQ.log | grep '==\|error'
+  [ -f "$SOAP_REQ.res" ] && echo "\n>>> $SOAP_REQ.res <<<" && cat $SOAP_REQ.res
+fi
+
+# Need a receipt?
+if [ "$RC" -lt "2" -a "$4" != "" ]; then		# Request ok and need to send a reciept
+  OPTS=
+  if [ "$VERBOSE" = "1" ]; then OPTS="$OPTS -v" ; fi		# Keep the options
+  if [ "$DEBUG"   = "1" ]; then OPTS="$OPTS -d" ; fi
+  if [ "$ENCRYPT" = "1" ]; then					# Encrypted?
+    $PWD/mobileid-receipt.sh $OPTS $SEND_TO $RES_MSSPID "$4" $SOAP_REQ.sig.cert
+   else								# -> normal
+    $PWD/mobileid-receipt.sh $OPTS $SEND_TO $RES_MSSPID "$4"
+  fi
+fi
+
 # Cleanups if not DEBUG mode
 if [ "$DEBUG" = "" ]; then
   [ -f "$SOAP_REQ" ] && rm $SOAP_REQ
@@ -244,9 +252,6 @@ if [ "$DEBUG" = "" ]; then
   [ -f "$SOAP_REQ.sig.cert" ] && rm $SOAP_REQ.sig.cert
   [ -f "$SOAP_REQ.sig.cert.check" ] && rm $SOAP_REQ.sig.cert.check
   [ -f "$SOAP_REQ.sig.txt" ] && rm $SOAP_REQ.sig.txt
- else
-  [ -f "$SOAP_REQ.log" ] && echo "\n>>> $SOAP_REQ.log <<<" && cat $SOAP_REQ.log | grep '==\|error'
-  [ -f "$SOAP_REQ.res" ] && echo "\n>>> $SOAP_REQ.res <<<" && cat $SOAP_REQ.res
 fi
 
 exit $RC
