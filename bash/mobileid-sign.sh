@@ -60,7 +60,7 @@ if [ $# -lt 3 ]; then				# Parse the rest of the arguments
   echo "  receipt  - optional success receipt message"
   echo
   echo "  Example $0 -v +41792080350 \"Do you want to login to corporate VPN?\" en"
-  echo "          $0 -v +41792080350 \"Do you want to login to corporate VPN?\" en \"Successfull login into VPN\""
+  echo "          $0 -v +41792080350 \"Do you want to login to corporate VPN?\" en \"Successful login into VPN\""
   echo "          $0 -v -e +41792080350 \"Do you need a new password?\" en \"Password: 123456\""
   echo 
   exit 1

@@ -18,7 +18,7 @@ Usage: ./mobileid-sign.sh <args> mobile "message" userlang <receipt>
   receipt  - optional success receipt message
 
   Example ./mobileid-sign.sh -v +41792080350 "Do you want to login to corporate VPN?" en
-          ./mobileid-sign.sh -v +41792080350 "Do you want to login to corporate VPN?" en "Successfull login into VPN"
+          ./mobileid-sign.sh -v +41792080350 "Do you want to login to corporate VPN?" en "Successful login into VPN"
           ./mobileid-sign.sh -v -e +41792080350 "Do you need a new password?" en "Password: 123456"
 ```
 
@@ -27,9 +27,9 @@ Usage: ./mobileid-receipt.sh <args> mobile transID "message" <pubCert>
   -v       - verbose output
   -d       - debug mode
   mobile   - mobile number
-  transID  - transaction id
+  transID  - transaction id of the related signature request
   message  - message to be displayed
-  pubCert  - optional public certificate file of the mobile user to encode the message
+  pubCert  - optional public certificate file of the Mobile ID user to encode the message
 
   Example ./mobileid-receipt.sh -v +41792080350 h29ah1 "All fine"
           ./mobileid-receipt.sh -v +41792080350 h29ah1 "Password: 123456" /tmp/_tmp.8OVlwv.sig.cert
@@ -45,8 +45,9 @@ Refer to the "Mobile ID - SOAP client reference guide" document from Swisscom fo
 Example of verbose outputs:
 ```
 ./mobileid-sign.sh -v +41792080350 "Hello" en
-OK with following details and checks:
+#MSS_Signature OK with following details and checks:
  1) Transaction ID : AP.TEST.34309.7311 -> same as in request
+    MSSP TransID   : h2ecyu
  2) Signed by      : +41792080350 -> same as in request
  3) Time to sign   : <Not verified>
  4) Signer         : subject= /serialNumber=MIDCHE3QWAXYEAA2/CN=MIDCHE3QWAXYEAA2:PN/C=CH -> OCSP check: good
@@ -57,16 +58,41 @@ OK with following details and checks:
 
 ```
 ./mobileid-sign.sh -v +41792204080 "Hello" en
-FAILED with mss:_105 (Unknown user) and exit 2
+#MSS_Signature FAILED with mss:_105 (Unknown user) and exit 2
 
 ./mobileid-sign.sh -v +4179220408012312312 "Hello" en
-FAILED with mss:_104 (Wrong SSL credentials) and exit 2
+#MSS_Signature FAILED with mss:_104 (Wrong SSL credentials) and exit 2
 
 ./mobileid-sign.sh -v +4179220408012312312 "Hello" en
-FAILED with mss:_101 (Illegal msisdn) and exit 2
+#MSS_Signature FAILED with mss:_101 (Illegal msisdn) and exit 2
 
 ./mobileid-sign.sh -v +41792080350 "Hello" en
-FAILED with mss:_401 (User Cancelled the request) and exit 2
+#MSS_Signature FAILED with mss:_401 (User Cancelled the request) and exit 2
+```
+
+```
+./mobileid-sign.sh -v +41792080350 "Do you want to login to corporate VPN?" en "Successful login into VPN"
+#MSS_Signature OK with following details and checks:
+ 1) Transaction ID : AP.TEST.13428.4428 -> same as in request
+    MSSP TransID   : h2ed05
+ 2) Signed by      : +41792080350 -> same as in request
+ 3) Time to sign   : <Not verified>
+ 4) Signer         : subject= /serialNumber=MIDCHE3QWAXYEAA2/CN=MIDCHE3QWAXYEAA2:PN/C=CH -> OCSP check: good
+ 5) Signed Data    : Do you want to login to corporate VPN? -> Decode and verify: success and same as in request
+ 6) Status code    : 500 with exit 0
+    Status details : SIGNATURE
+#MSS_Receipt OK with following details and checks:
+ MSSP TransID   : h2ed05
+ Status code    : 100 with exit 0
+ Status details : REQUEST_OK
+```
+
+```
+./mobileid-receipt.sh -v +41792080350 h2ed05 "Successful login into VPN"
+#MSS_Receipt FAILED with mss:_101 (Receipt already sent for this transaction. Only one receipt allowed per transaction.) and exit 2
+
+./mobileid-receipt.sh -v +41792080350 h2ed01 "Successful login into VPN"
+#MSS_Receipt FAILED with mss:_101 (There is no such transaction.) and exit 2
 ```
 
 
