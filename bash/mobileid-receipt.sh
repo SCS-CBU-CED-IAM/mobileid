@@ -1,11 +1,12 @@
 #!/bin/sh
-# mobileid-receipt.sh - 1.0
+# mobileid-receipt.sh - 1.1
 #
 # Generic script using curl to invoke Swisscom Mobile ID service.
-# Dependencies: curl, openssl, base64, sed
+# Dependencies: curl, openssl, base64, sed, iconv
 #
 # Change Log:
 #  1.0 08.05.2013: Initial version
+#  1.1 30.05.2013: Proper encoding for encryted receipts
 
 ######################################################################
 # User configurable options
@@ -41,7 +42,7 @@ if [ $# -lt 3 ]; then				# Parse the rest of the arguments
   echo "  -v       - verbose output"
   echo "  -d       - debug mode"
   echo "  mobile   - mobile number"
-  echo "  transID  - transaction id of the related signature request"
+  echo "  transID  - transaction id"
   echo "  message  - message to be displayed"
   echo "  pubCert  - optional public certificate file of the mobile user to encode the message"
   echo
@@ -78,9 +79,16 @@ MSG_TXT=$3
 if [ "$PUB_CERT" != "" ]; then			# Message to be encrypted
   [ -r "${PUB_CERT}" ] || error "Public certificate for encoding the message ($PUB_CERT) missing or not readable"
   MSG_TYPE='MimeType="application/alauda-rsamessage" Encoding="BASE64"'
-  echo $MSG_TXT > $SOAP_REQ.msg
-  openssl rsautl -encrypt -inkey $PUB_CERT -in $SOAP_REQ.msg -out $SOAP_REQ.msg.enc -certin > /dev/null 2>&1
-  [ -f "$SOAP_REQ.msg.enc" ] && MSG_TXT=$(base64 $SOAP_REQ.msg.enc)
+  # GSM11.14 STK commands do not support UTF8, either UCS-2 or GSMDA 
+  MSG_TXT=$(echo -n $MSG_TXT | iconv -f UTF-8 -t UCS-2)
+  # UCS-2 must be prefixed with 0x80
+## TODO: Remove perl dependency and do it just with bash
+  UCS2=`perl -e 'print "\x80"'`
+## TODO: Remove this debugging
+echo "\n"
+echo -n $UCS2$MSG_TXT | hexdump -v  -e '/1  "%_ad#    "' -e '/1    "%02X hex"' -e '/1 " = %03i dec"' -e '/1 " = %03o oct"' -e '/1 " = _%c\_\n"'
+  echo -n $UCS2$MSG_TXT | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
+  [ -f "$SOAP_REQ.msg" ] && MSG_TXT=$(base64 $SOAP_REQ.msg)
 fi
 
 cat > $SOAP_REQ <<End
@@ -159,7 +167,6 @@ if [ "$DEBUG" = "" ]; then
   [ -f "$SOAP_REQ.log" ] && rm $SOAP_REQ.log
   [ -f "$SOAP_REQ.res" ] && rm $SOAP_REQ.res
   [ -f "$SOAP_REQ.msg" ] && rm $SOAP_REQ.msg
-  [ -f "$SOAP_REQ.msg.enc" ] && rm $SOAP_REQ.msg.enc
  else
   [ -f "$SOAP_REQ" ] && echo "\n>>> $SOAP_REQ <<<" && cat $SOAP_REQ
   [ -f "$SOAP_REQ.log" ] && echo "\n>>> $SOAP_REQ.log <<<" && cat $SOAP_REQ.log | grep '==\|error'
