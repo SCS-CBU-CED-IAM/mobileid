@@ -42,7 +42,7 @@ if [ $# -lt 3 ]; then				# Parse the rest of the arguments
   echo "  -v       - verbose output"
   echo "  -d       - debug mode"
   echo "  mobile   - mobile number"
-  echo "  transID  - transaction id"
+  echo "  transID  - transaction id of the related signature request"
   echo "  message  - message to be displayed"
   echo "  pubCert  - optional public certificate file of the mobile user to encode the message"
   echo
