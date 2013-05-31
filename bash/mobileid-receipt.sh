@@ -80,14 +80,8 @@ if [ "$PUB_CERT" != "" ]; then			# Message to be encrypted
   [ -r "${PUB_CERT}" ] || error "Public certificate for encoding the message ($PUB_CERT) missing or not readable"
   MSG_TYPE='MimeType="application/alauda-rsamessage" Encoding="BASE64"'
   # GSM11.14 STK commands do not support UTF8, either UCS-2 or GSMDA 
-  MSG_TXT=$(echo -n $MSG_TXT | iconv -f UTF-8 -t UCS-2)
   # UCS-2 must be prefixed with 0x80
-## TODO: Remove perl dependency and do it just with bash
-  UCS2=`perl -e 'print "\x80"'`
-## TODO: Remove this debugging
-echo "\n"
-echo -n $UCS2$MSG_TXT | hexdump -v  -e '/1  "%_ad#    "' -e '/1    "%02X hex"' -e '/1 " = %03i dec"' -e '/1 " = %03o oct"' -e '/1 " = _%c\_\n"'
-  echo -n $UCS2$MSG_TXT | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
+  (echo -ne "\x80"; echo -n $MSG_TXT | iconv -f UTF-8 -t UCS2) | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
   [ -f "$SOAP_REQ.msg" ] && MSG_TXT=$(base64 $SOAP_REQ.msg)
 fi
 
