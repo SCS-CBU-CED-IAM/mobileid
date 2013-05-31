@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # mobileid-receipt.sh - 1.1
 #
 # Generic script using curl to invoke Swisscom Mobile ID service.
@@ -79,10 +79,9 @@ MSG_TXT=$3
 if [ "$PUB_CERT" != "" ]; then			# Message to be encrypted
   [ -r "${PUB_CERT}" ] || error "Public certificate for encoding the message ($PUB_CERT) missing or not readable"
   MSG_TYPE='MimeType="application/alauda-rsamessage" Encoding="BASE64"'
-  # GSM11.14 STK commands do not support UTF8, either UCS-2 or GSMDA 
-UCS2=`perl -e 'print "\x80"'`
-(echo -n $UCS2; echo -n $MSG_TXT | iconv -f UTF-8 -t UCS-2BE) | hexdump -v  -e '/1  "%_ad#    "' -e '/1    "%02X hex"' -e '/1 " = %03i dec"' -e '/1 " = %03o oct"' -e '/1 " = _%c\_\n"'
-  (echo -n $UCS2; echo -n $MSG_TXT | iconv -f UTF-8 -t UCS-2BE) | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
+  # GSM11.14 STK commands do not support UTF8, either UCS-2 or GSMDA
+  # Encrypt UCS-2 prefixed with Hex 80 over cmd as vars are not properly encoding
+  (echo -ne "\x80"; echo -n $MSG_TXT | iconv -f UTF-8 -t UCS-2BE) | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
   [ -f "$SOAP_REQ.msg" ] && MSG_TXT=$(base64 $SOAP_REQ.msg)
 fi
 
