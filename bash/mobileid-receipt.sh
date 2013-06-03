@@ -47,8 +47,8 @@ if [ $# -lt 3 ]; then				# Parse the rest of the arguments
   echo "  message  - message to be displayed"
   echo "  pubCert  - optional public certificate file of the mobile user to encode the message"
   echo
-  echo "  Example $0 -v +41792080350 h29ah1 \"All fine\""
-  echo "          $0 -v +41792080350 h29ah1 \"Password: 123456\" /tmp/_tmp.8OVlwv.sig.cert"
+  echo "  Example $0 -v +41792080350 h29ah1 'All fine'"
+  echo "          $0 -v +41792080350 h29ah1 'Password: 123456' /tmp/_tmp.8OVlwv.sig.cert"
   echo 
   exit 1
 fi

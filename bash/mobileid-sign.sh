@@ -17,6 +17,7 @@
 #  1.5 05.04.2013: Switching from wegt to curl
 #                  Better error handling
 #  1.6 08.05.2013: Options for sending normal/encrypted receipt
+#  1.7 03.06.2013: Updated usage details
 
 ######################################################################
 # User configurable options
@@ -59,9 +60,9 @@ if [ $# -lt 3 ]; then				# Parse the rest of the arguments
   echo "  userlang - user language (one of en, de, fr, it)"
   echo "  receipt  - optional success receipt message"
   echo
-  echo "  Example $0 -v +41792080350 \"Do you want to login to corporate VPN?\" en"
-  echo "          $0 -v +41792080350 \"Do you want to login to corporate VPN?\" en \"Successful login into VPN\""
-  echo "          $0 -v -e +41792080350 \"Do you need a new password?\" en \"Password: 123456\""
+  echo "  Example $0 -v +41792080350 'Do you want to login to corporate VPN?' en"
+  echo "          $0 -v +41792080350 'Do you want to login to corporate VPN?' en \"Successful login into VPN\""
+  echo "          $0 -v -e +41792080350 'Do you need a new password?' en \"Password: 123456\""
   echo 
   exit 1
 fi
