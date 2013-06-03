@@ -1,5 +1,5 @@
 #!/bin/bash
-# mobileid-receipt.sh - 1.1
+# mobileid-receipt.sh - 1.2
 #
 # Generic script using curl to invoke Swisscom Mobile ID service.
 # Dependencies: curl, openssl, base64, sed, iconv
@@ -7,6 +7,7 @@
 # Change Log:
 #  1.0 08.05.2013: Initial version
 #  1.1 30.05.2013: Proper encoding for encryted receipts
+#  1.2 03.05.2013: Conditional encoding for encrypted receipts based on content
 
 ######################################################################
 # User configurable options
@@ -79,10 +80,15 @@ MSG_TXT=$3
 if [ "$PUB_CERT" != "" ]; then			# Message to be encrypted
   [ -r "${PUB_CERT}" ] || error "Public certificate for encoding the message ($PUB_CERT) missing or not readable"
   MSG_TYPE='MimeType="application/alauda-rsamessage" Encoding="BASE64"'
-  # GSM11.14 STK commands do not support UTF8, either UCS-2 or GSMDA
-  # Encrypt UCS-2 prefixed with Hex 80 over cmd as vars are not properly encoding
-  (echo -ne "\x80"; echo -n $MSG_TXT | iconv -f UTF-8 -t UCS-2BE) | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
-  [ -f "$SOAP_REQ.msg" ] && MSG_TXT=$(base64 $SOAP_REQ.msg)
+  MSG_ASCI=$(echo -n $MSG_TXT | iconv -s -f UTF-8 -t US-ASCII//TRANSLIT)
+  if [ "$MSG_TXT" == "$MSG_ASCI" ]; then		# Message does not contain special chars
+    echo -n $MSG_TXT | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
+    [ -f "$SOAP_REQ.msg" ] && MSG_TXT=$(base64 $SOAP_REQ.msg)
+   else							# -> GSM11.14 STK commands do not support UTF8, either UCS-2 or GSMDA
+    # Encrypt UCS-2 prefixed with Hex 80 over cmd as vars are not properly encoding
+    (echo -ne "\x80"; echo -n $MSG_TXT | iconv -s -f UTF-8 -t UCS-2BE) | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
+    [ -f "$SOAP_REQ.msg" ] && MSG_TXT=$(base64 $SOAP_REQ.msg)
+  fi
 fi
 
 cat > $SOAP_REQ <<End
