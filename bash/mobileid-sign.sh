@@ -150,12 +150,13 @@ http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
     --connect-timeout $TIMEOUT_CON \
     $SOAP_URL)
 
-TIME2=$(date +"%s")						# Get the response time
-RES_TIME=$(($TIME2-$TIME1))					# Calc the used time
-
 # Results
 export RC=$?
 if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
+  # Calc the response time
+  TIME2=$(date +"%s")
+  RES_TIME=$(($TIME2-$TIME1))
+
   # Parse the response xml
   RES_TRANSID=$(sed -n -e 's/.*AP_TransID="\(.*\)" AP_.*/\1/p' $SOAP_REQ.res)
   RES_MSISDNID=$(sed -n -e 's/.*<mss:MSISDN>\(.*\)<\/mss:MSISDN>.*/\1/p' $SOAP_REQ.res)
