@@ -1,8 +1,8 @@
 #!/bin/sh
-# mobileid-sign.sh - 1.6
+# mobileid-sign.sh - 1.7
 #
 # Generic script using wget to invoke Swisscom Mobile ID service.
-# Dependencies: curl, openssl, base64, sed
+# Dependencies: curl, openssl, base64, sed, date
 #
 # Change Log:
 #  1.0 13.09.2012: Initial version with signature validation
@@ -18,6 +18,7 @@
 #                  Better error handling
 #  1.6 08.05.2013: Options for sending normal/encrypted receipt
 #  1.7 03.06.2013: Updated usage details
+#  1.8 07.06.2013: Time to sign implementation
 
 ######################################################################
 # User configurable options
@@ -68,6 +69,7 @@ if [ $# -lt 3 ]; then				# Parse the rest of the arguments
 fi
 
 PWD=$(dirname $0)				# Get the Path of the script
+TIME1=$(date +"%s")				# Get the start time
 
 # Swisscom Mobile ID credentials
 CERT_FILE=$PWD/mycert.crt			# The certificate that is allowed to access the service
@@ -148,6 +150,9 @@ http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
     --connect-timeout $TIMEOUT_CON \
     $SOAP_URL)
 
+TIME2=$(date +"%s")						# Get the response time
+RES_TIME=$(($TIME2-$TIME1))					# Calc the used time
+
 # Results
 export RC=$?
 if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
@@ -204,7 +209,7 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
     echo    "    MSSP TransID   : $RES_MSSPID"
     echo -n " 2) Signed by      : $RES_MSISDNID"
       if [ "$RES_MSISDNID" = "$SEND_TO" ] ; then echo " -> same as in request" ; else echo " -> different as in request!" ; fi
-    echo    " 3) Time to sign   : <Not verified>"
+    echo    " 3) Time to sign   : $(($RES_TIME / 60)) minutes and $(($RES_TIME % 60)) seconds"
     echo    " 4) Signer         : $RES_ID_CERT -> OCSP check: $RES_ID_CERT_STATUS"
     echo -n " 5) Signed Data    : $RES_MSG -> Decode and verify: $RES_MSG_STATUS and "
       if [ "$RES_MSG" = "$SEND_MSG" ] ; then echo "same as in request" ; else echo "different as in request!" ; fi
