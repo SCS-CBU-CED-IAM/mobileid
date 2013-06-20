@@ -48,8 +48,8 @@ while getopts "dve" opt; do			# Parse the options
     v) VERBOSE=1 ;;				# Verbose
     e) ENCRYPT=1 ;;				# Encrypt receipt
   esac
-  shift
 done
+shift $((OPTIND-1))                             # Remove the options
 
 if [ $# -lt 3 ]; then				# Parse the rest of the arguments
   echo "Usage: $0 <args> mobile \"message\" userlang <receipt>"

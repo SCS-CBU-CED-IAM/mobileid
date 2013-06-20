@@ -35,8 +35,8 @@ while getopts "dv" opt; do			# Parse the options
     d) DEBUG=1 ;;				# Debug
     v) VERBOSE=1 ;;				# Verbose
   esac
-  shift
 done
+shift $((OPTIND-1))                             # Remove the options
 
 if [ $# -lt 3 ]; then				# Parse the rest of the arguments
   echo "Usage: $0 <args> mobile transID \"message\" <pubCert>"
