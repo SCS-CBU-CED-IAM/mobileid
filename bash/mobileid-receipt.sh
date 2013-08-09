@@ -70,8 +70,8 @@ AP_TRANSID=AP.TEST.$((RANDOM%89999+10000)).$((RANDOM%8999+1000))
 MSSP_TRANSID=$2					# Transaction ID of request
 SOAP_REQ=$(mktemp /tmp/_tmp.XXXXXX)		# SOAP Request goes here
 SEND_TO=$1					# To who
-TIMEOUT_REQ=80					# Timeout of the request itself
-TIMEOUT_CON=90					# Timeout of the connection to the server
+TIMEOUT_REQ=5					# Timeout of the request itself
+TIMEOUT_CON=10					# Timeout of the connection to the server
 PUB_CERT=$4					# Public certificate for optional encryption
 
 # Define the message and format
