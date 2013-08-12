@@ -8,7 +8,7 @@
 #  1.0 08.05.2013: Initial version
 #  1.1 30.05.2013: Proper encoding for encryted receipts
 #  1.2 03.05.2013: Conditional encoding for encrypted receipts based on content
-#  1.3 12.08.2013: Instant with timezone and lower than one second
+#  1.3 12.08.2013: Instant with timezone
 
 ######################################################################
 # User configurable options
@@ -66,7 +66,7 @@ CERT_CA=$PWD/swisscom-ca.crt                    # Bag file with the server/clien
 
 # Create temporary SOAP request
 RANDOM=$$					# Seeds the random number generator from PID of script
-AP_INSTANT=$(date +%Y-%m-%dT%H:%M:%S.%N%:z)	# Define instant and transaction id
+AP_INSTANT=$(date +%Y-%m-%dT%H:%M:%S%:z)	# Define instant and transaction id
 AP_TRANSID=AP.TEST.$((RANDOM%89999+10000)).$((RANDOM%8999+1000))
 MSSP_TRANSID=$2					# Transaction ID of request
 SOAP_REQ=$(mktemp /tmp/_tmp.XXXXXX)		# SOAP Request goes here

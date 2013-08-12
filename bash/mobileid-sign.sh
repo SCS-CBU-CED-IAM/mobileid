@@ -19,7 +19,7 @@
 #  1.6 08.05.2013: Options for sending normal/encrypted receipt
 #  1.7 03.06.2013: Updated usage details
 #  1.8 07.06.2013: Time to sign implementation
-#  1.9 12.08.2013: Instant with timezone and lower than one second
+#  1.9 12.08.2013: Instant with timezone
 
 ######################################################################
 # User configurable options
@@ -86,7 +86,7 @@ OCSP_URL=http://ocsp.swissdigicert.ch/sdcs-rubin2
 #  Synchron with timeout
 #  Signature format in PKCS7
 RANDOM=$$					# Seeds the random number generator from PID of script
-AP_INSTANT=$(date +%Y-%m-%dT%H:%M:%S.%N%:z)	# Define instant and transaction id
+AP_INSTANT=$(date +%Y-%m-%dT%H:%M:%S%:z)	# Define instant and transaction id
 AP_TRANSID=AP.TEST.$((RANDOM%89999+10000)).$((RANDOM%8999+1000))
 SOAP_REQ=$(mktemp /tmp/_tmp.XXXXXX)		# SOAP Request goes here
 SEND_TO=$1					# To who
