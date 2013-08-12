@@ -1,5 +1,5 @@
 #!/bin/bash
-# mobileid-receipt.sh - 1.2
+# mobileid-receipt.sh - 1.3
 #
 # Generic script using curl to invoke Swisscom Mobile ID service.
 # Dependencies: curl, openssl, base64, sed, iconv
@@ -8,6 +8,7 @@
 #  1.0 08.05.2013: Initial version
 #  1.1 30.05.2013: Proper encoding for encryted receipts
 #  1.2 03.05.2013: Conditional encoding for encrypted receipts based on content
+#  1.3 12.08.2013: Instant with timezone and lower than one second
 
 ######################################################################
 # User configurable options
@@ -65,7 +66,7 @@ CERT_CA=$PWD/swisscom-ca.crt                    # Bag file with the server/clien
 
 # Create temporary SOAP request
 RANDOM=$$					# Seeds the random number generator from PID of script
-AP_INSTANT=$(date +%Y-%m-%dT%H:%M:%S)		# Define instant and transaction id
+AP_INSTANT=$(date +%Y-%m-%dT%H:%M:%S.%N%:z)	# Define instant and transaction id
 AP_TRANSID=AP.TEST.$((RANDOM%89999+10000)).$((RANDOM%8999+1000))
 MSSP_TRANSID=$2					# Transaction ID of request
 SOAP_REQ=$(mktemp /tmp/_tmp.XXXXXX)		# SOAP Request goes here
@@ -156,7 +157,7 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
     if [ -s $SOAP_REQ.res ]; then                               # Response from the service
       RES_VALUE=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $SOAP_REQ.res)
       RES_DETAIL=$(sed -n -e 's/.*<ns1:detail.*>\(.*\)<\/ns1:detail>.*/\1/p' $SOAP_REQ.res)
-      echo "$SOAP_ACTION FAILED with $RES_VALUE ($RES_DETAIL) and exit $RC"
+      echo "$SOAP_ACTION FAILED on $SEND_TO with $RES_VALUE ($RES_DETAIL) and exit $RC"
     fi
   fi
 fi
