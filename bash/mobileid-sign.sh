@@ -108,7 +108,9 @@ cat > $SOAP_REQ <<End
       <mss:MSS_SignatureReq MinorVersion="1" MajorVersion="1" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#" MessagingMode="synch" TimeOut="$TIMEOUT_REQ" xmlns:fi="http://mss.ficom.fi/TS102204/v1.0.0#">
         <mss:AP_Info AP_PWD="$AP_PWD" AP_TransID="$AP_TRANSID" Instant="$AP_INSTANT" AP_ID="$AP_ID" />
         <mss:MSSP_Info>
-          <mss:MSSP_ID/>
+          <mss:MSSP_ID>
+            <mss:URI>http://mid.swisscom.ch/</mss:URI>
+          </mss:MSSP_ID>
         </mss:MSSP_Info>
         <mss:MobileUser>
           <mss:MSISDN>$SEND_TO</mss:MSISDN>
