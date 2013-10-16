@@ -156,8 +156,9 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
     [ $CURL_ERR != "0" ] && echo "curl failed with $CURL_ERR"   # Curl error
     if [ -s $SOAP_REQ.res ]; then                               # Response from the service
       RES_VALUE=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $SOAP_REQ.res)
+      RES_REASON=$(sed -n -e 's/.*<soapenv:Text.*>\(.*\)<\/soapenv:Text>.*/\1/p' $SOAP_REQ.res)
       RES_DETAIL=$(sed -n -e 's/.*<ns1:detail.*>\(.*\)<\/ns1:detail>.*/\1/p' $SOAP_REQ.res)
-      echo "$SOAP_ACTION FAILED on $SEND_TO with $RES_VALUE ($RES_DETAIL) and exit $RC"
+      echo "$SOAP_ACTION FAILED on $SEND_TO with $RES_VALUE ($RES_REASON: $RES_DETAIL) and exit $RC"
     fi
   fi
 fi
