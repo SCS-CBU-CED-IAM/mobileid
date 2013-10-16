@@ -18,7 +18,6 @@ $PWD/mobileid-sign.sh -v +41000092108 "INCOMPATIBLE_INTERFACE" en
 $PWD/mobileid-sign.sh -v +41000092109 "UNSUPPORTED_PROFILE" en
 $PWD/mobileid-sign.sh -v +41000092208 "EXPIRED_TRANSACTION" en
 $PWD/mobileid-sign.sh -v +41000092209 "OTA_ERROR" en
-$PWD/mobileid-sign.sh -v +41000020901 "BAD_OTA_RESPONSE_FORMAT" en
 $PWD/mobileid-sign.sh -v +41000092401 "USER_CANCEL" en
 $PWD/mobileid-sign.sh -v +41000092402 "PIN_NR_BLOCKED" en
 $PWD/mobileid-sign.sh -v +41000092403 "CARD_BLOCKED" en
