@@ -6,8 +6,10 @@
 #
 # Change Log:
 #  1.0 27.09.2013: Initial version
+#  1.1 16.10.2013: Updated version
 
-# Test specific error cases
+# Fault codes with specific MSISDN’s
+echo "> Fault codes with specific MSISDN’s"
 $PWD/mobileid-sign.sh -v +41000092101 "ILLEGAL_MSISDN" en
 $PWD/mobileid-sign.sh -v +41000092102 "MISSING_PARAM" en
 $PWD/mobileid-sign.sh -v +41000092103 "WRONG_DATA_LENGTH" en
@@ -26,5 +28,10 @@ $PWD/mobileid-sign.sh -v +41000092406 "PB_SIGNATURE_PROCESS" en
 $PWD/mobileid-sign.sh -v +41000092422 "NO_CERT_FOUND" en
 $PWD/mobileid-sign.sh -v +41000092900 "INTERNAL_ERROR" en
 
-# Test Heartbeat
+# Unknown fault codes
+echo "> Specific MSISDN's with inexistent fault code"
+$PWD/mobileid-sign.sh -v +41000092700 "FAULT_CODE_DOES_NOT_EXIST" en
+ 
+# Test of Heartbeat
+echo ">  Specific MSISDN for Heratbeat"
 $PWD/mobileid-sign.sh -v +41000000000 "HEARTBEAT" en
