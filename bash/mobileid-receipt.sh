@@ -1,14 +1,16 @@
 #!/bin/bash
-# mobileid-receipt.sh - 1.3
+# mobileid-receipt.sh - 2.0
 #
 # Generic script using curl to invoke Swisscom Mobile ID service.
-# Dependencies: curl, openssl, base64, sed, iconv
+# Dependencies: curl, openssl, base64, sed, iconv, xmlindent
 #
 # Change Log:
 #  1.0 08.05.2013: Initial version
 #  1.1 30.05.2013: Proper encoding for encryted receipts
 #  1.2 03.05.2013: Conditional encoding for encrypted receipts based on content
 #  1.3 12.08.2013: Instant with timezone
+#  2.0 18.10.2013: Format the xml results in debug mode
+#                  Dependency checker
 
 ######################################################################
 # User configurable options
@@ -170,9 +172,9 @@ if [ "$DEBUG" = "" ]; then
   [ -f "$SOAP_REQ.res" ] && rm $SOAP_REQ.res
   [ -f "$SOAP_REQ.msg" ] && rm $SOAP_REQ.msg
  else
-  [ -f "$SOAP_REQ" ] && echo "\n>>> $SOAP_REQ <<<" && cat $SOAP_REQ
+  [ -f "$SOAP_REQ" ] && echo "\n>>> $SOAP_REQ <<<" && cat $SOAP_REQ | xmlindent
   [ -f "$SOAP_REQ.log" ] && echo "\n>>> $SOAP_REQ.log <<<" && cat $SOAP_REQ.log | grep '==\|error'
-  [ -f "$SOAP_REQ.res" ] && echo "\n>>> $SOAP_REQ.res <<<" && cat $SOAP_REQ.res
+  [ -f "$SOAP_REQ.res" ] && echo "\n>>> $SOAP_REQ.res <<<" && cat $SOAP_REQ.res | xmlindent
 fi
 
 exit $RC

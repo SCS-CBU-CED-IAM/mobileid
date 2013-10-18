@@ -1,8 +1,8 @@
 #!/bin/sh
-# mobileid-sign.sh - 1.8
+# mobileid-sign.sh - 2.0
 #
 # Generic script using wget to invoke Swisscom Mobile ID service.
-# Dependencies: curl, openssl, base64, sed, date
+# Dependencies: curl, openssl, base64, sed, date, xmlindent
 #
 # Change Log:
 #  1.0 13.09.2012: Initial version with signature validation
@@ -20,6 +20,8 @@
 #  1.7 03.06.2013: Updated usage details
 #  1.8 07.06.2013: Time to sign implementation
 #  1.9 12.08.2013: Instant with timezone
+#  2.0 18.10.2013: Format the xml results in debug mode
+#                  Dependency checker
 
 ######################################################################
 # User configurable options
@@ -236,9 +238,9 @@ fi
 
 # Debug details
 if [ "$DEBUG" != "" ]; then
-  [ -f "$SOAP_REQ" ] && echo "\n>>> $SOAP_REQ <<<" && cat $SOAP_REQ
+  [ -f "$SOAP_REQ" ] && echo "\n>>> $SOAP_REQ <<<" && cat $SOAP_REQ | xmlindent
   [ -f "$SOAP_REQ.log" ] && echo "\n>>> $SOAP_REQ.log <<<" && cat $SOAP_REQ.log | grep '==\|error'
-  [ -f "$SOAP_REQ.res" ] && echo "\n>>> $SOAP_REQ.res <<<" && cat $SOAP_REQ.res
+  [ -f "$SOAP_REQ.res" ] && echo "\n>>> $SOAP_REQ.res <<<" && cat $SOAP_REQ.res | xmlindent
 fi
 
 # Need a receipt?
