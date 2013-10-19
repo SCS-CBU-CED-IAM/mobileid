@@ -2,7 +2,7 @@
 # mobileid-receipt.sh - 2.0
 #
 # Generic script using curl to invoke Swisscom Mobile ID service.
-# Dependencies: curl, openssl, base64, sed, iconv, xmlindent
+# Dependencies: curl, openssl, base64, sed, date, iconv, xmlindent
 #
 # Change Log:
 #  1.0 08.05.2013: Initial version
@@ -57,6 +57,12 @@ if [ $# -lt 3 ]; then				# Parse the rest of the arguments
 fi
 
 PWD=$(dirname $0)				# Get the Path of the script
+
+# Check the dependencies
+for cmd in curl openssl base64 sed date iconv xmlindent; do
+  hash $cmd &> /dev/null
+  if [ $? -eq 1 ]; then error "Dependency error: '$cmd' not found" ; fi
+done
 
 # Swisscom Mobile ID credentials
 CERT_FILE=$PWD/mycert.crt			# The certificate that is allowed to access the service
