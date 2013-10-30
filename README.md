@@ -110,7 +110,7 @@ Contains a script to invoke the Signature Request service.
 Requires PowerShell 2.0 or higher as it contains an encapsulated C# class.
 The code is unsigned and requires the `Set-ExecutionPolicy Unrestricted`.
 
-The file `mycert.pfx ` is a placeholder without any valid content. Be sure to adjust it with your client certificate content in order to connect to the Mobile ID service. The file format is PKCS#12 without any password.
+The file `mycert.pfx ` is a placeholder without any valid content. Be sure to adjust it with your client certificate content in order to connect to the Mobile ID service. The file format is PKCS#12 without any password. For improved security, it is also possible to use a certificate with private key stored in the user certificate store. If you want to use a certificate from the Windows certificate store, please export the certificate as .CER file and configure the script to use the .CER file instead of the .PFX file.
 
 Open tasks:
 - Validation of the signature and certificate in the response
