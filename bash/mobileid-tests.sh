@@ -10,7 +10,7 @@
 
 # Fault codes with specific MSISDN’s
 echo "> Fault codes with specific MSISDN’s"
-$PWD/mobileid-sign.sh -v +41000092101 "ILLEGAL_MSISDN" en
+$PWD/mobileid-sign.sh -v +41000092101 "WRONG_PARAM" en
 $PWD/mobileid-sign.sh -v +41000092102 "MISSING_PARAM" en
 $PWD/mobileid-sign.sh -v +41000092103 "WRONG_DATA_LENGTH" en
 $PWD/mobileid-sign.sh -v +41000092104 "UNAUTHORIZED_ACCESS" en
