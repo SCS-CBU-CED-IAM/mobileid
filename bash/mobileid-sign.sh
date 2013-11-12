@@ -79,7 +79,7 @@ for cmd in curl openssl base64 sed date; do
   hash $cmd &> /dev/null
   if [ $? -eq 1 ]; then error "Dependency error: '$cmd' not found" ; fi
 done
-if [ "$DEBUG" = "" ]; then
+if [ "$DEBUG" = "1" ]; then
   for cmd in xmlindent; do
     hash $cmd &> /dev/null
     if [ $? -eq 1 ]; then error "Dependency error: '$cmd' not found" ; fi
