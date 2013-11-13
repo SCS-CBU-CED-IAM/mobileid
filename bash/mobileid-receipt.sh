@@ -1,8 +1,8 @@
 #!/bin/bash
-# mobileid-receipt.sh - 2.0
+# mobileid-receipt.sh - 2.1
 #
 # Generic script using curl to invoke Swisscom Mobile ID service.
-# Dependencies: curl, openssl, base64, sed, date, iconv, xmlindent
+# Dependencies: curl, openssl, base64, sed, date, iconv, xmllint
 #
 # Change Log:
 #  1.0 08.05.2013: Initial version
@@ -11,6 +11,7 @@
 #  1.3 12.08.2013: Instant with timezone
 #  2.0 18.10.2013: Format the xml results in debug mode
 #                  Dependency checker
+#  2.1 13.11.2013: Switched from xmlindent to xmllint
 
 ######################################################################
 # User configurable options
@@ -59,7 +60,7 @@ fi
 PWD=$(dirname $0)				# Get the Path of the script
 
 # Check the dependencies
-for cmd in curl openssl base64 sed date iconv xmlindent; do
+for cmd in curl openssl base64 sed date iconv xmllint; do
   hash $cmd &> /dev/null
   if [ $? -eq 1 ]; then error "Dependency error: '$cmd' not found" ; fi
 done
@@ -178,9 +179,9 @@ if [ "$DEBUG" = "" ]; then
   [ -f "$SOAP_REQ.res" ] && rm $SOAP_REQ.res
   [ -f "$SOAP_REQ.msg" ] && rm $SOAP_REQ.msg
  else
-  [ -f "$SOAP_REQ" ] && echo ">>> $SOAP_REQ <<<" && cat $SOAP_REQ | xmlindent
+  [ -f "$SOAP_REQ" ] && echo ">>> $SOAP_REQ <<<" && cat $SOAP_REQ | xmllint --format -
   [ -f "$SOAP_REQ.log" ] && echo ">>> $SOAP_REQ.log <<<" && cat $SOAP_REQ.log | grep '==\|error'
-  [ -f "$SOAP_REQ.res" ] && echo ">>> $SOAP_REQ.res <<<" && cat $SOAP_REQ.res | xmlindent
+  [ -f "$SOAP_REQ.res" ] && echo ">>> $SOAP_REQ.res <<<" && cat $SOAP_REQ.res | xmllint --format -
 fi
 
 exit $RC
