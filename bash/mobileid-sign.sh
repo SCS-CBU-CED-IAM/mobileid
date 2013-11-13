@@ -107,8 +107,8 @@ SOAP_REQ=$(mktemp /tmp/_tmp.XXXXXX)		# SOAP Request goes here
 SEND_TO=$1					# To who
 SEND_MSG=$2					# What DataToBeSigned (DTBS)
 USERLANG=$3					# User language
-TIMEOUT_REQ=80					# Timeout of the request itself
-TIMEOUT_CON=90					# Timeout of the connection to the server
+TIMEOUT=80					# Value of Timeout
+TIMEOUT_CON=90					# Timeout of the client connection
 
 cat > $SOAP_REQ <<End
 <?xml version="1.0" encoding="UTF-8"?>
@@ -120,7 +120,7 @@ cat > $SOAP_REQ <<End
     xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soapenv:Body>
     <MSS_Signature xmlns="">
-      <mss:MSS_SignatureReq MinorVersion="1" MajorVersion="1" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#" MessagingMode="synch" TimeOut="$TIMEOUT_REQ" xmlns:fi="http://mss.ficom.fi/TS102204/v1.0.0#">
+      <mss:MSS_SignatureReq MinorVersion="1" MajorVersion="1" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#" MessagingMode="synch" TimeOut="$TIMEOUT" xmlns:fi="http://mss.ficom.fi/TS102204/v1.0.0#">
         <mss:AP_Info AP_PWD="$AP_PWD" AP_TransID="$AP_TRANSID" Instant="$AP_INSTANT" AP_ID="$AP_ID" />
         <mss:MSSP_Info>
           <mss:MSSP_ID>

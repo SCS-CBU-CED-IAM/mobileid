@@ -80,8 +80,8 @@ AP_TRANSID=AP.TEST.$((RANDOM%89999+10000)).$((RANDOM%8999+1000))
 MSSP_TRANSID=$2					# Transaction ID of request
 SOAP_REQ=$(mktemp /tmp/_tmp.XXXXXX)		# SOAP Request goes here
 SEND_TO=$1					# To who
-TIMEOUT_REQ=5					# Timeout of the request itself
-TIMEOUT_CON=10					# Timeout of the connection to the server
+TIMEOUT=5					# Value of Timeout
+TIMEOUT_CON=10					# Timeout of the client connection
 PUB_CERT=$4					# Public certificate for optional encryption
 
 # Define the message and format
@@ -111,7 +111,7 @@ cat > $SOAP_REQ <<End
     xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soapenv:Body>
     <MSS_Receipt>
-      <mss:MSS_ReceiptReq MinorVersion="1" MajorVersion="1" MSSP_TransID="$MSSP_TRANSID" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#" TimeOut="$TIMEOUT_REQ" xmlns:fi="http://mss.ficom.fi/TS102204/v1.0.0#">
+      <mss:MSS_ReceiptReq MinorVersion="1" MajorVersion="1" MSSP_TransID="$MSSP_TRANSID" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#" TimeOut="$TIMEOUT" xmlns:fi="http://mss.ficom.fi/TS102204/v1.0.0#">
         <mss:AP_Info AP_PWD="$AP_PWD" AP_TransID="$AP_TRANSID" Instant="$AP_INSTANT" AP_ID="$AP_ID" />
         <mss:MSSP_Info>
           <mss:MSSP_ID>
