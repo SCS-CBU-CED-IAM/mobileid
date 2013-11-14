@@ -18,7 +18,7 @@
 ######################################################################
 
 # AP_ID used to identify to Mobile ID (provided by Swisscom)
-AP_ID=http://iam.swisscom.ch
+AP_ID=mid://dev.swisscom.ch
 
 ######################################################################
 # There should be no need to change anything below
@@ -111,8 +111,8 @@ cat > $SOAP_REQ <<End
     xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soapenv:Body>
     <MSS_Receipt>
-      <mss:MSS_ReceiptReq MinorVersion="1" MajorVersion="1" MSSP_TransID="$MSSP_TRANSID" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#" TimeOut="$TIMEOUT" xmlns:fi="http://mss.ficom.fi/TS102204/v1.0.0#">
-        <mss:AP_Info AP_PWD="$AP_PWD" AP_TransID="$AP_TRANSID" Instant="$AP_INSTANT" AP_ID="$AP_ID" />
+      <mss:MSS_ReceiptReq MajorVersion="1" MinorVersion="1" MSSP_TransID="$MSSP_TRANSID" TimeOut="$TIMEOUT" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#" xmlns:fi="http://mss.ficom.fi/TS102204/v1.0.0#">
+        <mss:AP_Info AP_ID="$AP_ID" AP_PWD="$AP_PWD" AP_TransID="$AP_TRANSID" Instant="$AP_INSTANT"/>
         <mss:MSSP_Info>
           <mss:MSSP_ID>
             <mss:URI>http://mid.swisscom.ch/</mss:URI>
