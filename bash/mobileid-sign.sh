@@ -76,16 +76,10 @@ PWD=$(dirname $0)				# Get the Path of the script
 TIME1=$(date +"%s")				# Get the start time
 
 # Check the dependencies
-for cmd in curl openssl base64 sed date; do
+for cmd in curl openssl base64 sed date xmllint; do
   hash $cmd &> /dev/null
   if [ $? -eq 1 ]; then error "Dependency error: '$cmd' not found" ; fi
 done
-if [ "$DEBUG" = "1" ]; then
-  for cmd in xmllint; do
-    hash $cmd &> /dev/null
-    if [ $? -eq 1 ]; then error "Dependency error: '$cmd' not found" ; fi
-  done
-fi
 
 # Swisscom Mobile ID credentials
 CERT_FILE=$PWD/mycert.crt			# The certificate that is allowed to access the service
