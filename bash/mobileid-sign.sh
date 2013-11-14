@@ -1,7 +1,7 @@
 #!/bin/sh
 # mobileid-sign.sh - 2.1
 #
-# Generic script using wget to invoke Swisscom Mobile ID service.
+# Generic script using curl to invoke Swisscom Mobile ID service.
 # Dependencies: curl, openssl, base64, sed, date, xmllint
 #
 # Change Log:
