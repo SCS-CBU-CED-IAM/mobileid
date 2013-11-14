@@ -1,35 +1,18 @@
 #!/bin/sh
-# mobileid-sign.sh - 2.1
+# mobileid-check.sh - 1.0
 #
 # Generic script using curl to invoke Swisscom Mobile ID service.
-# Dependencies: curl, openssl, base64, sed, date, xmllint
+# Dependencies: curl, sed, date, xmllint
 #
 # Change Log:
-#  1.0 13.09.2012: Initial version with signature validation
-#  1.1 27.09.2012: Revocation checks of the signers certificate
-#                  Signed message verification
-#                  Best practice response handling in the status details
-#  1.2 10.10.2012: Cleanup and correction for TRANSID
-#                  Optional parameters for language, debugging and verbose
-#  1.3 17.10.2012: Timeout settings for process and request
-#                  Mandatory language
-#  1.4 21.02.2013: Removal of the optional backend signature validation
-#  1.5 05.04.2013: Switching from wegt to curl
-#                  Better error handling
-#  1.6 08.05.2013: Options for sending normal/encrypted receipt
-#  1.7 03.06.2013: Updated usage details
-#  1.8 07.06.2013: Time to sign implementation
-#  1.9 12.08.2013: Instant with timezone
-#  2.0 18.10.2013: Format the xml results in debug mode
-#                  Dependency checker
-#  2.1 13.11.2013: Switched from xmlindent to xmllint
+#  1.0 14.11.2013: Initial version
 
 ######################################################################
 # User configurable options
 ######################################################################
 
 # AP_ID used to identify to Mobile ID (provided by Swisscom)
-AP_ID=http://iam.swisscom.ch
+AP_ID=mid://dev.swisscom.ch
 
 ######################################################################
 # There should be no need to change anything below
@@ -46,11 +29,10 @@ error()
 DEBUG=
 VERBOSE=
 ENCRYPT=
-while getopts "dve" opt; do			# Parse the options
+while getopts "dv" opt; do			# Parse the options
   case $opt in
     d) DEBUG=1 ;;				# Debug
     v) VERBOSE=1 ;;				# Verbose
-    e) ENCRYPT=1 ;;				# Encrypt receipt
   esac
 done
 shift $((OPTIND-1))                             # Remove the options
@@ -59,15 +41,9 @@ if [ $# -lt 3 ]; then				# Parse the rest of the arguments
   echo "Usage: $0 <args> mobile \"message\" userlang <receipt>"
   echo "  -v       - verbose output"
   echo "  -d       - debug mode"
-  echo "  -e       - encrypted receipt"
   echo "  mobile   - mobile number"
-  echo "  message  - message to be signed"
-  echo "  userlang - user language (one of en, de, fr, it)"
-  echo "  receipt  - optional success receipt message"
   echo
-  echo "  Example $0 -v +41792080350 'Do you want to login to corporate VPN?' en"
-  echo "          $0 -v +41792080350 'Do you want to login to corporate VPN?' en \"Successful login into VPN\""
-  echo "          $0 -v -e +41792080350 'Do you need a new password?' en \"Password: 123456\""
+  echo "  Example $0 -v +41792080350"
   echo 
   exit 1
 fi
@@ -76,7 +52,7 @@ PWD=$(dirname $0)				# Get the Path of the script
 TIME1=$(date +"%s")				# Get the start time
 
 # Check the dependencies
-for cmd in curl openssl base64 sed date xmllint; do
+for cmd in curl sed date xmllint; do
   hash $cmd &> /dev/null
   if [ $? -eq 1 ]; then error "Dependency error: '$cmd' not found" ; fi
 done
@@ -88,8 +64,6 @@ AP_PWD=disabled					# AP Password must be present but is not validated
 
 # Swisscom SDCS elements
 CERT_CA=$PWD/swisscom-ca.crt                    # Bag file with the server/client issuing and root certifiates
-OCSP_CERT=$PWD/swisscom-ocsp.crt		# OCSP information of the signers certificate
-OCSP_URL=http://ocsp.swissdigicert.ch/sdcs-rubin2
 
 # Create temporary SOAP request
 #  Synchron with timeout
@@ -99,9 +73,7 @@ AP_INSTANT=$(date +%Y-%m-%dT%H:%M:%S%:z)	# Define instant and transaction id
 AP_TRANSID=AP.TEST.$((RANDOM%89999+10000)).$((RANDOM%8999+1000))
 SOAP_REQ=$(mktemp /tmp/_tmp.XXXXXX)		# SOAP Request goes here
 SEND_TO=$1					# To who
-SEND_MSG=$2					# What DataToBeSigned (DTBS)
-USERLANG=$3					# User language
-TIMEOUT=80					# Value of Timeout
+TIMEOUT=80					# Timeout value
 TIMEOUT_CON=90					# Timeout of the client connection
 
 cat > $SOAP_REQ <<End
@@ -114,7 +86,7 @@ cat > $SOAP_REQ <<End
     xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soapenv:Body>
     <MSS_Signature xmlns="">
-      <mss:MSS_SignatureReq MinorVersion="1" MajorVersion="1" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#" MessagingMode="synch" TimeOut="$TIMEOUT" xmlns:fi="http://mss.ficom.fi/TS102204/v1.0.0#">
+      <mss:MSS_SignatureReq MinorVersion="1" MajorVersion="1" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#" MessagingMode="synch" TimeOut="$TIMEOUT_REQ" xmlns:fi="http://mss.ficom.fi/TS102204/v1.0.0#">
         <mss:AP_Info AP_PWD="$AP_PWD" AP_TransID="$AP_TRANSID" Instant="$AP_INSTANT" AP_ID="$AP_ID" />
         <mss:MSSP_Info>
           <mss:MSSP_ID>
