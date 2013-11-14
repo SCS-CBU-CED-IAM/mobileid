@@ -75,11 +75,15 @@ TIMEOUT_CON=90					# Timeout of the client connection
 
 cat > $SOAP_REQ <<End
 <?xml version="1.0" encoding="UTF-8"?>
-<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:ets="http://uri.etsi.org/TS102204/etsi204-kiuru.wsdl" xmlns:v1="http://uri.etsi.org/TS102204/v1.1.2#">
-  <soap:Header/>
-  <soap:Body>
-    <ets:MSS_ProfileQuery>
-      <MSS_ProfileReq MajorVersion="1" MinorVersion="1" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#" xmlns:fi="http://mss.ficom.fi/TS102204/v1.0.0#">
+<soapenv:Envelope
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
+    xmlns:soapenv="http://www.w3.org/2003/05/soap-envelope"
+    xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soapenv:Body>
+    <MSS_ProfileQuery>
+      <mss:MSS_ProfileReq MajorVersion="1" MinorVersion="1" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#" xmlns:fi="http://mss.ficom.fi/TS102204/v1.0.0#">
         <mss:AP_Info AP_PWD="$AP_PWD" AP_TransID="$AP_TRANSID" Instant="$AP_INSTANT" AP_ID="$AP_ID" />
         <mss:MSSP_Info>
           <mss:MSSP_ID>
@@ -89,10 +93,10 @@ cat > $SOAP_REQ <<End
         <mss:MobileUser>
           <mss:MSISDN>$SEND_TO</mss:MSISDN>
         </mss:MobileUser>
-      </MSS_ProfileReq>
-    </ets:MSS_ProfileQuery>
-  </soap:Body>
-</soap:Envelope>
+      </mss:MSS_ProfileReq>
+    </MSS_ProfileQuery>
+  </soapenv:Body>
+</soapenv:Envelope>
 End
 
 # Check existence of needed files
@@ -119,7 +123,9 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
   RES_RC=$(sed -n -e 's/.*<mss:StatusCode Value="\(.*\)"\/>.*/\1/p' $SOAP_REQ.res)
   RES_ST=$(sed -n -e 's/.*<mss:StatusMessage>\(.*\)<\/mss:StatusMessage>.*/\1/p' $SOAP_REQ.res)
 
-## TODO STATUS CODE TO RC
+  # Status codes
+  export RC=1                                           # By default not present
+  if [ "$RES_RC" = "100" ]; then export RC=0 ; fi	# ACTIVE or REGISTERED user
 
   if [ "$VERBOSE" = "1" ]; then				# Verbose details
     echo "$SOAP_ACTION OK with following details and checks:"
