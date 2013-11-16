@@ -115,3 +115,10 @@ The file `mycert.pfx ` is a placeholder without any valid content. Be sure to ad
 Open tasks:
 - Validation of the signature and certificate in the response
 - Move from response exception error handling to proper error parsing
+
+## Known issues
+
+**OS X 10.9: Requests always fail with MSS error 104: _Wrong SSL credentials_. The `curl` shipped with OS X uses their own Secure Transport engine, which broke the --cert option, see: http://curl.haxx.se/mail/archive-2013-10/0036.html.**
+
+Install curl from Mac Ports `sudo port install curl` or homebrew: `brew install curl && brew link --force curl`.
+
