@@ -40,12 +40,12 @@ Usage: ./mobileid-receipt.sh <args> mobile transID "message" <pubCert>
 ```
 
 ```
-Usage: ./mobileid-check.sh <args> mobile
+Usage: ./mobileid-query.sh <args> mobile
   -v       - verbose output
   -d       - debug mode
   mobile   - mobile number
 
-  Example ./mobileid-check.sh -v +41792080350
+  Example ./mobileid-query.sh -v +41792080350
 ````
 
 
@@ -108,14 +108,14 @@ Example of verbose outputs:
 ```
 
 ````
- ./mobileid-check.sh -v +41792454029
+ ./mobileid-query.sh -v +41792454029
 #MSS_ProfileQuery OK with following details and checks:
  Status code    : 100 with exit 0
  Status details : REQUEST_OK
 ````
 
 ````
-./mobileid-check.sh -v +41798440457
+./mobileid-query.sh -v +41798440457
 #MSS_ProfileQuery FAILED on +41798440457 with mss:_105 (UNKNOWN_CLIENT: User MSISDN unknown, no such user.) and exit 2
 ````
 
