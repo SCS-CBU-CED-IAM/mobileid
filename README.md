@@ -5,7 +5,10 @@ Mobile ID command line tools
 
 ## bash
 
-Contains a script to invoke the Signature Request and one to invoke the Receipt Request.
+Contains a script to invoke the:
+* Signature Request
+* Receipt Request
+* Profile Query Request
 
 ```
 Usage: ./mobileid-sign.sh <args> mobile "message" userlang <receipt>
@@ -35,6 +38,15 @@ Usage: ./mobileid-receipt.sh <args> mobile transID "message" <pubCert>
           ./mobileid-receipt.sh -v +41792080350 h29ah1 "Password: 123456" /tmp/_tmp.8OVlwv.sig.cert
 
 ```
+
+```
+Usage: ./mobileid-check.sh <args> mobile
+  -v       - verbose output
+  -d       - debug mode
+  mobile   - mobile number
+
+  Example ./mobileid-check.sh -v +41792080350
+````
 
 
 The files `mycert.crt`and `mycert.key` are placeholders without any valid content. Be sure to adjust them with your client certificate content in order to connect to the Mobile ID service.
@@ -95,10 +107,21 @@ Example of verbose outputs:
 #MSS_Receipt FAILED with mss:_101 (There is no such transaction.) and exit 2
 ```
 
+````
+ ./mobileid-check.sh -v +41792454029
+#MSS_ProfileQuery OK with following details and checks:
+ Status code    : 100 with exit 0
+ Status details : REQUEST_OK
+````
+
+````
+./mobileid-check.sh -v +41798440457
+#MSS_ProfileQuery FAILED on +41798440457 with mss:_105 (UNKNOWN_CLIENT: User MSISDN unknown, no such user.) and exit 2
+````
 
 ## freeradius
 
-Wrapper script for rlm_exec module and the Signature Request bash script.
+`mobileid-radius.sh` wrapper script for rlm_exec module and the Signature Request bash script.
 
 Refer to the "Mobile ID - RADIUS integration guide" document from Swisscom for more details.
 
