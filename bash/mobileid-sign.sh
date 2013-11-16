@@ -164,7 +164,7 @@ http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
 
 # Results
 export RC=$?
-if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
+if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   # Calc the response time
   TIME2=$(date +"%s")
   RES_TIME=$(($TIME2-$TIME1))
