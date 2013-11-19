@@ -1,10 +1,11 @@
 #!/bin/sh
-# mobileid-radius.sh - 1.0
+# mobileid-radius.sh - 1.1
 #
 # Helper script called from freeradius to invoke mobile-sign with correct parameters
 #
 # Change Log:
 #  1.0 13.10.2012: Initial version.
+#  1.1 19.11.2013: Update for the exit code
 #
 # Each of the attributes in the request will be available in an
 # environment variable.  The name of the variable depends on the
@@ -42,16 +43,19 @@ CALLED_STATION_ID=`eval echo $CALLED_STATION_ID|sed -e "s/ //g"`
 X_MSS_LANGUAGE=`eval echo $X_MSS_LANGUAGE`
 X_MSS_MESSAGE=`eval echo $X_MSS_MESSAGE`
 
-# Call the MID SOAP bash script
+# By default the user is rejected
+RC=1
+
+# Call the MID service
 if [ -e $PWD/mobileid-sign.sh ]; then
-    $PWD/mobileid-sign.sh $CALLED_STATION_ID "$X_MSS_MESSAGE" $X_MSS_LANGUAGE
-  else
-    echo "MID SOAP bash script not found in $PWD"
+  $PWD/mobileid-sign.sh $CALLED_STATION_ID "$X_MSS_MESSAGE" $X_MSS_LANGUAGE
+  RES_MID=$?                                    # Store the result
+  if [ "$RES_MID" = "0" ]; then RC=0 ; fi	# Success
+ else
+  echo "MID SOAP bash script not found in $PWD"
+  RC=2                                          # The module failed
 fi
 
-# Success and error handling according to freeradius rlm_exec
-if [ "$?" = "0" ]; then exit 0 ; fi	# Success
-if [ "$?" = "1" ]; then exit 1 ; fi	# MID response error
-if [ "$?" = "2" ]; then exit 2 ; fi	# MID service error
+exit $RC
 
-exit 1					# By default the user is rejected
+#==========================================================
