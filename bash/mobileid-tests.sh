@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # mobileid-tests.sh - 1.0
 #
 # Generic test script against Swisscom Mobile ID service
