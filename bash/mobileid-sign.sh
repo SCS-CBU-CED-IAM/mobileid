@@ -1,5 +1,5 @@
 #!/bin/sh
-# mobileid-sign.sh - 2.1
+# mobileid-sign.sh - 2.2
 #
 # Generic script using curl to invoke Swisscom Mobile ID service.
 # Dependencies: curl, openssl, base64, sed, date, xmllint
@@ -23,6 +23,7 @@
 #  2.0 18.10.2013: Format the xml results in debug mode
 #                  Dependency checker
 #  2.1 13.11.2013: Switched from xmlindent to xmllint
+#  2.2 19.11.2013: Remove of unnecessary exports
 
 ######################################################################
 # User configurable options
@@ -163,7 +164,7 @@ http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
     $SOAP_URL)
 
 # Results
-export RC=$?
+RC=$?
 if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   # Calc the response time
   TIME2=$(date +"%s")
@@ -210,10 +211,10 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   fi
 
   # Status codes
-  if [ "$RES_ID" = "500" ]; then export RC=0 ; fi	# Signature constructed
-  if [ "$RES_ID" = "501" ]; then export RC=1 ; fi	# Revoked certificate
-  if [ "$RES_ID" = "502" ]; then export RC=0 ; fi	# Valid signature
-  if [ "$RES_ID" = "503" ]; then export RC=1 ; fi	# Invalid signature
+  if [ "$RES_ID" = "500" ]; then RC=0 ; fi              # Signature constructed
+  if [ "$RES_ID" = "501" ]; then RC=1 ; fi              # Revoked certificate
+  if [ "$RES_ID" = "502" ]; then RC=0 ; fi              # Valid signature
+  if [ "$RES_ID" = "503" ]; then RC=1 ; fi              # Invalid signature
 
   if [ "$VERBOSE" = "1" ]; then				# Verbose details
     echo "$SOAP_ACTION OK with following details and checks:"
@@ -231,7 +232,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   fi
  else
   CURL_ERR=$RC                                          # Keep related error
-  export RC=2                                           # Force returned error code
+  RC=2                                                  # Force returned error code
   if [ "$VERBOSE" = "1" ]; then				# Verbose details
     [ $CURL_ERR != "0" ] && echo "curl failed with $CURL_ERR"   # Curl error
     if [ -s "${SOAP_REQ}.res" ]; then                           # Response from the service
