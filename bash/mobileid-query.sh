@@ -1,5 +1,5 @@
 #!/bin/sh
-# mobileid-check.sh - 1.0
+# mobileid-check.sh - 1.1
 #
 # Generic script using curl to invoke Swisscom Mobile ID service to
 # check about present MSISDN.
@@ -7,6 +7,7 @@
 #
 # Change Log:
 #  1.0 14.11.2013: Initial version
+#  1.1 19.11.2013: Remove of unnecessary exports
 
 ######################################################################
 # User configurable options
@@ -116,16 +117,15 @@ http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
     $SOAP_URL)
 
 # Results
-export RC=$?
-
+RC=$?
 if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   # Parse the response xml
   RES_RC=$(sed -n -e 's/.*<mss:StatusCode Value="\(.*\)"\/>.*/\1/p' $SOAP_REQ.res)
   RES_ST=$(sed -n -e 's/.*<mss:StatusMessage>\(.*\)<\/mss:StatusMessage>.*/\1/p' $SOAP_REQ.res)
 
   # Status codes
-  export RC=1                                           # By default not present
-  if [ "$RES_RC" = "100" ]; then export RC=0 ; fi	# ACTIVE or REGISTERED user
+  RC=1                                                  # By default not present
+  if [ "$RES_RC" = "100" ]; then RC=0 ; fi              # ACTIVE or REGISTERED user
 
   if [ "$VERBOSE" = "1" ]; then				# Verbose details
     echo "$SOAP_ACTION OK with following details and checks:"
@@ -134,7 +134,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   fi
  else
   CURL_ERR=$RC                                          # Keep related error
-  export RC=2                                           # Force returned error code
+  RC=2                                                  # Force returned error code
   if [ "$VERBOSE" = "1" ]; then				# Verbose details
     [ $CURL_ERR != "0" ] && echo "curl failed with $CURL_ERR"   # Curl error
     if [ -s $SOAP_REQ.res ]; then                               # Response from the service

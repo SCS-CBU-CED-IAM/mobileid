@@ -147,7 +147,6 @@ http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
 
 # Results
 RC=$?
-
 if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   # Parse the response xml
   RES_RC=$(sed -n -e 's/.*<mss:StatusCode Value="\(.*\)"\/>.*/\1/p' $SOAP_REQ.res)
