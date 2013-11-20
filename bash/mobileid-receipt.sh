@@ -1,8 +1,8 @@
-#!/bin/bash
-# mobileid-receipt.sh - 2.2
+#!/bin/sh
+# mobileid-receipt.sh - 2.3
 #
 # Generic script using curl to invoke Swisscom Mobile ID service.
-# Dependencies: curl, openssl, base64, sed, date, iconv, xmllint
+# Dependencies: curl, openssl, base64, sed, date, iconv, xmllint, xxd
 #
 # Change Log:
 #  1.0 08.05.2013: Initial version
@@ -13,6 +13,7 @@
 #                  Dependency checker
 #  2.1 13.11.2013: Switched from xmlindent to xmllint
 #  2.2 19.11.2013: Remove of unnecessary exports
+#  2.3 20.11.2013: Changed interpreter from bash to sh & use of xxd instead of "echo -e"
 
 ######################################################################
 # User configurable options
@@ -61,7 +62,7 @@ fi
 PWD=$(dirname $0)				# Get the Path of the script
 
 # Check the dependencies
-for cmd in curl openssl base64 sed date iconv xmllint; do
+for cmd in curl openssl base64 sed date iconv xmllint xxd ; do
   hash $cmd &> /dev/null
   if [ $? -eq 1 ]; then error "Dependency error: '$cmd' not found" ; fi
 done
@@ -92,12 +93,12 @@ if [ "$PUB_CERT" != "" ]; then			# Message to be encrypted
   [ -r "${PUB_CERT}" ] || error "Public certificate for encoding the message ($PUB_CERT) missing or not readable"
   MSG_TYPE='MimeType="application/alauda-rsamessage" Encoding="BASE64"'
   MSG_ASCI=$(echo -n $MSG_TXT | iconv -s -f UTF-8 -t US-ASCII//TRANSLIT)
-  if [ "$MSG_TXT" == "$MSG_ASCI" ]; then		# Message does not contain special chars
-    echo -n $MSG_TXT | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
+  if [ "$MSG_TXT" = "$MSG_ASCI" ]; then		# Message does not contain special chars
+    echo -n "$MSG_TXT" | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
     [ -f "$SOAP_REQ.msg" ] && MSG_TXT=$(base64 $SOAP_REQ.msg)
-   else							# -> GSM11.14 STK commands do not support UTF8, either UCS-2 or GSMDA
+  else							# -> GSM11.14 STK commands do not support UTF8, either UCS-2 or GSMDA
     # Encrypt UCS-2 prefixed with Hex 80 over cmd as vars are not properly encoding
-    (echo -ne "\x80"; echo -n $MSG_TXT | iconv -s -f UTF-8 -t UCS-2BE) | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
+    (echo 80 | xxd -r -p ; echo -n "$MSG_TXT" | iconv -s -f UTF-8 -t UCS-2BE) | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
     [ -f "$SOAP_REQ.msg" ] && MSG_TXT=$(base64 $SOAP_REQ.msg)
   fi
 fi
