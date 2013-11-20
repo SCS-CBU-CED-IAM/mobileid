@@ -1,5 +1,5 @@
 #!/bin/sh
-# mobileid-sign.sh - 2.2
+# mobileid-sign.sh - 2.3
 #
 # Generic script using curl to invoke Swisscom Mobile ID service.
 # Dependencies: curl, openssl, base64, sed, date, xmllint
@@ -24,6 +24,7 @@
 #                  Dependency checker
 #  2.1 13.11.2013: Switched from xmlindent to xmllint
 #  2.2 19.11.2013: Remove of unnecessary exports
+#  2.3 20.11.2013: Improved signature response status code checks
 
 ######################################################################
 # User configurable options
@@ -211,10 +212,12 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   fi
 
   # Status codes
-  if [ "$RES_ID" = "500" ]; then RC=0 ; fi              # Signature constructed
-  if [ "$RES_ID" = "501" ]; then RC=1 ; fi              # Revoked certificate
-  if [ "$RES_ID" = "502" ]; then RC=0 ; fi              # Valid signature
-  if [ "$RES_ID" = "503" ]; then RC=1 ; fi              # Invalid signature
+  case "$RES_ID" in
+    "500" ) RC=0 ;; # Signature constructed
+    "501" ) RC=1 ;; # Revoked certificate
+    "502" ) RC=0 ;; # Valid signature
+    "503" ) RC=1 ;; # Invalid signature
+  esac 
 
   if [ "$VERBOSE" = "1" ]; then				# Verbose details
     echo "$SOAP_ACTION OK with following details and checks:"
