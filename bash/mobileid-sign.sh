@@ -213,10 +213,10 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
 
   # Status codes
   case "$RES_ID" in
-    "500" ) RC=0 ;; # Signature constructed
-    "501" ) RC=1 ;; # Revoked certificate
-    "502" ) RC=0 ;; # Valid signature
-    "503" ) RC=1 ;; # Invalid signature
+    "500" ) RC=0 ;;                                     # Signature constructed
+    "501" ) RC=1 ;;                                     # Revoked certificate
+    "502" ) RC=0 ;;                                     # Valid signature
+    "503" ) RC=1 ;;                                     # Invalid signature
   esac 
 
   if [ "$VERBOSE" = "1" ]; then				# Verbose details
