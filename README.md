@@ -61,10 +61,9 @@ Example of verbose outputs:
  1) Transaction ID : AP.TEST.34309.7311 -> same as in request
     MSSP TransID   : h2ecyu
  2) Signed by      : +41792080350 -> same as in request
- 3) Time to sign   : <Not verified>
- 4) Signer         : subject= /serialNumber=MIDCHE3QWAXYEAA2/CN=MIDCHE3QWAXYEAA2:PN/C=CH -> OCSP check: good
- 5) Signed Data    : Hello -> Decode and verify: success and same as in request
- 6) Status code    : 500 with exit 0
+ 3) Signer         : subject= /serialNumber=MIDCHE3QWAXYEAA2/CN=MIDCHE3QWAXYEAA2:PN/C=CH -> OCSP check: good
+ 4) Signed Data    : Hello -> Decode and verify: success and same as in request
+ 5) Status code    : 500 with exit 0
     Status details : SIGNATURE
 ```
 
@@ -88,10 +87,9 @@ Example of verbose outputs:
  1) Transaction ID : AP.TEST.13428.4428 -> same as in request
     MSSP TransID   : h2ed05
  2) Signed by      : +41792080350 -> same as in request
- 3) Time to sign   : <Not verified>
- 4) Signer         : subject= /serialNumber=MIDCHE3QWAXYEAA2/CN=MIDCHE3QWAXYEAA2:PN/C=CH -> OCSP check: good
- 5) Signed Data    : Do you want to login to corporate VPN? -> Decode and verify: success and same as in request
- 6) Status code    : 500 with exit 0
+ 3) Signer         : subject= /serialNumber=MIDCHE3QWAXYEAA2/CN=MIDCHE3QWAXYEAA2:PN/C=CH -> OCSP check: good
+ 4) Signed Data    : Do you want to login to corporate VPN? -> Decode and verify: success and same as in request
+ 5) Status code    : 500 with exit 0
     Status details : SIGNATURE
 #MSS_Receipt OK with following details and checks:
  MSSP TransID   : h2ed05
