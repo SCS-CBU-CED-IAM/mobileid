@@ -1,5 +1,5 @@
 #!/bin/sh
-# mobileid-sign.sh - 2.3
+# mobileid-sign.sh - 2.4
 #
 # Generic script using curl to invoke Swisscom Mobile ID service.
 # Dependencies: curl, openssl, base64, sed, date, xmllint
@@ -25,6 +25,7 @@
 #  2.1 13.11.2013: Switched from xmlindent to xmllint
 #  2.2 19.11.2013: Remove of unnecessary exports
 #  2.3 20.11.2013: Improved signature response status code checks
+#  2.4 25.11.2013: Removal of time to sign implementation
 
 ######################################################################
 # User configurable options
@@ -75,7 +76,6 @@ if [ $# -lt 3 ]; then				# Parse the rest of the arguments
 fi
 
 PWD=$(dirname $0)				# Get the Path of the script
-TIME1=$(date +"%s")				# Get the start time
 
 # Check the dependencies
 for cmd in curl openssl base64 sed date xmllint; do
@@ -167,10 +167,6 @@ http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
 # Results
 RC=$?
 if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
-  # Calc the response time
-  TIME2=$(date +"%s")
-  RES_TIME=$(($TIME2-$TIME1))
-
   # Parse the response xml
   RES_TRANSID=$(sed -n -e 's/.*AP_TransID="\(.*\)" AP_.*/\1/p' $SOAP_REQ.res)
   RES_MSISDNID=$(sed -n -e 's/.*<mss:MSISDN>\(.*\)<\/mss:MSISDN>.*/\1/p' $SOAP_REQ.res)
@@ -226,11 +222,10 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
     echo    "    MSSP TransID   : $RES_MSSPID"
     echo -n " 2) Signed by      : $RES_MSISDNID"
       if [ "$RES_MSISDNID" = "$SEND_TO" ] ; then echo " -> same as in request" ; else echo " -> different as in request!" ; fi
-    echo    " 3) Time to sign   : $(($RES_TIME / 60)) minutes and $(($RES_TIME % 60)) seconds"
-    echo    " 4) Signer         : $RES_ID_CERT -> OCSP check: $RES_ID_CERT_STATUS"
-    echo -n " 5) Signed Data    : $RES_MSG -> Decode and verify: $RES_MSG_STATUS and "
+    echo    " 3) Signer         : $RES_ID_CERT -> OCSP check: $RES_ID_CERT_STATUS"
+    echo -n " 4) Signed Data    : $RES_MSG -> Decode and verify: $RES_MSG_STATUS and "
       if [ "$RES_MSG" = "$SEND_MSG" ] ; then echo "same as in request" ; else echo "different as in request!" ; fi
-    echo    " 6) Status code    : $RES_RC with exit $RC"
+    echo    " 5) Status code    : $RES_RC with exit $RC"
     echo    "    Status details : $RES_ST"
   fi
  else
