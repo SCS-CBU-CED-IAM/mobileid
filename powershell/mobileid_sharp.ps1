@@ -11,7 +11,7 @@
 # Change Log  :
 #  1.0 31.10.2012: Initial version with signature validation
 
-param([string]$Verbose = "", [string]$PhoneNumber = "", [string]$Message = "", [string]$Language = "")
+param([switch]$Verbose, [switch]$Debug, [string]$PhoneNumber = "", [string]$Message = "", [string]$Language = "")
 
 
 ################################################################################
@@ -72,9 +72,10 @@ namespace Swisscom
     private string proxy_uri;
     
     #region Constructor
-    public SwisscomMobileID(bool v, string mobileNumber, string msg, string lng, string folder)
+    public SwisscomMobileID(bool v, bool d, string mobileNumber, string msg, string lng, string folder)
     {
       verbose = v;
+      debug = d;
       phoneNumber = mobileNumber;
       message = msg;
       language = lng;
@@ -88,9 +89,9 @@ namespace Swisscom
       try
       {
         friendly_error_msg = string.Empty;
-        proxy_username =     string.Empty;
-        proxy_password =     string.Empty";
-        proxy_uri =          string.Empty;
+        proxy_username =     null;
+        proxy_password =     null;
+        proxy_uri =          null; // e.g. "10.185.32.40:8079"
 
         InitializeCertificateLocation();
         InitializeApplicationProviderInfos();
@@ -226,7 +227,9 @@ namespace Swisscom
         if (proxy_uri != null ) {
           if (debug) { Console.WriteLine("Proxy; {0}", proxy_uri); }
           WebProxy rssProxy = new WebProxy(proxy_uri);
-          rssProxy.Credentials = new NetworkCredential(proxy_username,proxy_password);//,"CORPROOT.NET");
+          if (proxy_username != null ) {
+            rssProxy.Credentials = new NetworkCredential(proxy_username,proxy_password);//,"CORPROOT.NET");
+          }
           rssProxy.BypassProxyOnLocal=false;
           WebRequest.DefaultWebProxy = rssProxy;
           request.Proxy = rssProxy;
@@ -425,11 +428,11 @@ if ($PhoneNumber -ne "" -and $Message -ne "" -and $Language -ne "")
     Add-Type -TypeDefinition $source -ReferencedAssemblies $Assem -IgnoreWarnings
 
     $currentPath = $(Split-Path $myInvocation.MyCommand.Path)
-    $mid = New-Object Swisscom.SwisscomMobileID($Verbose, $PhoneNumber, $Message, $Language, $currentPath)
+    $mid = New-Object Swisscom.SwisscomMobileID($Verbose, $Debug, $PhoneNumber, $Message, $Language, $currentPath)
     Write-Host $mid.Execute()
   }
   catch {
-    if ($verbose) { $error[0] }
+    if ($verbose -or $debug) { $error[0] }
     return 1
   }
   finally {
@@ -440,8 +443,9 @@ else
 {
   $scriptName = $myInvocation.MyCommand.Name 
   Write-Host "Usage: $scriptName <args> -PhoneNumber <mobileNumber> -Message ""Message to be signed"" -Language <userlang>"
-  Write-Host " -Verbose     : verbose output (0 or 1)"
+  Write-Host " -Verbose     : verbose output"
+  Write-Host " -Debug       : debug output"
   Write-Host " -Language    : user language (one of en, de, fr, it)"
   Write-Host
-  Write-Host "Example $scriptName -Verbose 1 -PhoneNumber +41792080401 -Message ""Do you want to login to corporate VPN?"" -Language en"
+  Write-Host "Example $scriptName -Verbose -PhoneNumber +41792080401 -Message ""Do you want to login to corporate VPN?"" -Language en"
 }
