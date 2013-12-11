@@ -67,8 +67,10 @@ namespace Swisscom
     private string soap_xml_post;
     private string soap_xml_response;
     private string friendly_error_msg;
-    private string framework_error_msg;
-
+    private string proxy_username;
+    private string proxy_password;
+    private string proxy_uri;
+    
     #region Constructor
     public SwisscomMobileID(bool v, string mobileNumber, string msg, string lng, string folder)
     {
@@ -86,6 +88,9 @@ namespace Swisscom
       try
       {
         friendly_error_msg = string.Empty;
+    		proxy_username =     string.Empty;
+    		proxy_password =     string.Empty";
+				proxy_uri =          string.Empty;
 
         InitializeCertificateLocation();
         InitializeApplicationProviderInfos();
@@ -95,7 +100,7 @@ namespace Swisscom
       }
       catch (Exception ex)
       {
-        return DisplayException();
+        return DisplayException(ex);
       }
     }
     #endregion
@@ -131,18 +136,6 @@ namespace Swisscom
       cert_ca = System.IO.Path.Combine(workingFolder, "swisscom-ca.crt");
       ocsp_cert = System.IO.Path.Combine(workingFolder, "swisscom-ocsp.crt");
       ocsp_url = "http://ocsp.swissdigicert.ch/sdcs-rubin2";
-
-      if (!File.Exists(cert_filePfx))
-      {
-        friendly_error_msg = "The file [" + cert_filePfx + "] doesn't exists";
-        throw new System.IO.FileNotFoundException();
-      }
-
-      if (!File.Exists(cert_ca))
-      {
-        friendly_error_msg = "The file [" + cert_ca + "] doesn't exists";
-        throw new System.IO.FileNotFoundException();
-      }
     }
     #endregion
 
@@ -217,17 +210,28 @@ namespace Swisscom
     #region PostXmlToWebService
     private void PostXmlToWebService()
     {
+      friendly_error_msg = "Error reading certficate " + cert_filePfx;
       X509Certificate certificatePFX = X509Certificate.CreateFromCertFile(cert_filePfx);
+      friendly_error_msg = "Error reading certficate " + cert_ca;
       X509Certificate certificateCA = X509Certificate.CreateFromCertFile(cert_ca);
+      friendly_error_msg = string.Empty;
 
       // SSL V3
       ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3;
-
       HttpWebRequest request = (HttpWebRequest)WebRequest.Create(SWISSCOM_SERVICE_URL);
 
       #region Web request
       try
       {        
+				if (proxy_uri != null ) {
+				  if (verbose) { Console.WriteLine("Proxy; {0}", proxy_uri); }
+					WebProxy rssProxy = new WebProxy(proxy_uri);
+				  rssProxy.Credentials = new NetworkCredential(proxy_username,proxy_password);//,"CORPROOT.NET");
+				  rssProxy.BypassProxyOnLocal=false;
+				  WebRequest.DefaultWebProxy = rssProxy;
+				  request.Proxy = rssProxy;
+				}
+				
         request.ClientCertificates.Add(certificatePFX);
         request.ClientCertificates.Add(certificateCA);
 
@@ -247,8 +251,7 @@ namespace Swisscom
       catch (Exception ex)
       {
         friendly_error_msg = "Web request exception";
-        framework_error_msg = ex.Message;
-        throw ex;
+        throw;
       }
 
       #endregion
@@ -271,7 +274,6 @@ namespace Swisscom
       {
         rc = 2; // Error
         friendly_error_msg = "Web service error. Check XML server response for further details";
-        framework_error_msg = ex.Message;
         using (WebResponse response = ex.Response)
         {
           HttpWebResponse httpResponse = (HttpWebResponse)response;
@@ -280,7 +282,6 @@ namespace Swisscom
           {
             // XML server response
             soap_xml_response = new StreamReader(data).ReadToEnd();
-            framework_error_msg = ex.Message;
             throw ex;
           }
         }
@@ -357,6 +358,9 @@ namespace Swisscom
       }
       catch (CryptographicException ex)
       {
+      	Console.WriteLine("\nException Message: {0}\n",ex.Message ); 
+      	Console.WriteLine("\nException Source : {0}\n",ex.Source ); 
+      	Console.WriteLine("\nException Stack:\n{0}\n",ex.Source ); 
         rc = 3;
         friendly_error_msg = "Cryptographic exception";
         res_msg_status = ex.Message;
@@ -393,13 +397,21 @@ namespace Swisscom
     #endregion
 
     #region DisplayException
-    private string DisplayException()
+    private string DisplayException(Exception ex)
     {
       StringBuilder sb = new StringBuilder();
 
+      	if (verbose) {
+	      	Console.WriteLine("\nException Message: {0}\n",ex.Message ); 
+	      	Console.WriteLine("\nException Source : {0}\n",ex.Source ); 
+	      	Console.WriteLine("\nException Data: {0}\n",ex.Data ); 
+	      	Console.WriteLine("\nException HelpLink : {0}\n",ex.HelpLink ); 
+	      	Console.WriteLine("\nException TargetSite : {0}\n",ex.TargetSite ); 
+	      	Console.WriteLine("\nException Stack:\n{0}\n",ex.StackTrace ); 
+				}
       sb.Append("ERROR" + CRLF);
-      sb.Append("Friendly error message : [" + friendly_error_msg + "]" + CRLF);
-      sb.Append("Framework error message : [" + framework_error_msg + "]" + CRLF);
+      sb.Append("Friendly error message : " + friendly_error_msg + CRLF);
+      sb.Append("Framework error message : " + ex.Message + CRLF);
       return sb.ToString();
     }
     #endregion
@@ -411,12 +423,21 @@ namespace Swisscom
 
 if ($PhoneNumber -ne "" -and $Message -ne "" -and $Language -ne "")
 {
-  $Assem = ("System.Xml", "System.Security") 
-  Add-Type -TypeDefinition $source -ReferencedAssemblies $Assem -IgnoreWarnings
+  try {
+	  $Assem = ("System.Xml", "System.Security") 
+  	Add-Type -TypeDefinition $source -ReferencedAssemblies $Assem -IgnoreWarnings
 
-  $currentPath = $(Split-Path $myInvocation.MyCommand.Path)
-  $mid = New-Object Swisscom.SwisscomMobileID($Verbose, $PhoneNumber, $Message, $Language, $currentPath)
-  Write-Host $mid.Execute()
+  	$currentPath = $(Split-Path $myInvocation.MyCommand.Path)
+	  $mid = New-Object Swisscom.SwisscomMobileID($Verbose, $PhoneNumber, $Message, $Language, $currentPath)
+	  Write-Host $mid.Execute()
+	}
+	catch {
+		if ($verbose) { $error[0] }
+		return 1
+	}
+	finally {
+		if ($mid) { remove-variable mid }
+	}
 }
 else
 {
