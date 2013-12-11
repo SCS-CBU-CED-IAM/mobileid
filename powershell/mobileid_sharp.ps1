@@ -88,9 +88,9 @@ namespace Swisscom
       try
       {
         friendly_error_msg = string.Empty;
-    		proxy_username =     string.Empty;
-    		proxy_password =     string.Empty";
-				proxy_uri =          string.Empty;
+        proxy_username =     string.Empty;
+        proxy_password =     string.Empty";
+        proxy_uri =          string.Empty;
 
         InitializeCertificateLocation();
         InitializeApplicationProviderInfos();
