@@ -222,16 +222,16 @@ namespace Swisscom
 
       #region Web request
       try
-      {        
-				if (proxy_uri != null ) {
-				  if (verbose) { Console.WriteLine("Proxy; {0}", proxy_uri); }
-					WebProxy rssProxy = new WebProxy(proxy_uri);
-				  rssProxy.Credentials = new NetworkCredential(proxy_username,proxy_password);//,"CORPROOT.NET");
-				  rssProxy.BypassProxyOnLocal=false;
-				  WebRequest.DefaultWebProxy = rssProxy;
-				  request.Proxy = rssProxy;
-				}
-				
+      {
+        if (proxy_uri != null ) {
+          if (debug) { Console.WriteLine("Proxy; {0}", proxy_uri); }
+          WebProxy rssProxy = new WebProxy(proxy_uri);
+          rssProxy.Credentials = new NetworkCredential(proxy_username,proxy_password);//,"CORPROOT.NET");
+          rssProxy.BypassProxyOnLocal=false;
+          WebRequest.DefaultWebProxy = rssProxy;
+          request.Proxy = rssProxy;
+        }
+
         request.ClientCertificates.Add(certificatePFX);
         request.ClientCertificates.Add(certificateCA);
 
@@ -358,9 +358,6 @@ namespace Swisscom
       }
       catch (CryptographicException ex)
       {
-      	Console.WriteLine("\nException Message: {0}\n",ex.Message ); 
-      	Console.WriteLine("\nException Source : {0}\n",ex.Source ); 
-      	Console.WriteLine("\nException Stack:\n{0}\n",ex.Source ); 
         rc = 3;
         friendly_error_msg = "Cryptographic exception";
         res_msg_status = ex.Message;
@@ -401,14 +398,14 @@ namespace Swisscom
     {
       StringBuilder sb = new StringBuilder();
 
-      	if (verbose) {
-	      	Console.WriteLine("\nException Message: {0}\n",ex.Message ); 
-	      	Console.WriteLine("\nException Source : {0}\n",ex.Source ); 
-	      	Console.WriteLine("\nException Data: {0}\n",ex.Data ); 
-	      	Console.WriteLine("\nException HelpLink : {0}\n",ex.HelpLink ); 
-	      	Console.WriteLine("\nException TargetSite : {0}\n",ex.TargetSite ); 
-	      	Console.WriteLine("\nException Stack:\n{0}\n",ex.StackTrace ); 
-				}
+      if (debug) {
+        Console.WriteLine("\nException Message: {0}\n",ex.Message ); 
+        Console.WriteLine("\nException Source : {0}\n",ex.Source ); 
+        Console.WriteLine("\nException Data: {0}\n",ex.Data ); 
+        Console.WriteLine("\nException HelpLink : {0}\n",ex.HelpLink ); 
+        Console.WriteLine("\nException TargetSite : {0}\n",ex.TargetSite ); 
+        Console.WriteLine("\nException Stack:\n{0}\n",ex.StackTrace ); 
+      }
       sb.Append("ERROR" + CRLF);
       sb.Append("Friendly error message : " + friendly_error_msg + CRLF);
       sb.Append("Framework error message : " + ex.Message + CRLF);
@@ -424,20 +421,20 @@ namespace Swisscom
 if ($PhoneNumber -ne "" -and $Message -ne "" -and $Language -ne "")
 {
   try {
-	  $Assem = ("System.Xml", "System.Security") 
-  	Add-Type -TypeDefinition $source -ReferencedAssemblies $Assem -IgnoreWarnings
+    $Assem = ("System.Xml", "System.Security") 
+    Add-Type -TypeDefinition $source -ReferencedAssemblies $Assem -IgnoreWarnings
 
-  	$currentPath = $(Split-Path $myInvocation.MyCommand.Path)
-	  $mid = New-Object Swisscom.SwisscomMobileID($Verbose, $PhoneNumber, $Message, $Language, $currentPath)
-	  Write-Host $mid.Execute()
-	}
-	catch {
-		if ($verbose) { $error[0] }
-		return 1
-	}
-	finally {
-		if ($mid) { remove-variable mid }
-	}
+    $currentPath = $(Split-Path $myInvocation.MyCommand.Path)
+    $mid = New-Object Swisscom.SwisscomMobileID($Verbose, $PhoneNumber, $Message, $Language, $currentPath)
+    Write-Host $mid.Execute()
+  }
+  catch {
+    if ($verbose) { $error[0] }
+    return 1
+  }
+  finally {
+    if ($mid) { remove-variable mid }
+  }
 }
 else
 {
@@ -448,4 +445,3 @@ else
   Write-Host
   Write-Host "Example $scriptName -Verbose 1 -PhoneNumber +41792080401 -Message ""Do you want to login to corporate VPN?"" -Language en"
 }
-
