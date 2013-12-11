@@ -1,8 +1,8 @@
 #!/bin/sh
-# mobileid-sign.sh - 2.0
+# mobileid-sign.sh - 2.4
 #
-# Generic script using wget to invoke Swisscom Mobile ID service.
-# Dependencies: curl, openssl, base64, sed, date, xmlindent
+# Generic script using curl to invoke Swisscom Mobile ID service.
+# Dependencies: curl, openssl, base64, sed, date, xmllint
 #
 # Change Log:
 #  1.0 13.09.2012: Initial version with signature validation
@@ -22,13 +22,17 @@
 #  1.9 12.08.2013: Instant with timezone
 #  2.0 18.10.2013: Format the xml results in debug mode
 #                  Dependency checker
+#  2.1 13.11.2013: Switched from xmlindent to xmllint
+#  2.2 19.11.2013: Remove of unnecessary exports
+#  2.3 20.11.2013: Improved signature response status code checks
+#  2.4 25.11.2013: Removal of time to sign implementation
 
 ######################################################################
 # User configurable options
 ######################################################################
 
 # AP_ID used to identify to Mobile ID (provided by Swisscom)
-AP_ID=http://iam.swisscom.ch
+AP_ID=mid://dev.swisscom.ch
 
 ######################################################################
 # There should be no need to change anything below
@@ -72,19 +76,12 @@ if [ $# -lt 3 ]; then				# Parse the rest of the arguments
 fi
 
 PWD=$(dirname $0)				# Get the Path of the script
-TIME1=$(date +"%s")				# Get the start time
 
 # Check the dependencies
-for cmd in curl openssl base64 sed date; do
+for cmd in curl openssl base64 sed date xmllint; do
   hash $cmd &> /dev/null
   if [ $? -eq 1 ]; then error "Dependency error: '$cmd' not found" ; fi
 done
-if [ "$DEBUG" = "1" ]; then
-  for cmd in xmlindent; do
-    hash $cmd &> /dev/null
-    if [ $? -eq 1 ]; then error "Dependency error: '$cmd' not found" ; fi
-  done
-fi
 
 # Swisscom Mobile ID credentials
 CERT_FILE=$PWD/mycert.crt			# The certificate that is allowed to access the service
@@ -106,8 +103,8 @@ SOAP_REQ=$(mktemp /tmp/_tmp.XXXXXX)		# SOAP Request goes here
 SEND_TO=$1					# To who
 SEND_MSG=$2					# What DataToBeSigned (DTBS)
 USERLANG=$3					# User language
-TIMEOUT_REQ=80					# Timeout of the request itself
-TIMEOUT_CON=90					# Timeout of the connection to the server
+TIMEOUT=80					# Value of Timeout
+TIMEOUT_CON=90					# Timeout of the client connection
 
 cat > $SOAP_REQ <<End
 <?xml version="1.0" encoding="UTF-8"?>
@@ -118,9 +115,9 @@ cat > $SOAP_REQ <<End
     xmlns:soapenv="http://www.w3.org/2003/05/soap-envelope" 
     xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soapenv:Body>
-    <MSS_Signature xmlns="">
-      <mss:MSS_SignatureReq MinorVersion="1" MajorVersion="1" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#" MessagingMode="synch" TimeOut="$TIMEOUT_REQ" xmlns:fi="http://mss.ficom.fi/TS102204/v1.0.0#">
-        <mss:AP_Info AP_PWD="$AP_PWD" AP_TransID="$AP_TRANSID" Instant="$AP_INSTANT" AP_ID="$AP_ID" />
+    <MSS_Signature>
+      <mss:MSS_SignatureReq MajorVersion="1" MinorVersion="1" MessagingMode="synch" TimeOut="$TIMEOUT" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#" xmlns:fi="http://mss.ficom.fi/TS102204/v1.0.0#">
+        <mss:AP_Info AP_ID="$AP_ID" AP_PWD="$AP_PWD" AP_TransID="$AP_TRANSID" Instant="$AP_INSTANT"/>
         <mss:MSSP_Info>
           <mss:MSSP_ID>
             <mss:URI>http://mid.swisscom.ch/</mss:URI>
@@ -168,12 +165,8 @@ http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
     $SOAP_URL)
 
 # Results
-export RC=$?
-if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
-  # Calc the response time
-  TIME2=$(date +"%s")
-  RES_TIME=$(($TIME2-$TIME1))
-
+RC=$?
+if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   # Parse the response xml
   RES_TRANSID=$(sed -n -e 's/.*AP_TransID="\(.*\)" AP_.*/\1/p' $SOAP_REQ.res)
   RES_MSISDNID=$(sed -n -e 's/.*<mss:MSISDN>\(.*\)<\/mss:MSISDN>.*/\1/p' $SOAP_REQ.res)
@@ -215,10 +208,12 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
   fi
 
   # Status codes
-  if [ "$RES_ID" = "500" ]; then export RC=0 ; fi	# Signature constructed
-  if [ "$RES_ID" = "501" ]; then export RC=1 ; fi	# Revoked certificate
-  if [ "$RES_ID" = "502" ]; then export RC=0 ; fi	# Valid signature
-  if [ "$RES_ID" = "503" ]; then export RC=1 ; fi	# Invalid signature
+  case "$RES_ID" in
+    "500" ) RC=0 ;;                                     # Signature constructed
+    "501" ) RC=1 ;;                                     # Revoked certificate
+    "502" ) RC=0 ;;                                     # Valid signature
+    "503" ) RC=1 ;;                                     # Invalid signature
+  esac 
 
   if [ "$VERBOSE" = "1" ]; then				# Verbose details
     echo "$SOAP_ACTION OK with following details and checks:"
@@ -227,16 +222,15 @@ if [ "$RC" = "0" -a "$http_code" -ne 500 ]; then
     echo    "    MSSP TransID   : $RES_MSSPID"
     echo -n " 2) Signed by      : $RES_MSISDNID"
       if [ "$RES_MSISDNID" = "$SEND_TO" ] ; then echo " -> same as in request" ; else echo " -> different as in request!" ; fi
-    echo    " 3) Time to sign   : $(($RES_TIME / 60)) minutes and $(($RES_TIME % 60)) seconds"
-    echo    " 4) Signer         : $RES_ID_CERT -> OCSP check: $RES_ID_CERT_STATUS"
-    echo -n " 5) Signed Data    : $RES_MSG -> Decode and verify: $RES_MSG_STATUS and "
+    echo    " 3) Signer         : $RES_ID_CERT -> OCSP check: $RES_ID_CERT_STATUS"
+    echo -n " 4) Signed Data    : $RES_MSG -> Decode and verify: $RES_MSG_STATUS and "
       if [ "$RES_MSG" = "$SEND_MSG" ] ; then echo "same as in request" ; else echo "different as in request!" ; fi
-    echo    " 6) Status code    : $RES_RC with exit $RC"
+    echo    " 5) Status code    : $RES_RC with exit $RC"
     echo    "    Status details : $RES_ST"
   fi
  else
   CURL_ERR=$RC                                          # Keep related error
-  export RC=2                                           # Force returned error code
+  RC=2                                                  # Force returned error code
   if [ "$VERBOSE" = "1" ]; then				# Verbose details
     [ $CURL_ERR != "0" ] && echo "curl failed with $CURL_ERR"   # Curl error
     if [ -s "${SOAP_REQ}.res" ]; then                           # Response from the service
@@ -250,9 +244,9 @@ fi
 
 # Debug details
 if [ "$DEBUG" != "" ]; then
-  [ -f "$SOAP_REQ" ] && echo ">>> $SOAP_REQ <<<" && cat $SOAP_REQ | xmlindent
+  [ -f "$SOAP_REQ" ] && echo ">>> $SOAP_REQ <<<" && cat $SOAP_REQ | xmllint --format -
   [ -f "$SOAP_REQ.log" ] && echo ">>> $SOAP_REQ.log <<<" && cat $SOAP_REQ.log | grep '==\|error'
-  [ -f "$SOAP_REQ.res" ] && echo ">>> $SOAP_REQ.res <<<" && cat $SOAP_REQ.res | xmlindent
+  [ -f "$SOAP_REQ.res" ] && echo ">>> $SOAP_REQ.res <<<" && cat $SOAP_REQ.res | xmllint --format -
 fi
 
 # Need a receipt?

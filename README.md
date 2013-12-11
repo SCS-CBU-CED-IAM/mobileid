@@ -5,7 +5,10 @@ Mobile ID command line tools
 
 ## bash
 
-Contains a script to invoke the Signature Request and one to invoke the Receipt Request.
+Contains a script to invoke the:
+* Signature Request
+* Receipt Request
+* Profile Query Request
 
 ```
 Usage: ./mobileid-sign.sh <args> mobile "message" userlang <receipt>
@@ -36,6 +39,15 @@ Usage: ./mobileid-receipt.sh <args> mobile transID "message" <pubCert>
 
 ```
 
+```
+Usage: ./mobileid-query.sh <args> mobile
+  -v       - verbose output
+  -d       - debug mode
+  mobile   - mobile number
+
+  Example ./mobileid-query.sh -v +41792080350
+````
+
 
 The files `mycert.crt`and `mycert.key` are placeholders without any valid content. Be sure to adjust them with your client certificate content in order to connect to the Mobile ID service.
 
@@ -49,10 +61,9 @@ Example of verbose outputs:
  1) Transaction ID : AP.TEST.34309.7311 -> same as in request
     MSSP TransID   : h2ecyu
  2) Signed by      : +41792080350 -> same as in request
- 3) Time to sign   : <Not verified>
- 4) Signer         : subject= /serialNumber=MIDCHE3QWAXYEAA2/CN=MIDCHE3QWAXYEAA2:PN/C=CH -> OCSP check: good
- 5) Signed Data    : Hello -> Decode and verify: success and same as in request
- 6) Status code    : 500 with exit 0
+ 3) Signer         : subject= /serialNumber=MIDCHE3QWAXYEAA2/CN=MIDCHE3QWAXYEAA2:PN/C=CH -> OCSP check: good
+ 4) Signed Data    : Hello -> Decode and verify: success and same as in request
+ 5) Status code    : 500 with exit 0
     Status details : SIGNATURE
 ```
 
@@ -76,10 +87,9 @@ Example of verbose outputs:
  1) Transaction ID : AP.TEST.13428.4428 -> same as in request
     MSSP TransID   : h2ed05
  2) Signed by      : +41792080350 -> same as in request
- 3) Time to sign   : <Not verified>
- 4) Signer         : subject= /serialNumber=MIDCHE3QWAXYEAA2/CN=MIDCHE3QWAXYEAA2:PN/C=CH -> OCSP check: good
- 5) Signed Data    : Do you want to login to corporate VPN? -> Decode and verify: success and same as in request
- 6) Status code    : 500 with exit 0
+ 3) Signer         : subject= /serialNumber=MIDCHE3QWAXYEAA2/CN=MIDCHE3QWAXYEAA2:PN/C=CH -> OCSP check: good
+ 4) Signed Data    : Do you want to login to corporate VPN? -> Decode and verify: success and same as in request
+ 5) Status code    : 500 with exit 0
     Status details : SIGNATURE
 #MSS_Receipt OK with following details and checks:
  MSSP TransID   : h2ed05
@@ -95,10 +105,21 @@ Example of verbose outputs:
 #MSS_Receipt FAILED with mss:_101 (There is no such transaction.) and exit 2
 ```
 
+````
+ ./mobileid-query.sh -v +41792454029
+#MSS_ProfileQuery OK with following details and checks:
+ Status code    : 100 with exit 0
+ Status details : REQUEST_OK
+````
+
+````
+./mobileid-query.sh -v +41798440457
+#MSS_ProfileQuery FAILED on +41798440457 with mss:_105 (UNKNOWN_CLIENT: User MSISDN unknown, no such user.) and exit 2
+````
 
 ## freeradius
 
-Wrapper script for rlm_exec module and the Signature Request bash script.
+`mobileid-radius.sh` wrapper script for rlm_exec module and the Signature Request bash script.
 
 Refer to the "Mobile ID - RADIUS integration guide" document from Swisscom for more details.
 
@@ -115,3 +136,12 @@ The file `mycert.pfx ` is a placeholder without any valid content. Be sure to ad
 Open tasks:
 - Validation of the signature and certificate in the response
 - Move from response exception error handling to proper error parsing
+
+## Known issues
+
+**OS X 10.x: Requests always fail with MSS error 104: _Wrong SSL credentials_.**
+
+The `curl` shipped with OS X uses their own Secure Transport engine, which broke the --cert option, see: http://curl.haxx.se/mail/archive-2013-10/0036.html
+
+Install curl from Mac Ports `sudo port install curl` or home-brew: `brew install curl && brew link --force curl`.
+

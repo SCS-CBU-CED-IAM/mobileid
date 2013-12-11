@@ -1,19 +1,13 @@
 #!/bin/sh
-# mobileid-receipt.sh - 2.3
+# mobileid-check.sh - 1.1
 #
-# Generic script using curl to invoke Swisscom Mobile ID service.
-# Dependencies: curl, openssl, base64, sed, date, iconv, xmllint, xxd
+# Generic script using curl to invoke Swisscom Mobile ID service to
+# check about present MSISDN.
+# Dependencies: curl, sed, date, xmllint
 #
 # Change Log:
-#  1.0 08.05.2013: Initial version
-#  1.1 30.05.2013: Proper encoding for encryted receipts
-#  1.2 03.05.2013: Conditional encoding for encrypted receipts based on content
-#  1.3 12.08.2013: Instant with timezone
-#  2.0 18.10.2013: Format the xml results in debug mode
-#                  Dependency checker
-#  2.1 13.11.2013: Switched from xmlindent to xmllint
-#  2.2 19.11.2013: Remove of unnecessary exports
-#  2.3 20.11.2013: Changed interpreter from bash to sh & use of xxd instead of "echo -e"
+#  1.0 14.11.2013: Initial version
+#  1.1 19.11.2013: Remove of unnecessary exports
 
 ######################################################################
 # User configurable options
@@ -44,25 +38,21 @@ while getopts "dv" opt; do			# Parse the options
 done
 shift $((OPTIND-1))                             # Remove the options
 
-if [ $# -lt 3 ]; then				# Parse the rest of the arguments
-  echo "Usage: $0 <args> mobile transID \"message\" <pubCert>"
+if [ $# -lt 1 ]; then				# Parse the rest of the arguments
+  echo "Usage: $0 <args> mobile"
   echo "  -v       - verbose output"
   echo "  -d       - debug mode"
   echo "  mobile   - mobile number"
-  echo "  transID  - transaction id of the related signature request"
-  echo "  message  - message to be displayed"
-  echo "  pubCert  - optional public certificate file of the mobile user to encode the message"
   echo
-  echo "  Example $0 -v +41792080350 h29ah1 'All fine'"
-  echo "          $0 -v +41792080350 h29ah1 'Password: 123456' /tmp/_tmp.8OVlwv.sig.cert"
-  echo 
+  echo "  Example $0 -v +41792080350"
+  echo
   exit 1
 fi
 
 PWD=$(dirname $0)				# Get the Path of the script
 
 # Check the dependencies
-for cmd in curl openssl base64 sed date iconv xmllint xxd ; do
+for cmd in curl sed date xmllint; do
   hash $cmd &> /dev/null
   if [ $? -eq 1 ]; then error "Dependency error: '$cmd' not found" ; fi
 done
@@ -79,42 +69,23 @@ CERT_CA=$PWD/swisscom-ca.crt                    # Bag file with the server/clien
 RANDOM=$$					# Seeds the random number generator from PID of script
 AP_INSTANT=$(date +%Y-%m-%dT%H:%M:%S%:z)	# Define instant and transaction id
 AP_TRANSID=AP.TEST.$((RANDOM%89999+10000)).$((RANDOM%8999+1000))
-MSSP_TRANSID=$2					# Transaction ID of request
 SOAP_REQ=$(mktemp /tmp/_tmp.XXXXXX)		# SOAP Request goes here
 SEND_TO=$1					# To who
-TIMEOUT=5					# Value of Timeout
-TIMEOUT_CON=10					# Timeout of the client connection
-PUB_CERT=$4					# Public certificate for optional encryption
-
-# Define the message and format
-MSG_TYPE='MimeType="text/plain" Encoding="UTF-8"'
-MSG_TXT=$3
-if [ "$PUB_CERT" != "" ]; then			# Message to be encrypted
-  [ -r "${PUB_CERT}" ] || error "Public certificate for encoding the message ($PUB_CERT) missing or not readable"
-  MSG_TYPE='MimeType="application/alauda-rsamessage" Encoding="BASE64"'
-  MSG_ASCI=$(echo -n $MSG_TXT | iconv -s -f UTF-8 -t US-ASCII//TRANSLIT)
-  if [ "$MSG_TXT" = "$MSG_ASCI" ]; then		# Message does not contain special chars
-    echo -n "$MSG_TXT" | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
-    [ -f "$SOAP_REQ.msg" ] && MSG_TXT=$(base64 $SOAP_REQ.msg)
-  else							# -> GSM11.14 STK commands do not support UTF8, either UCS-2 or GSMDA
-    # Encrypt UCS-2 prefixed with Hex 80 over cmd as vars are not properly encoding
-    (echo 80 | xxd -r -p ; echo -n "$MSG_TXT" | iconv -s -f UTF-8 -t UCS-2BE) | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
-    [ -f "$SOAP_REQ.msg" ] && MSG_TXT=$(base64 $SOAP_REQ.msg)
-  fi
-fi
+TIMEOUT=80					# Value of Timeout
+TIMEOUT_CON=90					# Timeout of the client connection
 
 cat > $SOAP_REQ <<End
 <?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
-    soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" 
-    xmlns:soapenv="http://www.w3.org/2003/05/soap-envelope" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    soap:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
+    xmlns:soapenv="http://www.w3.org/2003/05/soap-envelope"
     xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soapenv:Body>
-    <MSS_Receipt>
-      <mss:MSS_ReceiptReq MajorVersion="1" MinorVersion="1" MSSP_TransID="$MSSP_TRANSID" TimeOut="$TIMEOUT" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#">
-        <mss:AP_Info AP_ID="$AP_ID" AP_PWD="$AP_PWD" AP_TransID="$AP_TRANSID" Instant="$AP_INSTANT"/>
+    <MSS_ProfileQuery>
+      <mss:MSS_ProfileReq MajorVersion="1" MinorVersion="1" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#">
+        <mss:AP_Info AP_PWD="$AP_PWD" AP_TransID="$AP_TRANSID" Instant="$AP_INSTANT" AP_ID="$AP_ID" />
         <mss:MSSP_Info>
           <mss:MSSP_ID>
             <mss:URI>http://mid.swisscom.ch/</mss:URI>
@@ -123,9 +94,8 @@ cat > $SOAP_REQ <<End
         <mss:MobileUser>
           <mss:MSISDN>$SEND_TO</mss:MSISDN>
         </mss:MobileUser>
-        <mss:Message $MSG_TYPE>$MSG_TXT</mss:Message>
-      </mss:MSS_ReceiptReq>
-    </MSS_Receipt>
+      </mss:MSS_ProfileReq>
+    </MSS_ProfileQuery>
   </soapenv:Body>
 </soapenv:Envelope>
 End
@@ -136,8 +106,8 @@ End
 [ -r "${CERT_FILE}" ] || error "SSL certificate file ($CERT_FILE) missing or not readable"
 
 # Call the service
-SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_ReceiptPort
-SOAP_ACTION=#MSS_Receipt
+SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_ProfilePort
+SOAP_ACTION=#MSS_ProfileQuery
 CURL_OPTIONS="--sslv3 --silent"
 http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
     --data "@${SOAP_REQ}" --header "Content-Type: text/xml; charset=utf-8" --header "SOAPAction: \"$SOAP_ACTION\"" \
@@ -153,9 +123,12 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   RES_RC=$(sed -n -e 's/.*<mss:StatusCode Value="\(.*\)"\/>.*/\1/p' $SOAP_REQ.res)
   RES_ST=$(sed -n -e 's/.*<mss:StatusMessage>\(.*\)<\/mss:StatusMessage>.*/\1/p' $SOAP_REQ.res)
 
+  # Status codes
+  RC=1                                                  # By default not present
+  if [ "$RES_RC" = "100" ]; then RC=0 ; fi              # ACTIVE or REGISTERED user
+
   if [ "$VERBOSE" = "1" ]; then				# Verbose details
     echo "$SOAP_ACTION OK with following details and checks:"
-    echo    " MSSP TransID   : $MSSP_TRANSID"
     echo    " Status code    : $RES_RC with exit $RC"
     echo    " Status details : $RES_ST"
   fi
@@ -173,16 +146,18 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   fi
 fi
 
+# Debug details
+if [ "$DEBUG" != "" ]; then
+  [ -f "$SOAP_REQ" ] && echo ">>> $SOAP_REQ <<<" && cat $SOAP_REQ | xmllint --format -
+  [ -f "$SOAP_REQ.log" ] && echo ">>> $SOAP_REQ.log <<<" && cat $SOAP_REQ.log | grep '==\|error'
+  [ -f "$SOAP_REQ.res" ] && echo ">>> $SOAP_REQ.res <<<" && cat $SOAP_REQ.res | xmllint --format -
+fi
+
 # Cleanups if not DEBUG mode
 if [ "$DEBUG" = "" ]; then
   [ -f "$SOAP_REQ" ] && rm $SOAP_REQ
   [ -f "$SOAP_REQ.log" ] && rm $SOAP_REQ.log
   [ -f "$SOAP_REQ.res" ] && rm $SOAP_REQ.res
-  [ -f "$SOAP_REQ.msg" ] && rm $SOAP_REQ.msg
- else
-  [ -f "$SOAP_REQ" ] && echo ">>> $SOAP_REQ <<<" && cat $SOAP_REQ | xmllint --format -
-  [ -f "$SOAP_REQ.log" ] && echo ">>> $SOAP_REQ.log <<<" && cat $SOAP_REQ.log | grep '==\|error'
-  [ -f "$SOAP_REQ.res" ] && echo ">>> $SOAP_REQ.res <<<" && cat $SOAP_REQ.res | xmllint --format -
 fi
 
 exit $RC
