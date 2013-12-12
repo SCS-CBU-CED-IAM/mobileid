@@ -14,7 +14,7 @@
 #  1.3 17.10.2012: Timeout settings for process and request
 #                  Mandatory language
 #  1.4 21.02.2013: Removal of the optional backend signature validation
-#  1.5 05.04.2013: Switching from wegt to curl
+#  1.5 05.04.2013: Switching from wget to curl
 #                  Better error handling
 #  1.6 08.05.2013: Options for sending normal/encrypted receipt
 #  1.7 03.06.2013: Updated usage details
@@ -42,24 +42,24 @@ AP_ID=mid://dev.swisscom.ch
 # Error function
 error()
 {
-  [ "$VERBOSE" = "1" ] && echo "$@" >&2         # Verbose details
-  exit 1                                        # Exit
+  [ "$VERBOSE" = "1" -o "$DEBUG" = "1" ] && echo "$@" >&2
+  exit 1
 }
 
 # Check command line
 DEBUG=
 VERBOSE=
 ENCRYPT=
-while getopts "dve" opt; do			# Parse the options
+while getopts "dve" opt; do                     # Parse the options
   case $opt in
-    d) DEBUG=1 ;;				# Debug
-    v) VERBOSE=1 ;;				# Verbose
-    e) ENCRYPT=1 ;;				# Encrypt receipt
+    d) DEBUG=1 ;;                               # Debug
+    v) VERBOSE=1 ;;                             # Verbose
+    e) ENCRYPT=1 ;;                             # Encrypt receipt
   esac
 done
 shift $((OPTIND-1))                             # Remove the options
 
-if [ $# -lt 3 ]; then				# Parse the rest of the arguments
+if [ $# -lt 3 ]; then                           # Parse the rest of the arguments
   echo "Usage: $0 <args> mobile \"message\" userlang <receipt>"
   echo "  -v       - verbose output"
   echo "  -d       - debug mode"
@@ -76,7 +76,7 @@ if [ $# -lt 3 ]; then				# Parse the rest of the arguments
   exit 1
 fi
 
-PWD=$(dirname $0)				# Get the Path of the script
+PWD=$(dirname $0)                               # Get the Path of the script
 
 # Check the dependencies
 for cmd in curl openssl base64 sed date xmllint; do
@@ -85,25 +85,25 @@ for cmd in curl openssl base64 sed date xmllint; do
 done
 
 # Swisscom Mobile ID credentials
-CERT_FILE=$PWD/mycert.crt			# The certificate that is allowed to access the service
-CERT_KEY=$PWD/mycert.key			# The related key of the certificate
-AP_PWD=disabled					# AP Password must be present but is not validated
+CERT_FILE=$PWD/mycert.crt                       # The certificate that is allowed to access the service
+CERT_KEY=$PWD/mycert.key                        # The related key of the certificate
+AP_PWD=disabled                                 # AP Password must be present but is not validated
 
 # Swisscom SDCS elements
-CERT_CA=$PWD/swisscom-ca.crt                    # Bag file with the server/client issuing and root certifiates
+CERT_CA=$PWD/swisscom-ca.crt                    # Bag file with the server/client issuing and root certificates
 
 # Create temporary SOAP request
 #  Synchron with timeout
 #  Signature format in PKCS7
-RANDOM=$$					# Seeds the random number generator from PID of script
-AP_INSTANT=$(date +%Y-%m-%dT%H:%M:%S%:z)	# Define instant and transaction id
+RANDOM=$$                                       # Seeds the random number generator from PID of script
+AP_INSTANT=$(date +%Y-%m-%dT%H:%M:%S%:z)        # Define instant and transaction id
 AP_TRANSID=AP.TEST.$((RANDOM%89999+10000)).$((RANDOM%8999+1000))
-SOAP_REQ=$(mktemp /tmp/_tmp.XXXXXX)		# SOAP Request goes here
-SEND_TO=$1					# To who
-SEND_MSG=$2					# What DataToBeSigned (DTBS)
-USERLANG=$3					# User language
-TIMEOUT=80					# Value of Timeout
-TIMEOUT_CON=90					# Timeout of the client connection
+SOAP_REQ=$(mktemp /tmp/_tmp.XXXXXX)             # SOAP Request goes here
+SEND_TO=$1                                      # To who
+SEND_MSG=$2                                     # What DataToBeSigned (DTBS)
+USERLANG=$3                                     # User language
+TIMEOUT=80                                      # Value of Timeout
+TIMEOUT_CON=90                                  # Timeout of the client connection
 
 cat > $SOAP_REQ <<End
 <?xml version="1.0" encoding="UTF-8"?>
@@ -186,24 +186,24 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   # Get OCSP uri from the signers certificate and verify the revocation status
   OCSP_URL=$(openssl x509 -in $SOAP_REQ.sig.cert -ocsp_uri -noout)
   openssl ocsp -CAfile $CERT_CA -issuer $CERT_CA -nonce -out $SOAP_REQ.sig.cert.check -url $OCSP_URL -cert $SOAP_REQ.sig.cert > /dev/null 2>&1
-  if [ "$?" = "0" ]; then				# Revocation check completed
+  if [ "$?" = "0" ]; then                               # Revocation check completed
     RES_ID_CERT_STATUS=$(sed -n -e 's/.*.sig.cert: //p' $SOAP_REQ.sig.cert.check)
-    if [ "$RES_ID_CERT_STATUS" = "revoked" ]; then		# Force Revoked certificate
+    if [ "$RES_ID_CERT_STATUS" = "revoked" ]; then              # Force Revoked certificate
       RES_ID=501
     fi
-   else							# -> check not ok
+   else                                                 # -> check not ok
     RES_ID_CERT_STATUS="failed, status $?"
   fi
 
   # Extract the PKCS7 and validate the signature
   openssl smime -verify -inform DER -in $SOAP_REQ.sig.decoded -out $SOAP_REQ.sig.txt -CAfile $CERT_CA -purpose sslclient > /dev/null 2>&1
-  if [ "$?" = "0" ]; then				# Decoding without any error
-    RES_MSG=$(cat $SOAP_REQ.sig.txt)                    	# Decoded message is in this file
-    RES_MSG_STATUS="success"					# Details of verification
-   else							# -> error in decoding
-    RES_MSG=$(cat $SOAP_REQ.sig.txt)                      	# Decoded message is in this file
-    RES_MSG_STATUS="failed, status $?"				# Details of verification
-    RES_ID=503							# Force the Invalid signature status
+  if [ "$?" = "0" ]; then                               # Decoding without any error
+    RES_MSG=$(cat $SOAP_REQ.sig.txt)                            # Decoded message is in this file
+    RES_MSG_STATUS="success"                                    # Details of verification
+   else                                                 # -> error in decoding
+    RES_MSG=$(cat $SOAP_REQ.sig.txt)                            # Decoded message is in this file
+    RES_MSG_STATUS="failed, status $?"                          # Details of verification
+    RES_ID=503                                                  # Force the Invalid signature status
   fi
 
   # Status codes
@@ -214,7 +214,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
     "503" ) RC=1 ;;                                     # Invalid signature
   esac 
 
-  if [ "$VERBOSE" = "1" ]; then				# Verbose details
+  if [ "$VERBOSE" = "1" ]; then                         # Verbose details
     echo "$SOAP_ACTION OK with following details and checks:"
     echo -n " 1) Transaction ID : $RES_TRANSID"
       if [ "$RES_TRANSID" = "$AP_TRANSID" ] ; then echo " -> same as in request" ; else echo " -> different as in request!" ; fi
@@ -230,7 +230,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
  else
   CURL_ERR=$RC                                          # Keep related error
   RC=2                                                  # Force returned error code
-  if [ "$VERBOSE" = "1" ]; then				# Verbose details
+  if [ "$VERBOSE" = "1" ]; then                         # Verbose details
     [ $CURL_ERR != "0" ] && echo "curl failed with $CURL_ERR"   # Curl error
     if [ -s "${SOAP_REQ}.res" ]; then                           # Response from the service
       RES_VALUE=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $SOAP_REQ.res)
@@ -249,13 +249,13 @@ if [ "$DEBUG" != "" ]; then
 fi
 
 # Need a receipt?
-if [ "$RC" -lt "2" -a "$4" != "" ]; then		# Request ok and need to send a reciept
+if [ "$RC" -lt "2" -a "$4" != "" ]; then                        # Request ok and need to send a reciept
   OPTS=
-  if [ "$VERBOSE" = "1" ]; then OPTS="$OPTS -v" ; fi		# Keep the options
+  if [ "$VERBOSE" = "1" ]; then OPTS="$OPTS -v" ; fi            # Keep the options
   if [ "$DEBUG"   = "1" ]; then OPTS="$OPTS -d" ; fi
-  if [ "$ENCRYPT" = "1" ]; then					# Encrypted?
+  if [ "$ENCRYPT" = "1" ]; then                                 # Encrypted?
     $PWD/mobileid-receipt.sh $OPTS $SEND_TO $RES_MSSPID "$4" $SOAP_REQ.sig.cert
-   else								# -> normal
+   else                                                         # -> normal
     $PWD/mobileid-receipt.sh $OPTS $SEND_TO $RES_MSSPID "$4"
   fi
 fi
