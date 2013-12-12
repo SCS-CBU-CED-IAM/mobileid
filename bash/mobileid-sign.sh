@@ -91,7 +91,6 @@ AP_PWD=disabled					# AP Password must be present but is not validated
 
 # Swisscom SDCS elements
 CERT_CA=$PWD/swisscom-ca.crt                    # Bag file with the server/client issuing and root certifiates
-OCSP_CERT=$PWD/swisscom-ocsp.crt		# OCSP information of the signers certificate
 
 # Create temporary SOAP request
 #  Synchron with timeout
@@ -151,7 +150,6 @@ End
 [ -r "${CERT_CA}" ]   || error "CA certificate/chain file ($CERT_CA) missing or not readable"
 [ -r "${CERT_KEY}" ]  || error "SSL key file ($CERT_KEY) missing or not readable"
 [ -r "${CERT_FILE}" ] || error "SSL certificate file ($CERT_FILE) missing or not readable"
-[ -r "${OCSP_CERT}" ] || error "OCSP certificate file ($OCSP_CERT) missing or not readable"
 
 # Call the service
 SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_SignaturePort
@@ -187,7 +185,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
 
   # Get OCSP uri from the signers certificate and verify the revocation status
   OCSP_URL=$(openssl x509 -in $SOAP_REQ.sig.cert -ocsp_uri -noout)
-  openssl ocsp -CAfile $CERT_CA -issuer $OCSP_CERT -nonce -out $SOAP_REQ.sig.cert.check -url $OCSP_URL -cert $SOAP_REQ.sig.cert > /dev/null 2>&1
+  openssl ocsp -CAfile $CERT_CA -issuer $CERT_CA -nonce -out $SOAP_REQ.sig.cert.check -url $OCSP_URL -cert $SOAP_REQ.sig.cert > /dev/null 2>&1
   if [ "$?" = "0" ]; then				# Revocation check completed
     RES_ID_CERT_STATUS=$(sed -n -e 's/.*.sig.cert: //p' $SOAP_REQ.sig.cert.check)
     if [ "$RES_ID_CERT_STATUS" = "revoked" ]; then		# Force Revoked certificate
