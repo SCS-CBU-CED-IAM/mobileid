@@ -1,5 +1,5 @@
 #!/bin/sh
-# mobileid-sign.sh - 2.4
+# mobileid-sign.sh - 2.5
 #
 # Generic script using curl to invoke Swisscom Mobile ID service.
 # Dependencies: curl, openssl, base64, sed, date, xmllint
@@ -26,6 +26,7 @@
 #  2.2 19.11.2013: Remove of unnecessary exports
 #  2.3 20.11.2013: Improved signature response status code checks
 #  2.4 25.11.2013: Removal of time to sign implementation
+#  2.5 12.12.2013: Get the OCSP uri out of the signers certificate
 
 ######################################################################
 # User configurable options
@@ -91,7 +92,6 @@ AP_PWD=disabled					# AP Password must be present but is not validated
 # Swisscom SDCS elements
 CERT_CA=$PWD/swisscom-ca.crt                    # Bag file with the server/client issuing and root certifiates
 OCSP_CERT=$PWD/swisscom-ocsp.crt		# OCSP information of the signers certificate
-OCSP_URL=http://ocsp.swissdigicert.ch/sdcs-rubin2
 
 # Create temporary SOAP request
 #  Synchron with timeout
@@ -185,7 +185,8 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   [ -s "${SOAP_REQ}.sig.cert" ] || error "Unable to extract signers certificate from siganture"
   RES_ID_CERT=$(openssl x509 -subject -noout -in $SOAP_REQ.sig.cert)
 
-  # and verify the revocation status over ocsp
+  # Get OCSP uri from the signers certificate and verify the revocation status
+  OCSP_URL=$(openssl x509 -in $SOAP_REQ.sig.cert -ocsp_uri -noout)
   openssl ocsp -CAfile $CERT_CA -issuer $OCSP_CERT -nonce -out $SOAP_REQ.sig.cert.check -url $OCSP_URL -cert $SOAP_REQ.sig.cert > /dev/null 2>&1
   if [ "$?" = "0" ]; then				# Revocation check completed
     RES_ID_CERT_STATUS=$(sed -n -e 's/.*.sig.cert: //p' $SOAP_REQ.sig.cert.check)
