@@ -108,7 +108,7 @@ End
 # Call the service
 SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_ProfilePort
 SOAP_ACTION=#MSS_ProfileQuery
-CURL_OPTIONS="--sslv3 --silent"
+CURL_OPTIONS="--silent"
 http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
     --data "@${SOAP_REQ}" --header "Content-Type: text/xml; charset=utf-8" --header "SOAPAction: \"$SOAP_ACTION\"" \
     --cert $CERT_FILE --cacert $CERT_CA --key $CERT_KEY \
