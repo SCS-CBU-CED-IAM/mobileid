@@ -1,15 +1,27 @@
-# mobileid_sharp.ps1 - 1.0
 #
 # Generic script to invoke Swisscom Mobile ID service.
 # Minimum PowerShell version : 2.0
 #
 # Description :
-# First part  - line 14  / param aquisiton
-# Second part - line 21  / C# class SwisscomMobileID.cs
-# Third part  - line 414 / Processing
+# First part  - param aquisiton
+# Second part - C# class SwisscomMobileID.cs
+# Third part  - Processing
+#
+# REM Copyright (C) 2013 - Swisscom (Schweiz) AG
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 # 
-# Change Log  :
-#  1.0 31.10.2012: Initial version with signature validation
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see http://www.gnu.org/licenses/.
+ 
 
 param([switch]$Verbose, [switch]$Debug, [string]$PhoneNumber = "", [string]$Message = "", [string]$Language = "")
 
@@ -35,6 +47,12 @@ namespace Swisscom
   {
     private const string SWISSCOM_SERVICE_URL = "https://soap.mobileid.swisscom.com/soap/services/MSS_SignaturePort";
     private const string CRLF = "\r\n";
+    private const int RETURN_OK=0;      // mid request sent and accepted
+    private const int RETURN_REJECT=1;  // mid request rejected/aborted
+    private const int RETURN_FAIL=2;    // exception while handling request
+    private const int RETURN_INVALID=5; // request or configiration is not valid
+    private const int RETURN_BLOCKED=6; // user or token blocked
+    private const int RETURN_NOTFOUND=7;// user not found
 
     private bool verbose = false;
     private bool debug = false;
@@ -60,7 +78,7 @@ namespace Swisscom
     private string res_id_cert = string.Empty;
     private string res_rc = string.Empty;
     private string res_st = string.Empty;
-    private int rc = 0;
+    public int rc = 0;
 
     // Working variables
     private string workingFolder;
@@ -80,6 +98,7 @@ namespace Swisscom
       message = msg;
       language = lng;
       workingFolder = folder;
+      rc = RETURN_OK;
     }
     #endregion
 
@@ -89,9 +108,14 @@ namespace Swisscom
       try
       {
         friendly_error_msg = string.Empty;
+/*
         proxy_username =     null;
         proxy_password =     null;
         proxy_uri =          null; // e.g. "10.185.32.40:8079"
+*/
+        proxy_username =     null;
+        proxy_password =     null;
+        proxy_uri =          "10.185.32.40:8079"; // e.g. "10.185.32.40:8079"
 
         InitializeCertificateLocation();
         InitializeApplicationProviderInfos();
@@ -261,7 +285,6 @@ namespace Swisscom
 
       #region Get And Parse Response
       string result = string.Empty;
-      rc = 0;
       try
       {
         HttpWebResponse response = (HttpWebResponse)request.GetResponse();
@@ -275,7 +298,7 @@ namespace Swisscom
       }
       catch (WebException ex)
       {
-        rc = 2; // Error
+        rc = RETURN_FAIL; // Error
         friendly_error_msg = "Web service error. Check XML server response for further details";
         using (WebResponse response = ex.Response)
         {
@@ -361,7 +384,7 @@ namespace Swisscom
       }
       catch (CryptographicException ex)
       {
-        rc = 3;
+        rc = RETURN_FAIL;
         friendly_error_msg = "Cryptographic exception";
         res_msg_status = ex.Message;
         return false;
@@ -409,9 +432,11 @@ namespace Swisscom
         Console.WriteLine("\nException TargetSite : {0}\n",ex.TargetSite ); 
         Console.WriteLine("\nException Stack:\n{0}\n",ex.StackTrace ); 
       }
-      sb.Append("ERROR" + CRLF);
-      sb.Append("Friendly error message : " + friendly_error_msg + CRLF);
-      sb.Append("Framework error message : " + ex.Message + CRLF);
+      if (verbose) {
+      	sb.Append("ERROR" + CRLF);
+      	sb.Append("Friendly error message : " + friendly_error_msg + CRLF);
+      	sb.Append("Framework error message : " + ex.Message + CRLF);
+      }
       return sb.ToString();
     }
     #endregion
@@ -430,10 +455,11 @@ if ($PhoneNumber -ne "" -and $Message -ne "" -and $Language -ne "")
     $currentPath = $(Split-Path $myInvocation.MyCommand.Path)
     $mid = New-Object Swisscom.SwisscomMobileID($Verbose, $Debug, $PhoneNumber, $Message, $Language, $currentPath)
     Write-Host $mid.Execute()
+    $intReturn=$mid.rc
   }
   catch {
     if ($verbose -or $debug) { $error[0] }
-    return 1
+    $intReturn=2
   }
   finally {
     if ($mid) { remove-variable mid }
@@ -448,4 +474,6 @@ else
   Write-Host " -Language    : user language (one of en, de, fr, it)"
   Write-Host
   Write-Host "Example $scriptName -Verbose -PhoneNumber +41792080401 -Message ""Do you want to login to corporate VPN?"" -Language en"
+  $intReturn=5
 }
+exit $intReturn
