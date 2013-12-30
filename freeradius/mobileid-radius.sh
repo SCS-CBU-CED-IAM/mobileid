@@ -21,7 +21,7 @@
 # Change Log:
 #  1.0 13.10.2012: Initial version.
 #  1.1 19.11.2013: Update for the exit code
-#  1.2 30.11.2013: Updated information
+#  1.2 30.12.2013: Updated information
 #
 # Each of the attributes in the request will be available in an
 # environment variable.  The name of the variable depends on the

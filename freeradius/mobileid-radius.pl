@@ -20,7 +20,7 @@
 #           mobileid-sign.bat on Windows
 #
 # Change Log:
-#  1.0 30.10.2013: Initial version.
+#  1.0 30.12.2013: Initial version.
 
 use strict;
 use File::Basename;
