@@ -1,0 +1,7 @@
+exec mobileid {
+    program = "/opt/mobileid/mobileid-radius.sh"
+    wait = yes
+    input_pairs = request
+    shell_escape = yes
+    timeout = 120
+}

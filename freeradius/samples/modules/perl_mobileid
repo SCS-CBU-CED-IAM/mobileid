@@ -1,0 +1,3 @@
+perl mobileid {
+    module = /opt/mobileid/mobileid-radius.pl
+}
