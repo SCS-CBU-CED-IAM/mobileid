@@ -68,7 +68,7 @@ post-auth {
 		case {
 			update request {
 				X-MSS-Language := "en"
-				X-MSS-Message  := "myserver.com: Dou you want to login?"
+				X-MSS-Message  := "myserver.com: Do you want to login?"
 			}
 		}
 	}
