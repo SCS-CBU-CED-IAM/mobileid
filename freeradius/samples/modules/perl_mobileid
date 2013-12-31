@@ -1,3 +1,4 @@
 perl mobileid {
-    module = /opt/mobileid/mobileid-radius.pl
+    module = "/opt/mobileid/mobileid-radius.pl"
+    perl_flags = "-I/opt/mobileid"
 }

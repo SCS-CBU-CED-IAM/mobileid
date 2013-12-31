@@ -1,9 +1,9 @@
-#!/usr/bin/env perl
-# mobileid-radius.pl - 1.0
+#!/usr/bin/perl
+# mobileid-perl.pl - 1.0
 #
 # rlm_perl script that can be called by freeradius as a module.
 #
-# It will call mobileid-sign.sh from the same folder with the appropriate
+# It will use mobileid.pm from the same folder with the appropriate
 # parameters out of the %RAD_REQUEST collection:
 #  Called-Station-Id: contains the Mobile ID number
 #  X-MSS-Message: contains the related Mobile ID message
@@ -11,23 +11,27 @@
 #
 # Sample rlm_perl module definition: /etc/freeradius/modules/perl_mobileid
 # perl mobileid {
-#	module = "/opt/mobileid/mobileid-radius.pl"
+#	module = "/opt/mobileid/mobileid-perl.pl"
 #   perl_flags = "-I/opt/mobileid"
 # }
 #
 # Dependencies:
-#  Perl modules: File::Basename
-#  Scripts: mobileid-sign.sh on Linux/Mac
-#           mobileid-sign.bat on Windows
+#  Perl modules: mobileid.pm File::Basename
 #
 # Change Log:
-#  1.0 30.12.2013: Initial version.
+#  1.0 31.12.2013: Initial version.
 
 use strict;
-use File::Basename;
+use utf8;
+use File::Basename qw(dirname);
+use mobileid;
 
 # This is very important ! Without this script will not get the filled values from main.
 use vars qw(%RAD_REQUEST %RAD_REPLY %RAD_CHECK);
+
+#mobileid::trace_on();
+select STDERR; $| = 1;
+select STDOUT; $| = 1;
 
 # This the remapping of return values
 use constant    RLM_MODULE_REJECT=>     0;#  /* immediately reject the request */
@@ -40,7 +44,7 @@ use constant    RLM_MODULE_NOTFOUND=>   6;#  /* user not found */
 use constant    RLM_MODULE_NOOP=>       7;#  /* module succeeded without doing anything */
 use constant    RLM_MODULE_UPDATED=>    8;#  /* OK (pairs modified) */
 use constant    RLM_MODULE_NUMCODES=>   9;#  /* How many return codes there are */
-
+    
 # Logging. Same as src/include/radiusd.h
 use constant    L_DBG=>     1;
 use constant    L_AUTH=>    2;
@@ -49,9 +53,12 @@ use constant    L_ERR=>     4;
 use constant    L_PROXY=>   5;
 use constant    L_ACCT=>    6;
 
-# Launched script
-use constant    CALL_NIX=>  "mobileid-sign.sh";
-use constant    CALL_WIN=>  "mobileid-sign.bat";
+# Mobile ID elements
+use constant    CERT_FILE=> 'mycert.crt';
+use constant    KEY_FILE=>  'mycert.key';
+use constant    CA_FILE=>   'swisscom-ca.crt';
+use constant    APID=>      'mid://dev.swisscom.ch';
+use constant    APPASS=>    'disabled';
 
 # rlm_perl function handling
 sub post_auth {
@@ -61,13 +68,11 @@ sub post_auth {
     my $isWin  = 0;
     if ($^O eq 'MSWin32') { $isWin = 1; }
 
-    # Get path of current script and define the related OS command
+    # Get path of current script and define the OS related separator
     my $dir = dirname(__FILE__);
-    my $cmd = "";
-    if ($isWin == 0) {
-        $cmd = $dir . "/" . CALL_NIX;
-    } else {
-        $cmd = $dir . "\\" . CALL_WIN;
+    my $sep = "/";
+    if ($isWin == 1) {
+        $sep = "\\";
     }
 
     # Get the relevant request attributes
@@ -76,18 +81,26 @@ sub post_auth {
     my $lang   = $RAD_REQUEST{'X-MSS-Language'};
 
     # Spawn the call to the Mobile ID script
-    &radiusd::radlog(L_INFO, "$0::system $cmd $msisdn $msg $lang");
-    my $status = system($cmd, $msisdn, $msg, $lang);
+    my $mssapi = new mobileid;
+    my $certfile = $dir . $sep . CERT_FILE;
+    my $keyfile  = $dir . $sep . KEY_FILE;
+    my $cafile   = $dir . $sep . CA_FILE;
+    $mssapi->setssl($certfile, $keyfile, $cafile);
+    $mssapi->setapinfo(APID, APPASS);
+    &radiusd::radlog(L_INFO, "$0::MSS_Signature $msisdn '$msg' $lang");
+    my $status = $mssapi->MSS_Signature($msisdn, $msg, $lang, 80);
 
-    # Parse the results
-    if ($status == 0) {
+    # Result handling
+    $mssapi = undef;
+    if ($status == 1) {
         &radiusd::radlog(L_INFO, "$0::post_auth RLM_MODULE_OK");
         return RLM_MODULE_OK;
     } else {
-        &radiusd::radlog(L_ERR, "$0::system $cmd (status=$status)");
+        &radiusd::radlog(L_ERR, "$0::MSS_Signature (status=$status)");
         &radiusd::radlog(L_ERR, "$0::post_auth RLM_MODULE_REJECT");
         return RLM_MODULE_REJECT;
     }
+
 }
 
 sub authorize {
