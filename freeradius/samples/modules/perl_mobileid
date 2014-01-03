@@ -1,4 +1,19 @@
+#  Call Mobile ID over the persistent and embedded Perl interpreter.
+#
+#  Use perl_flags and the -I<location> to define the location of additional modules
+#
+#  If on freeradius start you get errors like:
+#    Can't load '/usr/local/lib/perl/5.14.2/auto/Time/HiRes/HiRes.so' for module Time::HiRes: /usr/local/lib/perl/5.14.2/auto/Time/HiRes/HiRes.so:
+#    undefined symbol: PL_thr_key at /usr/lib/perl/5.14/DynaLoader.pm line 184 at /opt/mobileid/mobileid.pm line 17
+#
+#  you must preload the perl library with LD_PRELOAD, example:
+#    LD_PRELOAD=/usr/lib/libperl.so /usr/sbin/freeradius -X -f
+#    Note: you will need to find out your perl library path with: find /usr/lib/ -name libperl.so*
+#
+#  you also need to update your init script just like this :
+#    LD_PRELOAD=/usr/lib/libperl.so start-stop-daemon –start –quiet –pidfile $PIDFILE –exec $PROGRAM — $FREERADIUS_OPTIONS ...
+
 perl mobileid {
-    module = "/opt/mobileid/mobileid-radius.pl"
-    perl_flags = "-I/opt/mobileid"
+    module = /opt/mobileid/mobileid-radius.pl
+    perl_flags = -I/opt/mobileid
 }

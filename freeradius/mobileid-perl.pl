@@ -11,8 +11,8 @@
 #
 # Sample rlm_perl module definition: /etc/freeradius/modules/perl_mobileid
 # perl mobileid {
-#	module = "/opt/mobileid/mobileid-perl.pl"
-#   perl_flags = "-I/opt/mobileid"
+#	module = /opt/mobileid/mobileid-perl.pl
+#   perl_flags = -I/opt/mobileid
 # }
 #
 # Dependencies:
@@ -71,9 +71,7 @@ sub post_auth {
     # Get path of current script and define the OS related separator
     my $dir = dirname(__FILE__);
     my $sep = "/";
-    if ($isWin == 1) {
-        $sep = "\\";
-    }
+    if ($isWin == 1) { $sep = "\\"; }
 
     # Get the relevant request attributes
     my $msisdn = $RAD_REQUEST{'Called-Station-Id'};
@@ -103,41 +101,15 @@ sub post_auth {
 
 }
 
-sub authorize {
-    return RLM_MODULE_NOOP;
-}
-
-sub authenticate {
-    return RLM_MODULE_NOOP;
-}
-
-sub preacct {
-    return RLM_MODULE_NOOP;
-}
-
-sub accounting {
-    return RLM_MODULE_NOOP;
-}
-
-sub checksimul {
-    return RLM_MODULE_NOOP;
-}
-
-sub pre_proxy {
-    return RLM_MODULE_NOOP;
-}
-
-sub post_proxy {
-    return RLM_MODULE_NOOP;
-}
-
-sub xlat {
-    return RLM_MODULE_NOOP;
-}
-
-sub detach {
-    &radiusd::radlog(L_INFO, "$0::Detaching. Reloading. Done.");
-    return RLM_MODULE_NOOP;
-}
+# Unused subroutines called by FreeRadius. Must leave them here.
+sub authorize { return RLM_MODULE_NOOP; }
+sub authenticate { return RLM_MODULE_NOOP; }
+sub preacct { return RLM_MODULE_NOOP; }
+sub accounting { return RLM_MODULE_NOOP; }
+sub checksimul { return RLM_MODULE_NOOP; }
+sub pre_proxy { return RLM_MODULE_NOOP; }
+sub post_proxy { return RLM_MODULE_NOOP; }
+sub xlat { return RLM_MODULE_NOOP; }
+sub detach { return RLM_MODULE_NOOP; }
 
 #==========================================================

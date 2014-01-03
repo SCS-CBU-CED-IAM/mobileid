@@ -3,8 +3,8 @@
 use utf8;
 use mobileid;
 
-#mobileid::trace_on();
-mobileid::trace_request_on();
+mobileid::trace_on();
+#mobileid::trace_request_on();
 
 select STDERR; $| = 1;
 select STDOUT; $| = 1;
