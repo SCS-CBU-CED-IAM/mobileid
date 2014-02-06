@@ -23,22 +23,22 @@ AP_ID=mid://dev.swisscom.ch
 # Error function
 error()
 {
-  [ "$VERBOSE" = "1" ] && echo "$@" >&2         # Verbose details
-  exit 1                                        # Exit
+  [ "$VERBOSE" = "1" -o "$DEBUG" = "1" ] && echo "$@" >&2
+  exit 1
 }
 
 # Check command line
 DEBUG=
 VERBOSE=
-while getopts "dv" opt; do			# Parse the options
+while getopts "dv" opt; do                      # Parse the options
   case $opt in
-    d) DEBUG=1 ;;				# Debug
-    v) VERBOSE=1 ;;				# Verbose
+    d) DEBUG=1 ;;                               # Debug
+    v) VERBOSE=1 ;;                             # Verbose
   esac
 done
 shift $((OPTIND-1))                             # Remove the options
 
-if [ $# -lt 1 ]; then				# Parse the rest of the arguments
+if [ $# -lt 1 ]; then                           # Parse the rest of the arguments
   echo "Usage: $0 <args> mobile"
   echo "  -v       - verbose output"
   echo "  -d       - debug mode"
@@ -49,7 +49,7 @@ if [ $# -lt 1 ]; then				# Parse the rest of the arguments
   exit 1
 fi
 
-PWD=$(dirname $0)				# Get the Path of the script
+PWD=$(dirname $0)                               # Get the Path of the script
 
 # Check the dependencies
 for cmd in curl sed date xmllint; do
@@ -58,21 +58,21 @@ for cmd in curl sed date xmllint; do
 done
 
 # Swisscom Mobile ID credentials
-CERT_FILE=$PWD/mycert.crt			# The certificate that is allowed to access the service
-CERT_KEY=$PWD/mycert.key			# The related key of the certificate
-AP_PWD=disabled					# AP Password must be present but is not validated
+CERT_FILE=$PWD/mycert.crt                       # The certificate that is allowed to access the service
+CERT_KEY=$PWD/mycert.key                        # The related key of the certificate
+AP_PWD=disabled                                 # AP Password must be present but is not validated
 
 # Swisscom SDCS elements
-CERT_CA=$PWD/swisscom-ca.crt                    # Bag file with the server/client issuing and root certifiates
+CERT_CA=$PWD/swisscom-ca.crt                    # Bag file with the server/client issuing and root certificates
 
 # Create temporary SOAP request
-RANDOM=$$					# Seeds the random number generator from PID of script
-AP_INSTANT=$(date +%Y-%m-%dT%H:%M:%S%:z)	# Define instant and transaction id
+RANDOM=$$                                       # Seeds the random number generator from PID of script
+AP_INSTANT=$(date +%Y-%m-%dT%H:%M:%S%:z)        # Define instant and transaction id
 AP_TRANSID=AP.TEST.$((RANDOM%89999+10000)).$((RANDOM%8999+1000))
-SOAP_REQ=$(mktemp /tmp/_tmp.XXXXXX)		# SOAP Request goes here
-SEND_TO=$1					# To who
-TIMEOUT=80					# Value of Timeout
-TIMEOUT_CON=90					# Timeout of the client connection
+SOAP_REQ=$(mktemp /tmp/_tmp.XXXXXX)             # SOAP Request goes here
+SEND_TO=$1                                      # To who
+TIMEOUT=80                                      # Value of Timeout
+TIMEOUT_CON=90                                  # Timeout of the client connection
 
 cat > $SOAP_REQ <<End
 <?xml version="1.0" encoding="UTF-8"?>
@@ -108,7 +108,7 @@ End
 # Call the service
 SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_ProfilePort
 SOAP_ACTION=#MSS_ProfileQuery
-CURL_OPTIONS="--sslv3 --silent"
+CURL_OPTIONS="--silent"
 http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
     --data "@${SOAP_REQ}" --header "Content-Type: text/xml; charset=utf-8" --header "SOAPAction: \"$SOAP_ACTION\"" \
     --cert $CERT_FILE --cacert $CERT_CA --key $CERT_KEY \
@@ -127,7 +127,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   RC=1                                                  # By default not present
   if [ "$RES_RC" = "100" ]; then RC=0 ; fi              # ACTIVE or REGISTERED user
 
-  if [ "$VERBOSE" = "1" ]; then				# Verbose details
+  if [ "$VERBOSE" = "1" ]; then                         # Verbose details
     echo "$SOAP_ACTION OK with following details and checks:"
     echo    " Status code    : $RES_RC with exit $RC"
     echo    " Status details : $RES_ST"
@@ -135,7 +135,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
  else
   CURL_ERR=$RC                                          # Keep related error
   RC=2                                                  # Force returned error code
-  if [ "$VERBOSE" = "1" ]; then				# Verbose details
+  if [ "$VERBOSE" = "1" ]; then                         # Verbose details
     [ $CURL_ERR != "0" ] && echo "curl failed with $CURL_ERR"   # Curl error
     if [ -s $SOAP_REQ.res ]; then                               # Response from the service
       RES_VALUE=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $SOAP_REQ.res)

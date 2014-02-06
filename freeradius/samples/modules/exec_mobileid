@@ -1,0 +1,13 @@
+#  Execute external mobileid-radius program
+#
+#  The RADIUS attributes from the user request will be placed into environment variables of the executed program.
+#  For Windows the RADIUS attributes must be passed over the command line as this seems not to be the case.
+
+exec mobileid {
+    program = /opt/mobileid/mobileid-radius.sh
+    # program = 'c:\\Programme\\mobileid\\mobileid-radius.bat %{Called-Station-Id} \"%{X-MSS-Message}\" %{X-MSS-Language}'
+    wait = yes
+    input_pairs = request
+    shell_escape = yes
+    timeout = 120
+}

@@ -6,7 +6,7 @@
 #
 # Change Log:
 #  1.0 08.05.2013: Initial version
-#  1.1 30.05.2013: Proper encoding for encryted receipts
+#  1.1 30.05.2013: Proper encoding for encrypted receipts
 #  1.2 03.05.2013: Conditional encoding for encrypted receipts based on content
 #  1.3 12.08.2013: Instant with timezone
 #  2.0 18.10.2013: Format the xml results in debug mode
@@ -29,22 +29,22 @@ AP_ID=mid://dev.swisscom.ch
 # Error function
 error()
 {
-  [ "$VERBOSE" = "1" ] && echo "$@" >&2         # Verbose details
+  [ "$VERBOSE" = "1" -o "$DEBUG" = "1" ] && echo "$@" >&2
   exit 1                                        # Exit
 }
 
 # Check command line
 DEBUG=
 VERBOSE=
-while getopts "dv" opt; do			# Parse the options
+while getopts "dv" opt; do                      # Parse the options
   case $opt in
-    d) DEBUG=1 ;;				# Debug
-    v) VERBOSE=1 ;;				# Verbose
+    d) DEBUG=1 ;;                               # Debug
+    v) VERBOSE=1 ;;                             # Verbose
   esac
 done
 shift $((OPTIND-1))                             # Remove the options
 
-if [ $# -lt 3 ]; then				# Parse the rest of the arguments
+if [ $# -lt 3 ]; then                           # Parse the rest of the arguments
   echo "Usage: $0 <args> mobile transID \"message\" <pubCert>"
   echo "  -v       - verbose output"
   echo "  -d       - debug mode"
@@ -59,7 +59,7 @@ if [ $# -lt 3 ]; then				# Parse the rest of the arguments
   exit 1
 fi
 
-PWD=$(dirname $0)				# Get the Path of the script
+PWD=$(dirname $0)                               # Get the Path of the script
 
 # Check the dependencies
 for cmd in curl openssl base64 sed date iconv xmllint xxd ; do
@@ -68,35 +68,35 @@ for cmd in curl openssl base64 sed date iconv xmllint xxd ; do
 done
 
 # Swisscom Mobile ID credentials
-CERT_FILE=$PWD/mycert.crt			# The certificate that is allowed to access the service
-CERT_KEY=$PWD/mycert.key			# The related key of the certificate
-AP_PWD=disabled					# AP Password must be present but is not validated
+CERT_FILE=$PWD/mycert.crt                       # The certificate that is allowed to access the service
+CERT_KEY=$PWD/mycert.key                        # The related key of the certificate
+AP_PWD=disabled                                 # AP Password must be present but is not validated
 
 # Swisscom SDCS elements
-CERT_CA=$PWD/swisscom-ca.crt                    # Bag file with the server/client issuing and root certifiates
+CERT_CA=$PWD/swisscom-ca.crt                    # Bag file with the server/client issuing and root certificates
 
 # Create temporary SOAP request
-RANDOM=$$					# Seeds the random number generator from PID of script
-AP_INSTANT=$(date +%Y-%m-%dT%H:%M:%S%:z)	# Define instant and transaction id
+RANDOM=$$                                       # Seeds the random number generator from PID of script
+AP_INSTANT=$(date +%Y-%m-%dT%H:%M:%S%:z)        # Define instant and transaction id
 AP_TRANSID=AP.TEST.$((RANDOM%89999+10000)).$((RANDOM%8999+1000))
-MSSP_TRANSID=$2					# Transaction ID of request
-SOAP_REQ=$(mktemp /tmp/_tmp.XXXXXX)		# SOAP Request goes here
-SEND_TO=$1					# To who
-TIMEOUT=5					# Value of Timeout
-TIMEOUT_CON=10					# Timeout of the client connection
-PUB_CERT=$4					# Public certificate for optional encryption
+MSSP_TRANSID=$2                                 # Transaction ID of request
+SOAP_REQ=$(mktemp /tmp/_tmp.XXXXXX)             # SOAP Request goes here
+SEND_TO=$1                                      # To who
+TIMEOUT=5                                       # Value of Timeout
+TIMEOUT_CON=10                                  # Timeout of the client connection
+PUB_CERT=$4                                     # Public certificate for optional encryption
 
 # Define the message and format
 MSG_TYPE='MimeType="text/plain" Encoding="UTF-8"'
 MSG_TXT=$3
-if [ "$PUB_CERT" != "" ]; then			# Message to be encrypted
+if [ "$PUB_CERT" != "" ]; then                  # Message to be encrypted
   [ -r "${PUB_CERT}" ] || error "Public certificate for encoding the message ($PUB_CERT) missing or not readable"
   MSG_TYPE='MimeType="application/alauda-rsamessage" Encoding="BASE64"'
   MSG_ASCI=$(echo -n $MSG_TXT | iconv -s -f UTF-8 -t US-ASCII//TRANSLIT)
-  if [ "$MSG_TXT" = "$MSG_ASCI" ]; then		# Message does not contain special chars
+  if [ "$MSG_TXT" = "$MSG_ASCI" ]; then         # Message does not contain special chars
     echo -n "$MSG_TXT" | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
     [ -f "$SOAP_REQ.msg" ] && MSG_TXT=$(base64 $SOAP_REQ.msg)
-  else							# -> GSM11.14 STK commands do not support UTF8, either UCS-2 or GSMDA
+  else                                          # -> GSM11.14 STK commands do not support UTF8, either UCS-2 or GSMDA
     # Encrypt UCS-2 prefixed with Hex 80 over cmd as vars are not properly encoding
     (echo 80 | xxd -r -p ; echo -n "$MSG_TXT" | iconv -s -f UTF-8 -t UCS-2BE) | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
     [ -f "$SOAP_REQ.msg" ] && MSG_TXT=$(base64 $SOAP_REQ.msg)
@@ -138,7 +138,7 @@ End
 # Call the service
 SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_ReceiptPort
 SOAP_ACTION=#MSS_Receipt
-CURL_OPTIONS="--sslv3 --silent"
+CURL_OPTIONS="--silent"
 http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
     --data "@${SOAP_REQ}" --header "Content-Type: text/xml; charset=utf-8" --header "SOAPAction: \"$SOAP_ACTION\"" \
     --cert $CERT_FILE --cacert $CERT_CA --key $CERT_KEY \
@@ -153,7 +153,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   RES_RC=$(sed -n -e 's/.*<mss:StatusCode Value="\(.*\)"\/>.*/\1/p' $SOAP_REQ.res)
   RES_ST=$(sed -n -e 's/.*<mss:StatusMessage>\(.*\)<\/mss:StatusMessage>.*/\1/p' $SOAP_REQ.res)
 
-  if [ "$VERBOSE" = "1" ]; then				# Verbose details
+  if [ "$VERBOSE" = "1" ]; then                         # Verbose details
     echo "$SOAP_ACTION OK with following details and checks:"
     echo    " MSSP TransID   : $MSSP_TRANSID"
     echo    " Status code    : $RES_RC with exit $RC"
@@ -162,7 +162,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
  else
   CURL_ERR=$RC                                          # Keep related error
   RC=2                                                  # Force returned error code
-  if [ "$VERBOSE" = "1" ]; then				# Verbose details
+  if [ "$VERBOSE" = "1" ]; then                         # Verbose details
     [ $CURL_ERR != "0" ] && echo "curl failed with $CURL_ERR"   # Curl error
     if [ -s $SOAP_REQ.res ]; then                               # Response from the service
       RES_VALUE=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $SOAP_REQ.res)

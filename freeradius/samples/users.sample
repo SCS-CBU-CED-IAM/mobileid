@@ -1,0 +1,14 @@
+# Set default language to English
+DEFAULT         X-MSS-Language := en
+                Fall-Through = Yes
+
+# Configuration for specific users
+"user1"         Called-Station-Id := +41791234567, Auth-Type := Accept
+"user2"         Cleartext-Password := "pwduser2", Called-Station-Id := +41791234567, X-MSS-Language := de
+"0791234567"    Cleartext-Password := "pwduser3", Called-Station-Id := +41791234567
+
+# This if you want to allow +4179xxxxxxx as implicit User-Name
+#  with a generic password for all users
+#DEFAULT	Cleartext-Password := "default"
+#  or without password validation at all
+DEFAULT	Auth-Type := Accept

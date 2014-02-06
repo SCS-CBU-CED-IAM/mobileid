@@ -1,11 +1,27 @@
 #!/bin/sh
-# mobileid-radius.sh - 1.1
+# mobileid-radius.sh - 1.2
 #
-# Helper script called from freeradius to invoke mobile-sign with correct parameters
+# rlm_exec script that can be called by freeradius as a module.
+#
+# It will call mobileid-sign.sh from the same folder with the appropriate
+# parameters out of the environment variables:
+#  CALLED_STATION_ID: contains the Mobile ID number
+#  X_MSS_MESSAGE: contains the related Mobile ID message
+#  X_MSS_LANGUAGE: contains the related Mobile ID user language
+#
+# Sample rlm_exec module definition: /etc/freeradius/modules/exec_mobileid
+# exec mobileid {
+#	program = "/opt/mobileid/mobileid-radius.sh"
+#	wait = yes
+#	timeout = 120
+#	input_pairs = request
+#	shell_escape = yes
+# }
 #
 # Change Log:
 #  1.0 13.10.2012: Initial version.
 #  1.1 19.11.2013: Update for the exit code
+#  1.2 30.12.2013: Updated information
 #
 # Each of the attributes in the request will be available in an
 # environment variable.  The name of the variable depends on the
