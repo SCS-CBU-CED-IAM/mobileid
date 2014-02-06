@@ -121,33 +121,17 @@ namespace Swisscom
         InitializeApplicationProviderInfos();
         InitializeSoapData();
         PostXmlToWebService();
-        return VerboseDetails();
+        if (rc==0) {
+          return VerboseDetails();
+        }
+        else {
+          return friendly_error_msg;
+        }
       }
       catch (Exception ex)
       {
         return DisplayException(ex);
       }
-    }
-    #endregion
-
-    #region Debug
-    public string Debug()
-    {
-      return "Hello from SwisscomMobileID : Timestamp ["+ DateTime.Now +"]";
-    }
-    #endregion
-
-    #region DebugParam
-    public string DebugParam()
-    {      
-      StringBuilder sb = new StringBuilder();
-      sb.Append("Verbose mode ... : [" + verbose.ToString() + "]" + CRLF);
-      sb.Append("Mobile number ...: [" + phoneNumber + "]" + CRLF);
-      sb.Append("Message .........: [" + message + "]" + CRLF);
-      sb.Append("Language ........: [" + language + "]" + CRLF);
-      sb.Append("Working folder ..: [" + workingFolder + "]" + CRLF);
-
-      return sb.ToString();
     }
     #endregion
 
@@ -300,7 +284,7 @@ namespace Swisscom
       {
         rc = RETURN_FAIL; // Error
         friendly_error_msg = "Web service error. Check XML server response for further details";
-        using (WebResponse response = ex.Response)
+ 	using (WebResponse response = ex.Response)
         {
           HttpWebResponse httpResponse = (HttpWebResponse)response;
 
@@ -308,7 +292,36 @@ namespace Swisscom
           {
             // XML server response
             soap_xml_response = new StreamReader(data).ReadToEnd();
-            throw ex;
+            if (debug) { Console.WriteLine("Response XML: {0}", soap_xml_response ); }
+            XmlDocument doc = new XmlDocument();
+            doc.XmlResolver = null;
+            doc.Load(new StringReader(soap_xml_response));
+            XmlNode aNode = null;
+            // Namespace manager
+            XmlNamespaceManager manager = new XmlNamespaceManager(doc.NameTable);
+            manager.AddNamespace("soapenv", "http://www.w3.org/2003/05/soap-envelope");
+            manager.AddNamespace("mss", "http://uri.etsi.org/TS102204/v1.1.2#");
+            // Value of Detail in XML
+            aNode = doc.SelectSingleNode("/soapenv:Envelope/soapenv:Body/soapenv:Fault/soapenv:Reason/soapenv:Text",manager);
+            friendly_error_msg = aNode.InnerText;
+            switch(friendly_error_msg.ToUpper().Trim()){
+            	case "UNKNOWN_CLIENT":
+                rc=RETURN_NOTFOUND; // user not found
+            		break;
+            	case "USER_CANCEL":
+                rc=RETURN_REJECT;   // mid request rejected/aborted
+            		break;
+            	case "PIN_NR_BLOCKED":
+            	case "CARD_BLOCKED":
+            	case "REVOKED_CERTIFICATE":
+                rc=RETURN_BLOCKED;  // user or token blocked
+            		break;
+            	default:
+                throw;
+            	  break;
+            }
+            aNode = doc.SelectSingleNode("/soapenv:Envelope/soapenv:Body/soapenv:Fault/soapenv:Detail",manager);
+            friendly_error_msg = friendly_error_msg+": "+aNode.InnerText;
           }
         }
       }
