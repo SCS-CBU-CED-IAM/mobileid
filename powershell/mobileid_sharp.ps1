@@ -220,7 +220,7 @@ namespace Swisscom
     private void PostXmlToWebService()
     {
       friendly_error_msg = "Error reading certficate " + cert_filePfx;
-      X509Certificate certificatePFX = X509Certificate.CreateFromCertFile(cert_filePfx);
+      X509Certificate certificatePFX = new X509Certificate(cert_filePfx,"",X509KeyStorageFlags.MachineKeySet);
       friendly_error_msg = "Error reading certficate " + cert_ca;
       X509Certificate certificateCA = X509Certificate.CreateFromCertFile(cert_ca);
       friendly_error_msg = string.Empty;
