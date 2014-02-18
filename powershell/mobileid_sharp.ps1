@@ -108,14 +108,9 @@ namespace Swisscom
       try
       {
         friendly_error_msg = string.Empty;
-/*
         proxy_username =     null;
         proxy_password =     null;
         proxy_uri =          null; // e.g. "10.185.32.40:8079"
-*/
-        proxy_username =     null;
-        proxy_password =     null;
-        proxy_uri =          "10.185.32.40:8079"; // e.g. "10.185.32.40:8079"
 
         InitializeCertificateLocation();
         InitializeApplicationProviderInfos();
