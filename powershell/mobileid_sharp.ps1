@@ -61,6 +61,7 @@ namespace Swisscom
     private string language = string.Empty;
 
     private string cert_filePfx = string.Empty;
+    private string cert_filePwd = "";   // set this variable to your P12 password
     private string ap_id = string.Empty;
 
     private string ap_pwd = string.Empty;
@@ -215,7 +216,7 @@ namespace Swisscom
     private void PostXmlToWebService()
     {
       friendly_error_msg = "Error reading certficate " + cert_filePfx;
-      X509Certificate certificatePFX = new X509Certificate(cert_filePfx,"",X509KeyStorageFlags.MachineKeySet);
+      X509Certificate certificatePFX = new X509Certificate(cert_filePfx,cert_filePwd,X509KeyStorageFlags.MachineKeySet);
       friendly_error_msg = "Error reading certficate " + cert_ca;
       X509Certificate certificateCA = X509Certificate.CreateFromCertFile(cert_ca);
       friendly_error_msg = string.Empty;
