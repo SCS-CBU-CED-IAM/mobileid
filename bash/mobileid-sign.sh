@@ -195,8 +195,13 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   RES_CERT_START=$(openssl x509 -startdate -noout -in $TMP.sig.certs.level0.pem)
   RES_CERT_END=$(openssl x509 -enddate -noout -in $TMP.sig.certs.level0.pem)
 
-  # Get OCSP uri from the signers certificate and verify the revocation status
+  # Get CRL uri from the signers certificate
+  CRL_URL=$(openssl x509 -in $TMP.sig.certs.level0.pem -text -noout | grep crl)
+  CRL_URL=$(echo "$CRL_URL" | sed -e 's/URI://')
+
+  # Get OCSP uri from the signers certificate
   OCSP_URL=$(openssl x509 -in $TMP.sig.certs.level0.pem -ocsp_uri -noout)
+
   # Find the proper issuer certificate in the list
   ISSUER=
   for i in $TMP.sig.certs.level?.pem; do
@@ -209,21 +214,44 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
 
   # Verify the certificate and revocation status over CRL
   RES_CERT_STATUS_CRL="Not yet implemented"
+  if [ -n "$CRL_URL" ]; then
+    # Get the CRL and convert from der to pem
+    curl $CURL_OPTIONS --connect-timeout $TIMEOUT_CON $CRL_URL | openssl crl -inform DER  -out $TMP.crl.pem > /dev/null 2>&1
+    # Add the chain to the CRL
+    for i in $TMP.sig.certs.level?.pem; do
+      if [ -s "$i" ]; then
+        cat $i >> $TMP.crl.pem
+      fi
+    done
+    # Verify the revocation status over CRL
+    openssl verify -CAfile $TMP.crl.pem -crl_check $TMP.sig.certs.level0.pem > $TMP.sig.cert.checkcrl
+    CRL_ERR=$?                                          # Keep related errorlevel
+    if [ "$CRL_ERR" = "0" ]; then                       # Revocation check completed
+      RES_CERT_STATUS_CRL=$(sed -n -e 's/.*.sig.certs.level0.pem: //p' $TMP.sig.cert.checkcrl)
+     else                                               # -> check not ok
+      RES_CERT_STATUS_CRL"error, status $CRL_ERR"           # Details for verification
+    fi
+   else
+    RES_CERT_STATUS_CRL="No CRL information found in the signers certificate"
+  fi
+  if [ "$RES_CERT_STATUS_CRL" = "revoked" ]; then       # Force Revoked certificate
+    RES_ID=501
+  fi
 
   # Verify the revocation status over OCSP
   # -no_cert_verify: don't verify the OCSP response signers certificate at all
   if [ -n "$OCSP_URL" -a -n "$ISSUER" ]; then
-    openssl ocsp -CAfile $CERT_CA -issuer $ISSUER -nonce -out $TMP.sig.cert.check -url $OCSP_URL -cert $TMP.sig.certs.level0.pem -no_cert_verify > /dev/null 2>&1
-    OCSP_ERR=$?                                   # Keep related errorlevel
-    if [ "$OCSP_ERR" = "0" ]; then                # Revocation check completed
-      RES_CERT_STATUS_OCSP=$(sed -n -e 's/.*.sig.certs.level0.pem: //p' $TMP.sig.cert.check)
-     else                                         # -> check not ok
-      RES_CERT_STATUS_OCSP="error, status $OCSP_ERR"    # Details for OCSP verification
+    openssl ocsp -CAfile $CERT_CA -issuer $ISSUER -nonce -out $TMP.sig.cert.checkocsp -url $OCSP_URL -cert $TMP.sig.certs.level0.pem -no_cert_verify > /dev/null 2>&1
+    OCSP_ERR=$?                                         # Keep related errorlevel
+    if [ "$OCSP_ERR" = "0" ]; then                      # Revocation check completed
+      RES_CERT_STATUS_OCSP=$(sed -n -e 's/.*.sig.certs.level0.pem: //p' $TMP.sig.cert.checkocsp)
+     else                                               # -> check not ok
+      RES_CERT_STATUS_OCSP="error, status $OCSP_ERR"        # Details for verification
     fi
    else
     RES_CERT_STATUS_OCSP="No OCSP information found in the signers certificate"
   fi
-  if [ "$RES_CERT_STATUS_OCSP" = "revoked" ]; then   # Force Revoked certificate
+  if [ "$RES_CERT_STATUS_OCSP" = "revoked" ]; then      # Force Revoked certificate
     RES_ID=501
   fi
 
@@ -306,7 +334,9 @@ if [ "$DEBUG" = "" ]; then
   [ -f "$TMP.sig.der" ] && rm $TMP.sig.der
   [ -f "$TMP.sig.cert.pem" ] && rm $TMP.sig.cert.pem
   for i in $TMP.sig.certs.level?.pem; do [ -f "$i" ] && rm $i; done
-  [ -f "$TMP.sig.cert.check" ] && rm $TMP.sig.cert.check
+  [ -f "$TMP.crl.pem" ] && rm $TMP.crl.pem
+  [ -f "$TMP.sig.cert.checkcrl" ] && rm $TMP.sig.cert.checkcrl
+  [ -f "$TMP.sig.cert.checkocsp" ] && rm $TMP.sig.cert.checkocsp
   [ -f "$TMP.sig.txt" ] && rm $TMP.sig.txt
 fi
 
