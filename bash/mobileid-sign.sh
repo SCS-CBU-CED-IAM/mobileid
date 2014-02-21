@@ -1,5 +1,5 @@
 #!/bin/sh
-# mobileid-sign.sh - 2.5
+# mobileid-sign.sh - 2.6
 #
 # Generic script using curl to invoke Swisscom Mobile ID service.
 # Dependencies: curl, openssl, base64, sed, date, xmllint
@@ -27,6 +27,8 @@
 #  2.3 20.11.2013: Improved signature response status code checks
 #  2.4 25.11.2013: Removal of time to sign implementation
 #  2.5 12.12.2013: Get the OCSP uri out of the signers certificate
+#  2.6 21.02.2014: Dynamic issuer for OCSP verification
+#                  Additional CRL verification
 
 ######################################################################
 # User configurable options
@@ -79,7 +81,7 @@ fi
 PWD=$(dirname $0)                               # Get the Path of the script
 
 # Check the dependencies
-for cmd in curl openssl base64 sed date xmllint; do
+for cmd in curl openssl base64 sed date xmllint awk; do
   hash $cmd &> /dev/null
   if [ $? -eq 1 ]; then error "Dependency error: '$cmd' not found" ; fi
 done
@@ -98,14 +100,14 @@ CERT_CA=$PWD/swisscom-ca.crt                    # Bag file with the server/clien
 RANDOM=$$                                       # Seeds the random number generator from PID of script
 AP_INSTANT=$(date +%Y-%m-%dT%H:%M:%S%:z)        # Define instant and transaction id
 AP_TRANSID=AP.TEST.$((RANDOM%89999+10000)).$((RANDOM%8999+1000))
-SOAP_REQ=$(mktemp /tmp/_tmp.XXXXXX)             # SOAP Request goes here
+TMP=$(mktemp /tmp/_tmp.XXXXXX)                  # Request goes here
 SEND_TO=$1                                      # To who
 SEND_MSG=$2                                     # What DataToBeSigned (DTBS)
 USERLANG=$3                                     # User language
 TIMEOUT=80                                      # Value of Timeout
 TIMEOUT_CON=90                                  # Timeout of the client connection
 
-cat > $SOAP_REQ <<End
+cat > $TMP.req <<End
 <?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
@@ -147,18 +149,18 @@ cat > $SOAP_REQ <<End
 End
 
 # Check existence of needed files
-[ -r "${CERT_CA}" ]   || error "CA certificate/chain file ($CERT_CA) missing or not readable"
-[ -r "${CERT_KEY}" ]  || error "SSL key file ($CERT_KEY) missing or not readable"
-[ -r "${CERT_FILE}" ] || error "SSL certificate file ($CERT_FILE) missing or not readable"
+[ -r "$CERT_CA" ]   || error "CA certificate/chain file ($CERT_CA) missing or not readable"
+[ -r "$CERT_KEY" ]  || error "SSL key file ($CERT_KEY) missing or not readable"
+[ -r "$CERT_FILE" ] || error "SSL certificate file ($CERT_FILE) missing or not readable"
 
 # Call the service
 SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_SignaturePort
 SOAP_ACTION=#MSS_Signature
 CURL_OPTIONS="--silent"
-http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
-    --data "@${SOAP_REQ}" --header "Content-Type: text/xml; charset=utf-8" --header "SOAPAction: \"$SOAP_ACTION\"" \
+http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS --data @$TMP.req \
+    --header "Content-Type: text/xml; charset=utf-8" --header "SOAPAction: \"$SOAP_ACTION\"" \
     --cert $CERT_FILE --cacert $CERT_CA --key $CERT_KEY \
-    --output $SOAP_REQ.res --trace-ascii $SOAP_REQ.log \
+    --output $TMP.rsp --trace-ascii $TMP.curl.log \
     --connect-timeout $TIMEOUT_CON \
     $SOAP_URL)
 
@@ -166,42 +168,72 @@ http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
 RC=$?
 if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   # Parse the response xml
-  RES_TRANSID=$(sed -n -e 's/.*AP_TransID="\(.*\)" AP_.*/\1/p' $SOAP_REQ.res)
-  RES_MSISDNID=$(sed -n -e 's/.*<mss:MSISDN>\(.*\)<\/mss:MSISDN>.*/\1/p' $SOAP_REQ.res)
-  RES_RC=$(sed -n -e 's/.*<mss:StatusCode Value="\(.*\)"\/>.*/\1/p' $SOAP_REQ.res)
-  RES_ST=$(sed -n -e 's/.*<mss:StatusMessage>\(.*\)<\/mss:StatusMessage>.*/\1/p' $SOAP_REQ.res)
-           sed -n -e 's/.*<mss:Base64Signature>\(.*\)<\/mss:Base64Signature>.*/\1/p' $SOAP_REQ.res > $SOAP_REQ.sig
-  RES_MSSPID=$(sed -n -e 's/.*MSSP_TransID="\(.*\)" xmlns:mss.*/\1/p' $SOAP_REQ.res)
+  RES_TRANSID=$(sed -n -e 's/.*AP_TransID="\(.*\)" AP_.*/\1/p' $TMP.rsp)
+  RES_MSISDNID=$(sed -n -e 's/.*<mss:MSISDN>\(.*\)<\/mss:MSISDN>.*/\1/p' $TMP.rsp)
+  RES_RC=$(sed -n -e 's/.*<mss:StatusCode Value="\(.*\)"\/>.*/\1/p' $TMP.rsp)
+  RES_ST=$(sed -n -e 's/.*<mss:StatusMessage>\(.*\)<\/mss:StatusMessage>.*/\1/p' $TMP.rsp)
+           sed -n -e 's/.*<mss:Base64Signature>\(.*\)<\/mss:Base64Signature>.*/\1/p' $TMP.rsp > $TMP.sig.base64
+  RES_MSSPID=$(sed -n -e 's/.*MSSP_TransID="\(.*\)" xmlns:mss.*/\1/p' $TMP.rsp)
 
-  [ -s "${SOAP_REQ}.sig" ] || error "No Base64Signature found"
+  [ -s "$TMP.sig.base64" ] || error "No Base64Signature found"
   # Decode the signature
-  base64 --decode  $SOAP_REQ.sig > $SOAP_REQ.sig.decoded
-  [ -s "${SOAP_REQ}.sig.decoded" ] || error "Unable to decode Base64Signature"
+  base64 --decode  $TMP.sig.base64 > $TMP.sig.der
+  [ -s "$TMP.sig.der" ] || error "Unable to decode Base64Signature"
 
   # Extract the signers certificate
-  openssl pkcs7 -inform der -in $SOAP_REQ.sig.decoded -out $SOAP_REQ.sig.cert -print_certs
-  [ -s "${SOAP_REQ}.sig.cert" ] || error "Unable to extract signers certificate from siganture"
-  RES_ID_CERT=$(openssl x509 -subject -noout -in $SOAP_REQ.sig.cert)
+  openssl pkcs7 -inform der -in $TMP.sig.der -out $TMP.sig.cert.pem -print_certs
+  [ -s "$TMP.sig.cert.pem" ] || error "Unable to extract signers certificate from signature"
+  # Add the CA file as chain until provided by the response
+  cat $CERT_CA >> $TMP.sig.cert.pem
+
+  # Split the certificate list into separate files
+  awk -v tmp=$TMP.sig.certs.level -v c=-1 '/-----BEGIN CERTIFICATE-----/{inc=1;c++} inc {print > (tmp c ".pem")}/---END CERTIFICATE-----/{inc=0}' $TMP.sig.cert.pem
+  # Signers certificate is in level0
+  [ -s "$TMP.sig.certs.level0.pem" ] || error "Unable to extract signers certificate from the list"
+  RES_CERT_SUBJ=$(openssl x509 -subject -nameopt utf8 -nameopt sep_comma_plus -noout -in $TMP.sig.certs.level0.pem)
+  RES_CERT_ISSUER=$(openssl x509 -issuer -nameopt utf8 -nameopt sep_comma_plus -noout -in $TMP.sig.certs.level0.pem)
+  RES_CERT_START=$(openssl x509 -startdate -noout -in $TMP.sig.certs.level0.pem)
+  RES_CERT_END=$(openssl x509 -enddate -noout -in $TMP.sig.certs.level0.pem)
 
   # Get OCSP uri from the signers certificate and verify the revocation status
-  OCSP_URL=$(openssl x509 -in $SOAP_REQ.sig.cert -ocsp_uri -noout)
-  openssl ocsp -CAfile $CERT_CA -issuer $CERT_CA -nonce -out $SOAP_REQ.sig.cert.check -url $OCSP_URL -cert $SOAP_REQ.sig.cert > /dev/null 2>&1
-  if [ "$?" = "0" ]; then                               # Revocation check completed
-    RES_ID_CERT_STATUS=$(sed -n -e 's/.*.sig.cert: //p' $SOAP_REQ.sig.cert.check)
-    if [ "$RES_ID_CERT_STATUS" = "revoked" ]; then              # Force Revoked certificate
-      RES_ID=501
+  OCSP_URL=$(openssl x509 -in $TMP.sig.certs.level0.pem -ocsp_uri -noout)
+  # Find the proper issuer certificate in the list
+  ISSUER=
+  for i in $TMP.sig.certs.level?.pem; do
+    if [ -s "$i" ]; then
+      RES_TMP=$(openssl x509 -subject -nameopt utf8 -nameopt sep_comma_plus -noout -in $i)
+      RES_TMP=$(echo "$RES_TMP" | sed -e 's/subject= /issuer= /')
+      if [ "$RES_TMP" = "$RES_CERT_ISSUER" ]; then ISSUER=$i; fi
     fi
-   else                                                 # -> check not ok
-    RES_ID_CERT_STATUS="failed, status $?"
+  done
+
+  # Verify the certificate and revocation status over CRL
+  RES_CERT_STATUS_CRL="Not yet implemented"
+
+  # Verify the revocation status over OCSP
+  # -no_cert_verify: don't verify the OCSP response signers certificate at all
+  if [ -n "$OCSP_URL" -a -n "$ISSUER" ]; then
+    openssl ocsp -CAfile $CERT_CA -issuer $ISSUER -nonce -out $TMP.sig.cert.check -url $OCSP_URL -cert $TMP.sig.certs.level0.pem -no_cert_verify > /dev/null 2>&1
+    OCSP_ERR=$?                                   # Keep related errorlevel
+    if [ "$OCSP_ERR" = "0" ]; then                # Revocation check completed
+      RES_CERT_STATUS_OCSP=$(sed -n -e 's/.*.sig.certs.level0.pem: //p' $TMP.sig.cert.check)
+     else                                         # -> check not ok
+      RES_CERT_STATUS_OCSP="error, status $OCSP_ERR"    # Details for OCSP verification
+    fi
+   else
+    RES_CERT_STATUS_OCSP="No OCSP information found in the signers certificate"
+  fi
+  if [ "$RES_CERT_STATUS_OCSP" = "revoked" ]; then   # Force Revoked certificate
+    RES_ID=501
   fi
 
   # Extract the PKCS7 and validate the signature
-  openssl smime -verify -inform DER -in $SOAP_REQ.sig.decoded -out $SOAP_REQ.sig.txt -CAfile $CERT_CA -purpose sslclient > /dev/null 2>&1
+  openssl cms -verify -inform der -in $TMP.sig.der -out $TMP.sig.txt -CAfile $CERT_CA -purpose sslclient > /dev/null 2>&1
   if [ "$?" = "0" ]; then                               # Decoding without any error
-    RES_MSG=$(cat $SOAP_REQ.sig.txt)                            # Decoded message is in this file
+    RES_MSG=$(cat $TMP.sig.txt)                            # Decoded message is in this file
     RES_MSG_STATUS="success"                                    # Details of verification
    else                                                 # -> error in decoding
-    RES_MSG=$(cat $SOAP_REQ.sig.txt)                            # Decoded message is in this file
+    RES_MSG=$(cat $TMP.sig.txt)                            # Decoded message is in this file
     RES_MSG_STATUS="failed, status $?"                          # Details of verification
     RES_ID=503                                                  # Force the Invalid signature status
   fi
@@ -221,7 +253,11 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
     echo    "    MSSP TransID   : $RES_MSSPID"
     echo -n " 2) Signed by      : $RES_MSISDNID"
       if [ "$RES_MSISDNID" = "$SEND_TO" ] ; then echo " -> same as in request" ; else echo " -> different as in request!" ; fi
-    echo    " 3) Signer         : $RES_ID_CERT -> OCSP check: $RES_ID_CERT_STATUS"
+    echo    " 3) Signer         : $RES_CERT_SUBJ"
+    echo    "                     $RES_CERT_ISSUER"
+    echo    "                     validity= $RES_CERT_START $RES_CERT_END"
+    echo    "                     CRL check= $RES_CERT_STATUS_CRL"
+    echo    "                     OCSP check= $RES_CERT_STATUS_OCSP"
     echo -n " 4) Signed Data    : $RES_MSG -> Decode and verify: $RES_MSG_STATUS and "
       if [ "$RES_MSG" = "$SEND_MSG" ] ; then echo "same as in request" ; else echo "different as in request!" ; fi
     echo    " 5) Status code    : $RES_RC with exit $RC"
@@ -232,10 +268,10 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   RC=2                                                  # Force returned error code
   if [ "$VERBOSE" = "1" ]; then                         # Verbose details
     [ $CURL_ERR != "0" ] && echo "curl failed with $CURL_ERR"   # Curl error
-    if [ -s "${SOAP_REQ}.res" ]; then                           # Response from the service
-      RES_VALUE=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $SOAP_REQ.res)
-      RES_REASON=$(sed -n -e 's/.*<soapenv:Text.*>\(.*\)<\/soapenv:Text>.*/\1/p' $SOAP_REQ.res)
-      RES_DETAIL=$(sed -n -e 's/.*<ns1:detail.*>\(.*\)<\/ns1:detail>.*/\1/p' $SOAP_REQ.res)
+    if [ -s "$TMP.rsp" ]; then                              # Response from the service
+      RES_VALUE=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $TMP.rsp)
+      RES_REASON=$(sed -n -e 's/.*<soapenv:Text.*>\(.*\)<\/soapenv:Text>.*/\1/p' $TMP.rsp)
+      RES_DETAIL=$(sed -n -e 's/.*<ns1:detail.*>\(.*\)<\/ns1:detail>.*/\1/p' $TMP.rsp)
       echo "$SOAP_ACTION FAILED on $SEND_TO with $RES_VALUE ($RES_REASON: $RES_DETAIL) and exit $RC"
     fi
   fi
@@ -243,33 +279,35 @@ fi
 
 # Debug details
 if [ "$DEBUG" != "" ]; then
-  [ -f "$SOAP_REQ" ] && echo ">>> $SOAP_REQ <<<" && cat $SOAP_REQ | xmllint --format -
-  [ -f "$SOAP_REQ.log" ] && echo ">>> $SOAP_REQ.log <<<" && cat $SOAP_REQ.log | grep '==\|error'
-  [ -f "$SOAP_REQ.res" ] && echo ">>> $SOAP_REQ.res <<<" && cat $SOAP_REQ.res | xmllint --format -
+  [ -f "$TMP" ] && echo ">>> $TMP <<<" && cat $TMP | xmllint --format -
+  [ -f "$TMP.curl.log" ] && echo ">>> $TMP.curl.log <<<" && cat $TMP.curl.log | grep '==\|error'
+  [ -f "$TMP.rsp" ] && echo ">>> $TMP.rsp <<<" && cat $TMP.rsp | xmllint --format -
 fi
 
 # Need a receipt?
-if [ "$RC" -lt "2" -a "$4" != "" ]; then                        # Request ok and need to send a reciept
+if [ "$RC" -lt "2" -a "$4" != "" ]; then        # Request ok and need to send a reciept
   OPTS=
-  if [ "$VERBOSE" = "1" ]; then OPTS="$OPTS -v" ; fi            # Keep the options
+  if [ "$VERBOSE" = "1" ]; then OPTS="$OPTS -v" ; fi    # Keep the options
   if [ "$DEBUG"   = "1" ]; then OPTS="$OPTS -d" ; fi
-  if [ "$ENCRYPT" = "1" ]; then                                 # Encrypted?
-    $PWD/mobileid-receipt.sh $OPTS $SEND_TO $RES_MSSPID "$4" $SOAP_REQ.sig.cert
-   else                                                         # -> normal
+  if [ "$ENCRYPT" = "1" ]; then                         # Encrypted?
+    $PWD/mobileid-receipt.sh $OPTS $SEND_TO $RES_MSSPID "$4" $TMP.sig.certs.level0.pem
+   else                                                 # -> normal
     $PWD/mobileid-receipt.sh $OPTS $SEND_TO $RES_MSSPID "$4"
   fi
 fi
 
 # Cleanups if not DEBUG mode
 if [ "$DEBUG" = "" ]; then
-  [ -f "$SOAP_REQ" ] && rm $SOAP_REQ
-  [ -f "$SOAP_REQ.log" ] && rm $SOAP_REQ.log
-  [ -f "$SOAP_REQ.res" ] && rm $SOAP_REQ.res
-  [ -f "$SOAP_REQ.sig" ] && rm $SOAP_REQ.sig
-  [ -f "$SOAP_REQ.sig.decoded" ] && rm $SOAP_REQ.sig.decoded
-  [ -f "$SOAP_REQ.sig.cert" ] && rm $SOAP_REQ.sig.cert
-  [ -f "$SOAP_REQ.sig.cert.check" ] && rm $SOAP_REQ.sig.cert.check
-  [ -f "$SOAP_REQ.sig.txt" ] && rm $SOAP_REQ.sig.txt
+  [ -f "$TMP" ] && rm $TMP
+  [ -f "$TMP.req" ] && rm $TMP.req
+  [ -f "$TMP.curl.log" ] && rm $TMP.curl.log
+  [ -f "$TMP.rsp" ] && rm $TMP.rsp
+  [ -f "$TMP.sig.base64" ] && rm $TMP.sig.base64
+  [ -f "$TMP.sig.der" ] && rm $TMP.sig.der
+  [ -f "$TMP.sig.cert.pem" ] && rm $TMP.sig.cert.pem
+  for i in $TMP.sig.certs.level?.pem; do [ -f "$i" ] && rm $i; done
+  [ -f "$TMP.sig.cert.check" ] && rm $TMP.sig.cert.check
+  [ -f "$TMP.sig.txt" ] && rm $TMP.sig.txt
 fi
 
 exit $RC
