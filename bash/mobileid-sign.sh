@@ -307,7 +307,7 @@ fi
 
 # Debug details
 if [ "$DEBUG" != "" ]; then
-  [ -f "$TMP" ] && echo ">>> $TMP <<<" && cat $TMP | xmllint --format -
+  [ -f "$TMP.req" ] && echo ">>> $TMP.req <<<" && cat $TMP.req | xmllint --format -
   [ -f "$TMP.curl.log" ] && echo ">>> $TMP.curl.log <<<" && cat $TMP.curl.log | grep '==\|error'
   [ -f "$TMP.rsp" ] && echo ">>> $TMP.rsp <<<" && cat $TMP.rsp | xmllint --format -
 fi
