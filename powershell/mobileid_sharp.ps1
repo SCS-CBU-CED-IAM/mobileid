@@ -216,7 +216,7 @@ namespace Swisscom
     private void PostXmlToWebService()
     {
       friendly_error_msg = "Error reading certficate " + cert_filePfx;
-      X509Certificate certificatePFX = new X509Certificate(cert_filePfx,cert_filePwd,X509KeyStorageFlags.MachineKeySet);
+      X509Certificate2 certificatePFX = new X509Certificate2(cert_filePfx,cert_filePwd,X509KeyStorageFlags.MachineKeySet);
       friendly_error_msg = "Error reading certficate " + cert_ca;
       X509Certificate certificateCA = X509Certificate.CreateFromCertFile(cert_ca);
       friendly_error_msg = string.Empty;
@@ -247,6 +247,9 @@ namespace Swisscom
         request.Headers.Add("SOAPAction", "#MSS_Signature");
 
         string strReq = @"<?xml version=""1.0"" encoding=""UTF-8""?>" + soap_xml_post;
+        
+        if (debug) { Console.WriteLine("Request XML: {0}", strReq ); }
+        
         UTF8Encoding encoding = new UTF8Encoding();
         byte[] postBytes = encoding.GetBytes(strReq);
 
