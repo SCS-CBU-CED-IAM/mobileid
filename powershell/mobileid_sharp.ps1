@@ -276,6 +276,7 @@ namespace Swisscom
         using (StreamReader sr = new StreamReader(response.GetResponseStream(), responseEncoding))
         {
           result = sr.ReadToEnd();
+          if (debug) { Console.WriteLine("Response XML: {0}", result ); }
           ParseResponse(result);
         }
       }
