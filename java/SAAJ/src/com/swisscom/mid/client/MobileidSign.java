@@ -251,7 +251,7 @@ public class MobileidSign {
 				} else if (innerResultList.item(l).getNodeName().equalsIgnoreCase("soapenv:Reason")) {
 					System.out.println("Fault Reason  : " + innerResultList.item(l).getChildNodes().item(0).getTextContent());
 				} else if (innerResultList.item(l).getNodeName().equalsIgnoreCase("soapenv:Detail")) {
-					System.out.println("Fault Detail  : " + innerResultList.item(l).getChildNodes().item(1).getTextContent());
+					System.out.println("Fault Detail  : " + innerResultList.item(l).getLastChild().getTextContent());
 				}
 			}
 		}
