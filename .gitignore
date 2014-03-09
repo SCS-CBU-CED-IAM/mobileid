@@ -11,3 +11,4 @@ Thumbs.db
 # PyCharm #
 .idea
 .idea/*.*
+*.jardesc

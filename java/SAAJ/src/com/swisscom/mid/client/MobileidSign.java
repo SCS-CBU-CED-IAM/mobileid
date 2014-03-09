@@ -20,8 +20,6 @@ package com.swisscom.mid.client;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -31,19 +29,24 @@ import javax.xml.namespace.QName;
 import javax.xml.soap.*;
 import javax.xml.transform.*;
 import javax.xml.transform.stream.*;
+import javax.xml.soap.MessageFactory;
+import javax.xml.soap.SOAPBody;
+import javax.xml.soap.SOAPException;
+import javax.xml.soap.SOAPMessage;
+import org.w3c.dom.NodeList;
 
 public class MobileidSign {
 
-	Properties prop = null;
+	Properties prop;
 
 	private boolean _debug;
 	private boolean _verbose;
 
-	private String propertyFilePath;
+	private String propertyFilePath = "mobileid.properties"; // default
 
 	private String msisdn;
-	private String message;
-	private String userLang;
+	private String message = "Do you want to login?"; // default
+	private String userLang = "en"; // default
 
 	/**
 	 * SAAJ - Simple Mobile ID SOAP Client Example
@@ -77,9 +80,7 @@ public class MobileidSign {
 				propertyFilePath = args[i].substring(args[i].indexOf("=") + 1).trim();
 				File propertyFile = new File(propertyFilePath);
 				if (!propertyFile.isFile() || !propertyFile.canRead()) {
-					if (_debug || _verbose) {
-						printError("The -config argument is set but the file does not exist or can not be read.");
-					}
+					printError("The -config argument is set but the file does not exist or can not be read.");
 					System.exit(1);
 				}
 			} else if (args[i].toLowerCase().contains("-v")) {
@@ -94,18 +95,18 @@ public class MobileidSign {
 		System.out.println("Usage: com.swisscom.mid.client.MobileidSign [OPTIONS]");
 		System.out.println();
 		System.out.println("Options:");
-		// System.out.println("  -v              - verbose output");
-		System.out.println("  -d              - debug mode");
+		System.out.println("  -v              - verbose output, parses response");
+		System.out.println("  -d              - debug output, prints full request and response");
 		System.out.println("  -config=VALUE   - custom path to properties file which will overwrite default path");
 		System.out.println("  -msisdn=VALUE   - mobile number");
 		System.out.println("  -message=VALUE  - message to be signed");
 		System.out.println("  -language=VALUE - user language (en, de, fr, it)");
-		// System.out.println("  -receipt=VALUE  - optional success receipt message");
 		System.out.println();
 		System.out.println("Examples:");
-		System.out.println("  java com.swisscom.mid.client.MobileidSign -d -msisdn=41792080350 -message='Do you want to login to corporate VPN?' -language=en");
-		// System.out.println("  java com.swisscom.mid.client.MobileidSign -v -msisdn=41792080350 -message='Do you want to login to corporate VPN?' -language=en -receipt=\"Successful login into VPN\"");
-		// System.out.println("  java com.swisscom.mid.client.MobileidSign -v -e -msisdn=41792080350 -message='Do you need a new password?' -language=en -receipt\"Password: 123456\"");
+		System.out.println("  java com.swisscom.mid.client.MobileidSign -v -d -msisdn=41791234567 -message=\"Do you want to login?\" -language=en");
+		System.out.println("  java -DproxySet=true -DproxyHost=10.185.32.54 -DproxyPort=8079 com.swisscom.mid.client.MobileidSign -v -d -msisdn=41791234567 -message=\"Do you want to login?\" -language=en");
+		System.out.println("  java -Djavax.net.debug=all -Djava.security.debug=certpath com.swisscom.mid.client.MobileidSign -v -d -msisdn=41791234567 -message=\"Do you want to login?\" -language=en");
+        System.out.println("  java com.swisscom.mid.client.MobileidSign -v -d -config=c:/mobileid.properties -msisdn=41791234567 -message=\"Do you want to login?\" -language=en");
 	}
 
 	private MobileidSign(String[] args) {
@@ -114,12 +115,10 @@ public class MobileidSign {
 
 		try {
 			prop = new Properties();
-			prop.load(new FileInputStream("mobileid.properties"));
-		} catch (FileNotFoundException e1) {
-			e1.printStackTrace();
-
-		} catch (IOException e1) {
-			e1.printStackTrace();
+			prop.load(new FileInputStream(propertyFilePath));
+		} catch (Exception e) {
+			System.err.println("Error occurred while reading the properties file");
+			e.printStackTrace();
 			System.exit(1);
 		}
 
@@ -136,18 +135,14 @@ public class MobileidSign {
 			System.setProperty("javax.net.ssl.keyStorePassword", prop.getProperty("Keystore.Password"));
 			System.setProperty("javax.net.ssl.keyStoreType", prop.getProperty("Keystore.Type"));
 
-			// System.setProperty("javax.net.debug", "all");
-			// System.setProperty("java.security.debug", "certpath");
-
-			// System.setProperty("https.proxySet", "true");
-			// System.setProperty("https.proxyHost", "10.185.32.54");
-			// System.setProperty("https.proxyPort", "8079");
-
 			// Send SOAP Message to SOAP Server
 			SOAPMessage soapResponse = soapConnection.call(createSOAPRequest(), prop.getProperty("URL"));
 
 			if (_debug)
 				printSOAPResponse(soapResponse);
+
+			if (_verbose)
+				parseSOAPResponse(soapResponse);
 
 			soapConnection.close();
 		} catch (Exception e) {
@@ -165,12 +160,10 @@ public class MobileidSign {
 
 		SOAPPart soapPart = soapMessage.getSOAPPart();
 
-		// SOAP Envelope
 		SOAPEnvelope envelope = soapPart.getEnvelope();
 		envelope.addNamespaceDeclaration("mss", "http://uri.etsi.org/TS102204/v1.1.2#");
 		envelope.addNamespaceDeclaration("fi", "http://mss.ficom.fi/TS102204/v1.0.0#");
 
-		// SOAP Body
 		SOAPBody soapBody = envelope.getBody();
 
 		SOAPElement MSS_Signature = soapBody.addChildElement("MSS_Signature");
@@ -231,9 +224,6 @@ public class MobileidSign {
 		return soapMessage;
 	}
 
-	/**
-	 * Method used to print the SOAP Response
-	 */
 	private void printSOAPResponse(SOAPMessage soapResponse) throws Exception {
 		TransformerFactory transformerFactory = TransformerFactory.newInstance();
 		Transformer transformer = transformerFactory.newTransformer();
@@ -241,7 +231,28 @@ public class MobileidSign {
 		System.out.print("Response SOAP Message:\n");
 		StreamResult result = new StreamResult(System.out);
 		transformer.transform(sourceContent, result);
-		System.out.println();
+		System.out.println("\n");
+	}
+	
+	private void parseSOAPResponse(SOAPMessage soapResponse) throws SOAPException {
+		System.out.println("VERBOSE OUTPUT");
+		
+		SOAPBody body = soapResponse.getSOAPBody();
+		NodeList returnList = body.getElementsByTagName("*");
+
+		for (int k = 0; k < returnList.getLength(); k++) {
+			NodeList innerResultList = returnList.item(k).getChildNodes();
+			for (int l = 0; l < innerResultList.getLength(); l++) {
+				if (innerResultList.item(l).getNodeName().equalsIgnoreCase("mss:Status")) {
+					System.out.println("StatusCode    : " + innerResultList.item(l).getChildNodes().item(0).getAttributes().getNamedItem("Value").getTextContent());
+					System.out.println("StatusMessage : " + innerResultList.item(l).getChildNodes().item(1).getTextContent());
+				} else if (innerResultList.item(l).getNodeName().equalsIgnoreCase("soapenv:Subcode")) {
+					System.out.println("Fault Subcode : " + innerResultList.item(l).getChildNodes().item(0).getTextContent());
+				} else if (innerResultList.item(l).getNodeName().equalsIgnoreCase("soapenv:Reason")) {
+					System.out.println("Fault Reason  : " + innerResultList.item(l).getChildNodes().item(0).getTextContent());
+				}
+			}
+		}
 	}
 
 	private String getInstant() {
