@@ -147,9 +147,30 @@ Open tasks:
 
 ## java
 
-Contains Java source code examples to invoke the Signature Request service.
+Contains Java source code example based on SAAJ to invoke the Signature Request service.
 
 The keystore file `keystore.jks` does not contain any keys. Be sure to adjust it with your client certificate content in order to connect to the Mobile ID service.
+
+```
+Usage: com.swisscom.mid.client.MobileidSign [OPTIONS]
+
+Options:
+  -v              - verbose output, parses response
+  -d              - debug output, prints full request and response
+  -config=VALUE   - custom path to properties file which will overwrite default path
+  -msisdn=VALUE   - mobile number
+  -message=VALUE  - message to be signed
+  -language=VALUE - user language (en, de, fr, it)
+
+Examples:
+  java com.swisscom.mid.client.MobileidSign -v -d -msisdn=41791234567 -message="Do you want to login?" -language=en
+  java -DproxySet=true -DproxyHost=10.185.32.54 -DproxyPort=8079 com.swisscom.mid.client.MobileidSign -v -d -msisdn=41791234567 -message="Do you want to login?" -language=en
+  java -Djavax.net.debug=all -Djava.security.debug=certpath com.swisscom.mid.client.MobileidSign -v -d -msisdn=41791234567 -message="Do you want to login?" -language=en
+  java com.swisscom.mid.client.MobileidSign -v -d -config=c:/mobileid.properties -msisdn=41791234567 -message="Do you want to login?" -language=en
+```
+
+Open tasks:
+- Add JAX-WS example client
 
 ## Known issues
 
