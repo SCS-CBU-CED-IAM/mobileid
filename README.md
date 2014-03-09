@@ -132,7 +132,7 @@ Example of verbose outputs:
 Refer to the "Mobile ID - RADIUS integration guide" document from Swisscom for more details.
 
 
-## PowerShell
+## powershell
 
 Contains a script to invoke the Signature Request service.
 
@@ -144,6 +144,12 @@ The file `mycert.pfx ` is a placeholder without any valid content. Be sure to ad
 Open tasks:
 - Validation of the signature and certificate in the response
 - Move from response exception error handling to proper error parsing
+
+## java
+
+Contains Java source code examples to invoke the Signature Request service.
+
+The keystore file `keystore.jks` does not contain any keys. Be sure to adjust it with your client certificate content in order to connect to the Mobile ID service.
 
 ## Known issues
 
