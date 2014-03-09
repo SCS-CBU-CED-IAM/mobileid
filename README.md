@@ -169,6 +169,26 @@ Examples:
   java com.swisscom.mid.client.MobileidSign -v -d -config=c:/mobileid.properties -msisdn=41791234567 -message="Do you want to login?" -language=en
 ```
 
+Example of verbose outputs:
+```
+$ ./MobileidSign.sh -v -msisdn=41792080350 -message="Do you want to login?" -language=en
+VERBOSE OUTPUT
+StatusCode    : 500
+StatusMessage : SIGNATURE
+
+$ ./MobileidSign.sh -v -msisdn=41792080350 -message="Do you want to login?" -language=en
+VERBOSE OUTPUT
+Fault Reason  : USER_CANCEL
+Fault Detail  : User Cancelled the request
+Fault Subcode : mss:_401
+
+$ ./MobileidSign.sh -v -msisdn=41792080350 -message="Do you want to login?" -language=en
+VERBOSE OUTPUT
+Fault Reason  : UNAUTHORIZED_ACCESS
+Fault Detail  : Wrong SSL credentials
+Fault Subcode : mss:_104
+```
+
 Open tasks:
 - Add JAX-WS example client
 
