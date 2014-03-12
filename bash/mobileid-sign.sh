@@ -227,7 +227,15 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
     openssl verify -CAfile $TMP.crl.pem -crl_check $TMP.sig.certs.level0.pem > $TMP.sig.cert.checkcrl
     CRL_ERR=$?                                          # Keep related errorlevel
     if [ "$CRL_ERR" = "0" ]; then                       # Revocation check completed
+      # if the certificate is revoked it will be in the .checkcrl as:
+      #  /tmp/_tmp.DLIV9M.sig.certs.level0.pem: serialNumber = MIDCHEP1YYDBMA59, CN = MIDCHEP1YYDBMA59:PN, C = CH
+      #  error 23 at 0 depth lookup:certificate revoked
+      # we need get the line, remove all spaces and compare with the subject itself
       RES_CERT_STATUS_CRL=$(sed -n -e 's/.*.sig.certs.level0.pem: //p' $TMP.sig.cert.checkcrl)
+      RES_CERT_STATUS_CRL=$(echo "$RES_CERT_STATUS_CRL" | sed -e 's/ //g')
+      if [ "subject= $RES_CERT_STATUS_CRL" = "$RES_CERT_SUBJ" ]; then
+        RES_CERT_STATUS_CRL="revoked"
+      fi
      else                                               # -> check not ok
       RES_CERT_STATUS_CRL"error, status $CRL_ERR"           # Details for verification
     fi
