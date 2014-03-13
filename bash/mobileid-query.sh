@@ -1,8 +1,8 @@
 #!/bin/sh
-# mobileid-check.sh - 1.1
+# mobileid-query.sh - 1.1
 #
 # Generic script using curl to invoke Swisscom Mobile ID service to
-# check about present MSISDN.
+# query details about MSISDN.
 # Dependencies: curl, sed, date, xmllint
 #
 # Change Log:
