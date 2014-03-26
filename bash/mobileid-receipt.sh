@@ -137,7 +137,6 @@ End
 
 # Call the service
 SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_ReceiptPort
-SOAP_ACTION=#MSS_Receipt
 CURL_OPTIONS="--silent"
 http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
     --data "@${SOAP_REQ}" --header "Content-Type: text/xml; charset=utf-8" \
@@ -154,7 +153,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   RES_ST=$(sed -n -e 's/.*<mss:StatusMessage>\(.*\)<\/mss:StatusMessage>.*/\1/p' $SOAP_REQ.res)
 
   if [ "$VERBOSE" = "1" ]; then                         # Verbose details
-    echo "$SOAP_ACTION OK with following details and checks:"
+    echo "OK with following details and checks:"
     echo    " MSSP TransID   : $MSSP_TRANSID"
     echo    " Status code    : $RES_RC with exit $RC"
     echo    " Status details : $RES_ST"
@@ -168,7 +167,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
       RES_VALUE=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $SOAP_REQ.res)
       RES_REASON=$(sed -n -e 's/.*<soapenv:Text.*>\(.*\)<\/soapenv:Text>.*/\1/p' $SOAP_REQ.res)
       RES_DETAIL=$(sed -n -e 's/.*<ns1:detail.*>\(.*\)<\/ns1:detail>.*/\1/p' $SOAP_REQ.res)
-      echo "$SOAP_ACTION FAILED on $SEND_TO with $RES_VALUE ($RES_REASON: $RES_DETAIL) and exit $RC"
+      echo "FAILED on $SEND_TO with $RES_VALUE ($RES_REASON: $RES_DETAIL) and exit $RC"
     fi
   fi
 fi

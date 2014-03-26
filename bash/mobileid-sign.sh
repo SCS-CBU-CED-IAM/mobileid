@@ -72,8 +72,8 @@ if [ $# -lt 3 ]; then                           # Parse the rest of the argument
   echo "  receipt  - optional success receipt message"
   echo
   echo "  Example $0 -v +41792080350 'Do you want to login to corporate VPN?' en"
-  echo "          $0 -v +41792080350 'Do you want to login to corporate VPN?' en \"Successful login into VPN\""
-  echo "          $0 -v -e +41792080350 'Do you need a new password?' en \"Password: 123456\""
+  echo "          $0 -v +41792080350 'Do you want to login to corporate VPN?' en 'Successful login into VPN'"
+  echo "          $0 -v -e +41792080350 'Do you need a new password?' en 'Password: 123456'"
   echo 
   exit 1
 fi
@@ -155,7 +155,6 @@ End
 
 # Call the service
 SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_SignaturePort
-SOAP_ACTION=#MSS_Signature
 CURL_OPTIONS="--silent"
 http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS --data @$TMP.req \
     --header "Content-Type: text/xml; charset=utf-8" \
@@ -283,7 +282,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   esac 
 
   if [ "$VERBOSE" = "1" ]; then                         # Verbose details
-    echo "$SOAP_ACTION OK with following details and checks:"
+    echo "OK with following details and checks:"
     echo -n " 1) Transaction ID : $RES_TRANSID"
       if [ "$RES_TRANSID" = "$AP_TRANSID" ] ; then echo " -> same as in request" ; else echo " -> different as in request!" ; fi
     echo    "    MSSP TransID   : $RES_MSSPID"
@@ -308,7 +307,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
       RES_VALUE=$(sed -n -e 's/.*<soapenv:Value>\(.*\)<\/soapenv:Value>.*/\1/p' $TMP.rsp)
       RES_REASON=$(sed -n -e 's/.*<soapenv:Text.*>\(.*\)<\/soapenv:Text>.*/\1/p' $TMP.rsp)
       RES_DETAIL=$(sed -n -e 's/.*<ns1:detail.*>\(.*\)<\/ns1:detail>.*/\1/p' $TMP.rsp)
-      echo "$SOAP_ACTION FAILED on $SEND_TO with $RES_VALUE ($RES_REASON: $RES_DETAIL) and exit $RC"
+      echo "FAILED on $SEND_TO with $RES_VALUE ($RES_REASON: $RES_DETAIL) and exit $RC"
     fi
   fi
 fi
