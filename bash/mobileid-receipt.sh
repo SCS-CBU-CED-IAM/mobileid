@@ -140,7 +140,7 @@ SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_ReceiptPort
 SOAP_ACTION=#MSS_Receipt
 CURL_OPTIONS="--silent"
 http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
-    --data "@${SOAP_REQ}" --header "Content-Type: text/xml; charset=utf-8" --header "SOAPAction: \"$SOAP_ACTION\"" \
+    --data "@${SOAP_REQ}" --header "Content-Type: text/xml; charset=utf-8" \
     --cert $CERT_FILE --cacert $CERT_CA --key $CERT_KEY \
     --output $SOAP_REQ.res --trace-ascii $SOAP_REQ.log \
     --connect-timeout $TIMEOUT_CON \
