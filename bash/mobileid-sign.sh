@@ -73,7 +73,7 @@ if [ $# -lt 3 ]; then                           # Parse the rest of the argument
   echo
   echo "  Example $0 -v +41792080350 'Do you want to login to corporate VPN?' en"
   echo "          $0 -v +41792080350 'Do you want to login to corporate VPN?' en 'Successful login into VPN'"
-  echo "          $0 -v -e +41792080350 'Do you need a new password?' en 'Password: 123456'"
+  echo "          $0 -v -e +41792080350 'Do you need a new password?' en 'Temporary password: 123456'"
   echo 
   exit 1
 fi
