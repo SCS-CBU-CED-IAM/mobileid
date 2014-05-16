@@ -104,6 +104,7 @@ TMP=$(mktemp /tmp/_tmp.XXXXXX)                  # Request goes here
 SEND_TO=$1                                      # To who
 SEND_MSG=$2                                     # What DataToBeSigned (DTBS)
 USERLANG=$3                                     # User language
+RECEIPT_MSG=$4                                  # Optional Receipt Message
 TIMEOUT=80                                      # Value of Timeout
 TIMEOUT_CON=90                                  # Timeout of the client connection
 
@@ -320,14 +321,14 @@ if [ "$DEBUG" != "" ]; then
 fi
 
 # Need a receipt?
-if [ "$RC" -lt "2" -a "$4" != "" ]; then        # Request ok and need to send a reciept
+if [ "$RC" -lt "2" -a "$RECEIPT_MSG" != "" ]; then      # Request ok and need to send a reciept
   OPTS=
   if [ "$VERBOSE" = "1" ]; then OPTS="$OPTS -v" ; fi    # Keep the options
   if [ "$DEBUG"   = "1" ]; then OPTS="$OPTS -d" ; fi
-  if [ "$ENCRYPT" = "1" ]; then                         # Encrypted?
-    $PWD/mobileid-receipt.sh $OPTS $SEND_TO $RES_MSSPID "$4" $TMP.sig.certs.level0.pem
-   else                                                 # -> normal
-    $PWD/mobileid-receipt.sh $OPTS $SEND_TO $RES_MSSPID "$4"
+  if [ "$ENCRYPT" = "1" ]; then                         # Encrypted Receipt
+    $PWD/mobileid-receipt.sh $OPTS $SEND_TO $RES_MSSPID "$RECEIPT_MSG" "$USERLANG" $TMP.sig.certs.level0.pem
+   else                                                 # Plain Receipt
+    $PWD/mobileid-receipt.sh $OPTS $SEND_TO $RES_MSSPID "$RECEIPT_MSG" "$USERLANG"
   fi
 fi
 

@@ -44,17 +44,18 @@ while getopts "dv" opt; do                      # Parse the options
 done
 shift $((OPTIND-1))                             # Remove the options
 
-if [ $# -lt 3 ]; then                           # Parse the rest of the arguments
-  echo "Usage: $0 <args> mobile transID \"message\" <pubCert>"
+if [ $# -lt 4 ]; then                           # Parse the rest of the arguments
+  echo "Usage: $0 <args> mobile transID \"message\" userlang <pubCert>"
   echo "  -v       - verbose output"
   echo "  -d       - debug mode"
   echo "  mobile   - mobile number"
   echo "  transID  - transaction id of the related signature request"
   echo "  message  - message to be displayed"
+  echo "  userlang - user language (one of en, de, fr, it)"
   echo "  pubCert  - optional public certificate file of the mobile user to encode the message"
   echo
-  echo "  Example $0 -v +41792080350 h29ah1 'All fine'"
-  echo "          $0 -v +41792080350 h29ah1 'Password: 123456' /tmp/_tmp.8OVlwv.sig.cert"
+  echo "  Example $0 -v +41792080350 h29ah1 'Successful login into VPN' en"
+  echo "          $0 -v +41792080350 h29ah1 'Temporary password: 123456' en /tmp/_tmp.8OVlwv.sig.cert"
   echo 
   exit 1
 fi
@@ -82,13 +83,13 @@ AP_TRANSID=AP.TEST.$((RANDOM%89999+10000)).$((RANDOM%8999+1000))
 MSSP_TRANSID=$2                                 # Transaction ID of request
 SOAP_REQ=$(mktemp /tmp/_tmp.XXXXXX)             # SOAP Request goes here
 SEND_TO=$1                                      # To who
-TIMEOUT=5                                       # Value of Timeout
 TIMEOUT_CON=10                                  # Timeout of the client connection
-PUB_CERT=$4                                     # Public certificate for optional encryption
+MSG_TXT=$3                                      # Message Content
+USERLANG=$4                                     # User language
+PUB_CERT=$5                                     # Public certificate for optional encryption
 
 # Define the message and format
 MSG_TYPE='MimeType="text/plain" Encoding="UTF-8"'
-MSG_TXT=$3
 if [ "$PUB_CERT" != "" ]; then                  # Message to be encrypted
   [ -r "${PUB_CERT}" ] || error "Public certificate for encoding the message ($PUB_CERT) missing or not readable"
   MSG_TYPE='MimeType="application/alauda-rsamessage" Encoding="BASE64"'
@@ -113,7 +114,7 @@ cat > $SOAP_REQ <<End
     xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soapenv:Body>
     <MSS_Receipt>
-      <mss:MSS_ReceiptReq MajorVersion="1" MinorVersion="1" MSSP_TransID="$MSSP_TRANSID" TimeOut="$TIMEOUT" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#">
+      <mss:MSS_ReceiptReq MajorVersion="1" MinorVersion="1" MSSP_TransID="$MSSP_TRANSID" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#" xmlns:sco="http://www.swisscom.ch/TS102204/ext/v1.0.0">
         <mss:AP_Info AP_ID="$AP_ID" AP_PWD="$AP_PWD" AP_TransID="$AP_TRANSID" Instant="$AP_INSTANT"/>
         <mss:MSSP_Info>
           <mss:MSSP_ID>
@@ -123,6 +124,16 @@ cat > $SOAP_REQ <<End
         <mss:MobileUser>
           <mss:MSISDN>$SEND_TO</mss:MSISDN>
         </mss:MobileUser>
+        <mss:Status>
+          <mss:StatusCode Value="100"/>
+          <mss:StatusDetail>
+            <sco:ReceiptRequestExtension ReceiptMessagingMode="synch" UserAck="true">
+              <sco:ReceiptProfile Language="$USERLANG">
+                <sco:ReceiptProfileURI>http://mss.swisscom.ch/synch</sco:ReceiptProfileURI>
+              </sco:ReceiptProfile>
+            </sco:ReceiptRequestExtension>
+          </mss:StatusDetail>
+        </mss:Status>
         <mss:Message $MSG_TYPE>$MSG_TXT</mss:Message>
       </mss:MSS_ReceiptReq>
     </MSS_Receipt>
@@ -149,14 +160,21 @@ http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
 RC=$?
 if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   # Parse the response xml
-  RES_RC=$(sed -n -e 's/.*<mss:StatusCode Value="\(.*\)"\/>.*/\1/p' $SOAP_REQ.res)
+  RES_RC=$(sed -n -e 's/.*<mss:StatusCode Value="\(...\)"\/>.*/\1/p' $SOAP_REQ.res)
   RES_ST=$(sed -n -e 's/.*<mss:StatusMessage>\(.*\)<\/mss:StatusMessage>.*/\1/p' $SOAP_REQ.res)
+  RES_USR_ACK=$(sed -n -e 's/.*UserAck=\(.*\)\" .*/\1/p' $SOAP_REQ.res)
+  RES_USR_RSP=$(sed -n -e 's/.*UserResponse="{\(.*\)}.*/\1/p' $SOAP_REQ.res | sed -e 's/\&quot\;/\"/g')
 
   if [ "$VERBOSE" = "1" ]; then                         # Verbose details
     echo "OK with following details and checks:"
     echo    " MSSP TransID   : $MSSP_TRANSID"
     echo    " Status code    : $RES_RC with exit $RC"
     echo    " Status details : $RES_ST"
+    if [ "$RES_USR_ACK" != "true" -a "$RES_USR_RSP" != "" ]; then
+      echo    " User Response  : $RES_USR_RSP"          # User Response details
+     else
+      echo    " User Response  : n/a"                   # No User Response available
+    fi
   fi
  else
   CURL_ERR=$RC                                          # Keep related error
