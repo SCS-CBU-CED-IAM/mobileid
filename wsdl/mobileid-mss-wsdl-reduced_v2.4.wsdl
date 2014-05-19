@@ -17,123 +17,13 @@
 			xmlns:env="http://www.w3.org/2003/05/soap-envelope" version="1.0"
 			elementFormDefault="qualified">
 			<xs:import namespace="http://www.w3.org/2000/09/xmldsig#"/>
-			<xs:complexType name="EncryptedType" abstract="true">
-				<xs:sequence>
-					<xs:element name="EncryptionMethod" type="xenc:EncryptionMethodType"
-						minOccurs="0"/>
-					<xs:element ref="ds:KeyInfo" minOccurs="0"/>
-					<xs:element ref="xenc:CipherData"/>
-					<xs:element ref="xenc:EncryptionProperties" minOccurs="0"/>
-				</xs:sequence>
-				<xs:attribute name="Id" type="xs:ID" use="optional"/>
-				<xs:attribute name="Type" type="xs:anyURI" use="optional"/>
-				<xs:attribute name="MimeType" type="xs:string" use="optional"/>
-				<xs:attribute name="Encoding" type="xs:anyURI" use="optional"/>
-			</xs:complexType>
-			<xs:complexType name="EncryptionMethodType" mixed="true">
-				<xs:sequence>
-					<xs:element name="KeySize" minOccurs="0" type="xenc:KeySizeType"/>
-					<xs:element name="OAEPparams" minOccurs="0" type="xs:base64Binary"/>
-					<xs:any namespace="##other" minOccurs="0" maxOccurs="unbounded"/>
-				</xs:sequence>
-				<xs:attribute name="Algorithm" type="xs:anyURI" use="required"/>
-			</xs:complexType>
-			<xs:simpleType name="KeySizeType">
-				<xs:restriction base="xs:integer"/>
-			</xs:simpleType>
-			<xs:element name="CipherData" type="xenc:CipherDataType"/>
-			<xs:complexType name="CipherDataType">
-				<xs:choice>
-					<xs:element name="CipherValue" type="xs:base64Binary"/>
-					<xs:element ref="xenc:CipherReference"/>
-				</xs:choice>
-			</xs:complexType>
-			<xs:element name="CipherReference" type="xenc:CipherReferenceType"/>
-			<xs:complexType name="CipherReferenceType">
-				<xs:choice>
-					<xs:element name="Transforms" type="xenc:TransformsType" minOccurs="0"/>
-				</xs:choice>
-				<xs:attribute name="URI" type="xs:anyURI" use="required"/>
-			</xs:complexType>
-			<xs:complexType name="TransformsType">
-				<xs:sequence>
-					<xs:element ref="ds:Transform" maxOccurs="unbounded"/>
-				</xs:sequence>
-			</xs:complexType>
-			<xs:element name="EncryptedData" type="xenc:EncryptedDataType"/>
-			<xs:complexType name="EncryptedDataType">
-				<xs:complexContent>
-					<xs:extension base="xenc:EncryptedType"> </xs:extension>
-				</xs:complexContent>
-			</xs:complexType>
-			<!-- Children of ds:KeyInfo -->
-			<xs:element name="EncryptedKey" type="xenc:EncryptedKeyType"/>
-			<xs:complexType name="EncryptedKeyType">
-				<xs:complexContent>
-					<xs:extension base="xenc:EncryptedType">
-						<xs:sequence>
-							<xs:element ref="xenc:ReferenceList" minOccurs="0"/>
-							<xs:element name="CarriedKeyName" type="xs:string" minOccurs="0"/>
-						</xs:sequence>
-						<xs:attribute name="Recipient" type="xs:string" use="optional"/>
-					</xs:extension>
-				</xs:complexContent>
-			</xs:complexType>
-			<xs:element name="AgreementMethod" type="xenc:AgreementMethodType"/>
-			<xs:complexType name="AgreementMethodType" mixed="true">
-				<xs:sequence>
-					<xs:element name="KA-Nonce" minOccurs="0" type="xs:base64Binary"/>
-					<!-- <xs:element ref="ds:DigestMethod" minOccurs="0"/> -->
-					<xs:any namespace="##other" minOccurs="0" maxOccurs="unbounded"/>
-					<xs:element name="OriginatorKeyInfo" minOccurs="0" type="ds:KeyInfoType"/>
-					<xs:element name="RecipientKeyInfo" minOccurs="0" type="ds:KeyInfoType"/>
-				</xs:sequence>
-				<xs:attribute name="Algorithm" type="xs:anyURI" use="required"/>
-			</xs:complexType>
-			<!-- End Children of ds:KeyInfo -->
-			<xs:element name="ReferenceList">
-				<xs:complexType>
-					<xs:choice minOccurs="1" maxOccurs="unbounded">
-						<xs:element name="DataReference" type="xenc:ReferenceType"/>
-						<xs:element name="KeyReference" type="xenc:ReferenceType"/>
-					</xs:choice>
-				</xs:complexType>
-			</xs:element>
-			<xs:complexType name="ReferenceType">
-				<xs:sequence>
-					<xs:any namespace="##other" minOccurs="0" maxOccurs="unbounded"/>
-				</xs:sequence>
-				<xs:attribute name="URI" type="xs:anyURI" use="required"/>
-			</xs:complexType>
-			<xs:element name="EncryptionProperties" type="xenc:EncryptionPropertiesType"/>
-			<xs:complexType name="EncryptionPropertiesType">
-				<xs:sequence>
-					<xs:element ref="xenc:EncryptionProperty" maxOccurs="unbounded"/>
-				</xs:sequence>
-				<xs:attribute name="Id" type="xs:ID" use="optional"/>
-			</xs:complexType>
-			<xs:element name="EncryptionProperty" type="xenc:EncryptionPropertyType"/>
-			<xs:complexType name="EncryptionPropertyType" mixed="true">
-				<xs:choice maxOccurs="unbounded">
-					<xs:any namespace="##other" processContents="lax"/>
-				</xs:choice>
-				<xs:attribute name="Target" type="xs:anyURI" use="optional"/>
-				<xs:attribute name="Id" type="xs:ID" use="optional"/>
-				<xs:anyAttribute namespace="http://www.w3.org/XML/1998/namespace"/>
-			</xs:complexType>
 		</xs:schema>
 		<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
 			xmlns:sco="http://www.swisscom.ch/TS102204/ext/v1.0.0"
 			targetNamespace="http://www.swisscom.ch/TS102204/ext/v1.0.0"
 			elementFormDefault="qualified">
 
-			<!-- This schema defines the MSS Receipt extension elements that are   
-       applied to the default TS 102 204 MSS XML schema StatusDetail element as 
-       defined by http://www.swisscom.ch/TS102204/ext/v1.0.0 . 
-  -->
-
 			<xs:element name="ReceiptRequestExtension" type="sco:ReceiptExtensionType"/>
-
 			<xs:element name="ReceiptResponseExtension" type="sco:ReceiptExtensionType"/>
 
 			<xs:complexType name="ReceiptExtensionType">
@@ -158,7 +48,6 @@
 					<xs:any namespace="##other" processContents="lax" minOccurs="0"
 						maxOccurs="unbounded"/>
 				</xs:sequence>
-				<!-- Overriding/extending parameters: -->
 				<xs:attribute name="Language" type="xs:string" use="optional"/>
 				<xs:anyAttribute namespace="##other" processContents="lax"/>
 			</xs:complexType>
@@ -182,7 +71,6 @@
 		</xs:schema>
 		<xs:schema targetNamespace="http://www.w3.org/2000/09/xmldsig#"
 			xmlns:xs="http://www.w3.org/2001/XMLSchema" version="0.1" elementFormDefault="qualified">
-			<!-- Basic Types Defined for Signatures -->
 			<xs:simpleType name="CryptoBinary">
 				<xs:restriction base="xs:base64Binary"> </xs:restriction>
 			</xs:simpleType>
@@ -190,237 +78,15 @@
 			<xs:element name="Signature" type="ds:SignatureType"/>
 			<xs:complexType name="SignatureType">
 				<xs:sequence>
-					<xs:element ref="ds:SignedInfo"/>
 					<xs:element ref="ds:SignatureValue"/>
-					<xs:element ref="ds:KeyInfo" minOccurs="0"/>
-					<xs:element ref="ds:Object" minOccurs="0" maxOccurs="unbounded"/>
 				</xs:sequence>
-				<xs:attribute name="Id" type="xs:ID" use="optional"/>
 			</xs:complexType>
 			<xs:element name="SignatureValue" type="ds:SignatureValueType"/>
 			<xs:complexType name="SignatureValueType">
 				<xs:simpleContent>
-					<xs:extension base="xs:base64Binary">
-						<xs:attribute name="Id" type="xs:ID" use="optional"/>
-					</xs:extension>
+					<xs:extension base="xs:base64Binary"/>
 				</xs:simpleContent>
 			</xs:complexType>
-			<!-- Start SignedInfo -->
-			<xs:element name="SignedInfo" type="ds:SignedInfoType"/>
-			<xs:complexType name="SignedInfoType">
-				<xs:sequence>
-					<xs:element ref="ds:CanonicalizationMethod"/>
-					<xs:element ref="ds:SignatureMethod"/>
-					<xs:element ref="ds:Reference" maxOccurs="unbounded"/>
-				</xs:sequence>
-				<xs:attribute name="Id" type="xs:ID" use="optional"/>
-			</xs:complexType>
-			<xs:element name="CanonicalizationMethod" type="ds:CanonicalizationMethodType"/>
-			<xs:complexType name="CanonicalizationMethodType" mixed="true">
-				<xs:sequence>
-					<xs:any namespace="##any" minOccurs="0" maxOccurs="unbounded"/>
-					<!-- (0,unbounded) elements from (1,1) namespace -->
-				</xs:sequence>
-				<xs:attribute name="Algorithm" type="xs:anyURI" use="required"/>
-			</xs:complexType>
-			<xs:element name="SignatureMethod" type="ds:SignatureMethodType"/>
-			<xs:complexType name="SignatureMethodType" mixed="true">
-				<xs:sequence>
-					<xs:element name="HMACOutputLength" minOccurs="0" type="ds:HMACOutputLengthType"/>
-					<xs:any namespace="##other" minOccurs="0" maxOccurs="unbounded"/>
-					<!-- (0,unbounded) elements from (1,1) external namespace -->
-				</xs:sequence>
-				<xs:attribute name="Algorithm" type="xs:anyURI" use="required"/>
-			</xs:complexType>
-			<!-- Start Reference -->
-			<xs:element name="Reference" type="ds:ReferenceType"/>
-			<xs:complexType name="ReferenceType">
-				<xs:sequence>
-					<xs:element ref="ds:Transforms" minOccurs="0"/>
-					<xs:element ref="ds:DigestMethod"/>
-					<xs:element ref="ds:DigestValue"/>
-				</xs:sequence>
-				<xs:attribute name="Id" type="xs:ID" use="optional"/>
-				<xs:attribute name="URI" type="xs:anyURI" use="optional"/>
-				<xs:attribute name="Type" type="xs:anyURI" use="optional"/>
-			</xs:complexType>
-			<xs:element name="Transforms" type="ds:TransformsType"/>
-			<xs:complexType name="TransformsType">
-				<xs:sequence>
-					<xs:element ref="ds:Transform" maxOccurs="unbounded"/>
-				</xs:sequence>
-			</xs:complexType>
-			<xs:element name="Transform" type="ds:TransformType"/>
-			<xs:complexType name="TransformType" mixed="true">
-				<xs:choice minOccurs="0" maxOccurs="unbounded">
-					<xs:any namespace="##other" processContents="lax"/>
-					<!-- (1,1) elements from (0,unbounded) namespaces -->
-					<xs:element name="XPath" type="xs:string"/>
-				</xs:choice>
-				<xs:attribute name="Algorithm" type="xs:anyURI" use="required"/>
-			</xs:complexType>
-			<!-- End Reference -->
-			<xs:element name="DigestMethod" type="ds:DigestMethodType"/>
-			<xs:complexType name="DigestMethodType" mixed="true">
-				<xs:sequence>
-					<xs:any namespace="##other" processContents="lax" minOccurs="0"
-						maxOccurs="unbounded"/>
-				</xs:sequence>
-				<xs:attribute name="Algorithm" type="xs:anyURI" use="required"/>
-			</xs:complexType>
-			<xs:element name="DigestValue" type="ds:DigestValueType"/>
-			<xs:simpleType name="DigestValueType">
-				<xs:restriction base="xs:base64Binary"/>
-			</xs:simpleType>
-			<!-- End SignedInfo -->
-			<!-- Start KeyInfo -->
-			<xs:element name="KeyInfo" type="ds:KeyInfoType"/>
-			<xs:complexType name="KeyInfoType" mixed="true">
-				<xs:choice maxOccurs="unbounded">
-					<xs:element ref="ds:KeyName"/>
-					<xs:element ref="ds:KeyValue"/>
-					<xs:element ref="ds:RetrievalMethod"/>
-					<xs:element ref="ds:X509Data"/>
-					<xs:element ref="ds:PGPData"/>
-					<xs:element ref="ds:SPKIData"/>
-					<xs:element ref="ds:MgmtData"/>
-					<xs:any processContents="lax" namespace="##other"/>
-					<!-- (1,1) elements from (0,unbounded) namespaces -->
-				</xs:choice>
-				<xs:attribute name="Id" type="xs:ID" use="optional"/>
-			</xs:complexType>
-			<xs:element name="KeyName" type="xs:string"/>
-			<xs:element name="MgmtData" type="xs:string"/>
-			<xs:element name="KeyValue" type="ds:KeyValueType"/>
-			<xs:complexType name="KeyValueType" mixed="true">
-				<xs:choice>
-					<xs:element ref="ds:DSAKeyValue"/>
-					<xs:element ref="ds:RSAKeyValue"/>
-					<xs:any namespace="##other" processContents="lax"/>
-				</xs:choice>
-			</xs:complexType>
-			<xs:element name="RetrievalMethod" type="ds:RetrievalMethodType"/>
-			<xs:complexType name="RetrievalMethodType">
-				<xs:sequence>
-					<xs:element ref="ds:Transforms" minOccurs="0"/>
-				</xs:sequence>
-				<xs:attribute name="URI" type="xs:anyURI"/>
-				<xs:attribute name="Type" type="xs:anyURI" use="optional"/>
-			</xs:complexType>
-			<!-- Start X509Data -->
-			<xs:element name="X509Data" type="ds:X509DataType"/>
-			<xs:complexType name="X509DataType">
-				<xs:sequence maxOccurs="unbounded">
-					<xs:choice>
-						<xs:element name="X509IssuerSerial" type="ds:X509IssuerSerialType"/>
-						<xs:element name="X509SKI" type="xs:base64Binary"/>
-						<xs:element name="X509SubjectName" type="xs:string"/>
-						<xs:element name="X509Certificate" type="xs:base64Binary"/>
-						<xs:element name="X509CRL" type="xs:base64Binary"/>
-						<xs:any namespace="##other" processContents="lax"/>
-					</xs:choice>
-				</xs:sequence>
-			</xs:complexType>
-			<xs:complexType name="X509IssuerSerialType">
-				<xs:sequence>
-					<xs:element name="X509IssuerName" type="xs:string"/>
-					<xs:element name="X509SerialNumber" type="xs:integer"/>
-				</xs:sequence>
-			</xs:complexType>
-			<!-- End X509Data -->
-			<!-- Begin PGPData -->
-			<xs:element name="PGPData" type="ds:PGPDataType"/>
-			<xs:complexType name="PGPDataType">
-				<xs:choice>
-					<xs:sequence>
-						<xs:element name="PGPKeyID" type="xs:base64Binary"/>
-						<xs:element name="PGPKeyPacket" type="xs:base64Binary" minOccurs="0"/>
-						<xs:any namespace="##other" processContents="lax" minOccurs="0"
-							maxOccurs="unbounded"/>
-					</xs:sequence>
-					<xs:sequence>
-						<xs:element name="PGPKeyPacket" type="xs:base64Binary"/>
-						<xs:any namespace="##other" processContents="lax" minOccurs="0"
-							maxOccurs="unbounded"/>
-					</xs:sequence>
-				</xs:choice>
-			</xs:complexType>
-			<!-- End PGPData -->
-			<!-- Begin SPKIData -->
-			<xs:element name="SPKIData" type="ds:SPKIDataType"/>
-			<xs:complexType name="SPKIDataType">
-				<xs:sequence maxOccurs="unbounded">
-					<xs:element name="SPKISexp" type="xs:base64Binary"/>
-					<xs:any namespace="##other" processContents="lax" minOccurs="0"/>
-				</xs:sequence>
-			</xs:complexType>
-			<!-- End SPKIData -->
-			<!-- End KeyInfo -->
-			<!-- Start Object (Manifest, SignatureProperty) -->
-			<xs:element name="Object" type="ds:ObjectType"/>
-			<xs:complexType name="ObjectType" mixed="true">
-				<xs:sequence minOccurs="0" maxOccurs="unbounded">
-					<xs:any namespace="##any" processContents="lax"/>
-				</xs:sequence>
-				<xs:attribute name="Id" type="xs:ID" use="optional"/>
-				<xs:attribute name="MimeType" type="xs:string" use="optional"/>
-				<!-- add a grep facet -->
-				<xs:attribute name="Encoding" type="xs:anyURI" use="optional"/>
-			</xs:complexType>
-			<xs:element name="Manifest" type="ds:ManifestType"/>
-			<xs:complexType name="ManifestType">
-				<xs:sequence>
-					<xs:element ref="ds:Reference" maxOccurs="unbounded"/>
-				</xs:sequence>
-				<xs:attribute name="Id" type="xs:ID" use="optional"/>
-			</xs:complexType>
-			<xs:element name="SignatureProperties" type="ds:SignaturePropertiesType"/>
-			<xs:complexType name="SignaturePropertiesType">
-				<xs:sequence>
-					<xs:element ref="ds:SignatureProperty" maxOccurs="unbounded"/>
-				</xs:sequence>
-				<xs:attribute name="Id" type="xs:ID" use="optional"/>
-			</xs:complexType>
-			<xs:element name="SignatureProperty" type="ds:SignaturePropertyType"/>
-			<xs:complexType name="SignaturePropertyType" mixed="true">
-				<xs:choice maxOccurs="unbounded">
-					<xs:any namespace="##other" processContents="lax"/>
-					<!-- (1,1) elements from (1,unbounded) namespaces -->
-				</xs:choice>
-				<xs:attribute name="Target" type="xs:anyURI" use="required"/>
-				<xs:attribute name="Id" type="xs:ID" use="optional"/>
-			</xs:complexType>
-			<!-- End Object (Manifest, SignatureProperty) -->
-			<!-- Start Algorithm Parameters -->
-			<xs:simpleType name="HMACOutputLengthType">
-				<xs:restriction base="xs:integer"/>
-			</xs:simpleType>
-			<!-- Start KeyValue Element-types -->
-			<xs:element name="DSAKeyValue" type="ds:DSAKeyValueType"/>
-			<xs:complexType name="DSAKeyValueType">
-				<xs:sequence>
-					<xs:sequence minOccurs="0">
-						<xs:element name="P" type="ds:CryptoBinary"/>
-						<xs:element name="Q" type="ds:CryptoBinary"/>
-					</xs:sequence>
-					<xs:element name="G" type="ds:CryptoBinary" minOccurs="0"/>
-					<xs:element name="Y" type="ds:CryptoBinary"/>
-					<xs:element name="J" type="ds:CryptoBinary" minOccurs="0"/>
-					<xs:sequence minOccurs="0">
-						<xs:element name="Seed" type="ds:CryptoBinary"/>
-						<xs:element name="PgenCounter" type="ds:CryptoBinary"/>
-					</xs:sequence>
-				</xs:sequence>
-			</xs:complexType>
-			<xs:element name="RSAKeyValue" type="ds:RSAKeyValueType"/>
-			<xs:complexType name="RSAKeyValueType">
-				<xs:sequence>
-					<xs:element name="Modulus" type="ds:CryptoBinary"/>
-					<xs:element name="Exponent" type="ds:CryptoBinary"/>
-				</xs:sequence>
-			</xs:complexType>
-			<!-- End KeyValue Element-types -->
-			<!-- End Signature -->
 		</xs:schema>
 		<xs:schema targetNamespace="http://www.w3.org/2003/05/soap-envelope"
 			elementFormDefault="qualified">
@@ -450,16 +116,6 @@
 				</xs:sequence>
 				<xs:anyAttribute namespace="##other" processContents="lax"/>
 			</xs:complexType>
-			<!-- Global Attributes.  The following attributes are intended to be
-	  usable via qualified attribute names on any complex type referencing
-	  them.  -->
-			<xs:attribute name="mustUnderstand" type="xs:boolean" default="0"/>
-			<xs:attribute name="relay" type="xs:boolean" default="0"/>
-			<xs:attribute name="role" type="xs:anyURI"/>
-			<!-- 'encodingStyle' indicates any canonicalization conventions
-	  followed in the contents of the containing element.  For example, the
-	  value 'http://www.w3.org/2003/05/soap-encoding' indicates the pattern
-	  described in the SOAP Version 1.2 Part 2: Adjuncts Recommendation -->
 			<xs:attribute name="encodingStyle" type="xs:anyURI"/>
 			<xs:element name="Fault" type="soapenv:Fault"/>
 			<xs:complexType name="Fault" final="extension">
@@ -512,22 +168,6 @@
 				</xs:sequence>
 				<xs:anyAttribute namespace="##other" processContents="lax"/>
 			</xs:complexType>
-			<!-- Global element declaration and complex type definition for header entry returned due to a mustUnderstand fault -->
-			<xs:element name="NotUnderstood" type="soapenv:NotUnderstoodType"/>
-			<xs:complexType name="NotUnderstoodType">
-				<xs:attribute name="qname" type="xs:QName" use="required"/>
-			</xs:complexType>
-			<!-- Global element and associated types for managing version transition as described in Appendix A of the SOAP Version 1.2 Part 1 Recommendation  -->
-			<xs:complexType name="SupportedEnvType">
-				<xs:attribute name="qname" type="xs:QName" use="required"/>
-			</xs:complexType>
-			<xs:element name="Upgrade" type="soapenv:UpgradeType"/>
-			<xs:complexType name="UpgradeType">
-				<xs:sequence>
-					<xs:element name="SupportedEnvelope" type="soapenv:SupportedEnvType"
-						minOccurs="1" maxOccurs="unbounded"/>
-				</xs:sequence>
-			</xs:complexType>
 		</xs:schema>
 		<xs:schema targetNamespace="http://uri.etsi.org/TS102204/v1.1.2#"
 			xmlns:xenc="http://www.w3.org/2001/04/xmlenc#"
@@ -548,7 +188,6 @@
 							<xs:attribute name="AP_PWD" type="xs:string" use="required"/>
 							<xs:attribute name="AP_TransID" type="xs:NCName" use="required"/>
 							<xs:attribute name="Instant" type="xs:dateTime" use="required"/>
-							<!--<xs:attribute name="AP_URL" type="xs:anyURI" use="optional"/>-->
 						</xs:complexType>
 					</xs:element>
 					<xs:element name="MSSP_Info">
@@ -570,7 +209,6 @@
 						<xs:sequence>
 							<xs:element name="MobileUser" type="mss:MobileUserType"/>
 							<xs:element name="DataToBeSigned" type="mss:DataType"/>
-							<xs:element name="DataToBeDisplayed" type="mss:DataType" minOccurs="0"/>
 							<xs:element name="SignatureProfile" type="mss:mssURIType" minOccurs="0"/>
 							<xs:element name="AdditionalServices" minOccurs="0">
 								<xs:complexType>
@@ -581,10 +219,6 @@
 								</xs:complexType>
 							</xs:element>
 							<xs:element name="MSS_Format" type="mss:mssURIType" minOccurs="0"/>
-							<xs:element name="KeyReference" type="mss:KeyReferenceType"
-								minOccurs="0"/>
-							<xs:element name="SignatureProfileComparison"
-								type="mss:SignatureProfileComparisonType" minOccurs="0"/>
 						</xs:sequence>
 						<xs:attribute name="ValidityDate" type="xs:dateTime" use="optional"/>
 						<xs:attribute name="TimeOut" type="xs:positiveInteger" use="optional"/>
@@ -627,36 +261,6 @@
 					</xs:extension>
 				</xs:complexContent>
 			</xs:complexType>
-			<xs:element name="MSS_RegistrationReq" type="mss:MSS_RegistrationReqType"/>
-			<xs:complexType name="MSS_RegistrationReqType">
-				<xs:complexContent>
-					<xs:extension base="mss:MessageAbstractType">
-						<xs:sequence>
-							<xs:element name="MobileUser" type="mss:MobileUserType"/>
-							<xs:element name="EncryptedData" type="xenc:EncryptedType" minOccurs="0"/>
-							<xs:element name="EncryptResponseBy" type="xs:anyURI" minOccurs="0"/>
-							<xs:element name="CertificateURI" type="xs:anyURI" minOccurs="0"/>
-							<xs:element name="X509Certificate" type="xs:base64Binary" minOccurs="0"/>
-							<xs:any namespace="##other" processContents="lax" minOccurs="0"
-								maxOccurs="unbounded"/>
-						</xs:sequence>
-					</xs:extension>
-				</xs:complexContent>
-			</xs:complexType>
-			<xs:element name="MSS_RegistrationResp" type="mss:MSS_RegistrationRespType"/>
-			<xs:complexType name="MSS_RegistrationRespType">
-				<xs:complexContent>
-					<xs:extension base="mss:MessageAbstractType">
-						<xs:sequence>
-							<xs:element name="Status" type="mss:StatusType"/>
-							<xs:element name="EncryptedData" type="xenc:EncryptedType" minOccurs="0"/>
-							<xs:element name="CertificateURI" type="xs:anyURI" minOccurs="0"/>
-							<xs:element name="X509Certificate" type="xs:base64Binary" minOccurs="0"/>
-							<xs:element name="PublicKey" type="xs:base64Binary" minOccurs="0"/>
-						</xs:sequence>
-					</xs:extension>
-				</xs:complexContent>
-			</xs:complexType>
 			<xs:element name="MSS_ProfileReq" type="mss:MSS_ProfileReqType"/>
 			<xs:complexType name="MSS_ProfileReqType">
 				<xs:complexContent>
@@ -687,7 +291,6 @@
 							<xs:element name="MobileUser" type="mss:MobileUserType"/>
 							<xs:element name="Status" type="mss:StatusType" minOccurs="0"/>
 							<xs:element name="Message" type="mss:DataType" minOccurs="0"/>
-							<xs:element name="SignedReceipt" type="ds:SignatureType" minOccurs="0"/>
 						</xs:sequence>
 						<xs:attribute name="MSSP_TransID" type="xs:NCName" use="required"/>
 					</xs:extension>
@@ -703,110 +306,8 @@
 					</xs:extension>
 				</xs:complexContent>
 			</xs:complexType>
-			<xs:element name="MSS_HandshakeReq" type="mss:MSS_HandshakeReqType"/>
-			<xs:complexType name="MSS_HandshakeReqType">
-				<xs:complexContent>
-					<xs:extension base="mss:MessageAbstractType">
-						<xs:sequence>
-							<xs:element name="SecureMethods">
-								<xs:complexType>
-									<xs:attribute name="MSS_Signature" type="xs:boolean"
-										use="required"/>
-									<xs:attribute name="MSS_Registration" type="xs:boolean"
-										use="required"/>
-									<xs:attribute name="MSS_Notification" type="xs:boolean"
-										use="required"/>
-									<xs:attribute name="MSS_ProfileQuery" type="xs:boolean"
-										use="required"/>
-									<xs:attribute name="MSS_Receipt" type="xs:boolean"
-										use="required"/>
-									<xs:attribute name="MSS_Status" type="xs:boolean" use="required"
-									/>
-								</xs:complexType>
-							</xs:element>
-							<xs:element name="Certificates">
-								<xs:complexType>
-									<xs:sequence>
-										<xs:element name="Certificate" type="xs:base64Binary"
-											minOccurs="0" maxOccurs="unbounded"/>
-									</xs:sequence>
-								</xs:complexType>
-							</xs:element>
-							<xs:element name="RootCAs">
-								<xs:complexType>
-									<xs:sequence>
-										<xs:element name="DN" type="xs:string" minOccurs="0"
-											maxOccurs="unbounded"/>
-									</xs:sequence>
-								</xs:complexType>
-							</xs:element>
-							<xs:element name="SignatureAlgList">
-								<xs:complexType>
-									<xs:sequence>
-										<xs:element name="Algorithm" type="mss:mssURIType"
-											minOccurs="0" maxOccurs="unbounded"/>
-									</xs:sequence>
-								</xs:complexType>
-							</xs:element>
-						</xs:sequence>
-					</xs:extension>
-				</xs:complexContent>
-			</xs:complexType>
-			<xs:element name="MSS_HandshakeResp" type="mss:MSS_HandshakeRespType"/>
-			<xs:complexType name="MSS_HandshakeRespType">
-				<xs:complexContent>
-					<xs:extension base="mss:MessageAbstractType">
-						<xs:sequence>
-							<xs:element name="SecureMethods">
-								<xs:complexType>
-									<xs:attribute name="MSS_Signature" type="xs:boolean"
-										use="required"/>
-									<xs:attribute name="MSS_Registration" type="xs:boolean"
-										use="required"/>
-									<xs:attribute name="MSS_Notification" type="xs:boolean"
-										use="required"/>
-									<xs:attribute name="MSS_ProfileQuery" type="xs:boolean"
-										use="required"/>
-									<xs:attribute name="MSS_Receipt" type="xs:boolean"
-										use="required"/>
-									<xs:attribute name="MSS_Status" type="xs:boolean" use="required"
-									/>
-								</xs:complexType>
-							</xs:element>
-							<xs:element name="MatchingMSSPCertificates">
-								<xs:complexType>
-									<xs:sequence>
-										<xs:element name="Certificate" type="xs:base64Binary"
-											minOccurs="0" maxOccurs="unbounded"/>
-									</xs:sequence>
-								</xs:complexType>
-							</xs:element>
-							<xs:element name="MatchingAPCertificates">
-								<xs:complexType>
-									<xs:sequence>
-										<xs:element name="Certificate" type="xs:base64Binary"
-											minOccurs="0" maxOccurs="unbounded"/>
-									</xs:sequence>
-								</xs:complexType>
-							</xs:element>
-							<xs:element name="MatchingSigAlgList">
-								<xs:complexType>
-									<xs:sequence>
-										<xs:element name="Algorithm" type="mss:mssURIType"
-											minOccurs="0" maxOccurs="unbounded"/>
-									</xs:sequence>
-								</xs:complexType>
-							</xs:element>
-						</xs:sequence>
-						<xs:attribute name="MSSP_TransID" type="xs:NCName" use="required"/>
-					</xs:extension>
-				</xs:complexContent>
-			</xs:complexType>
 			<xs:complexType name="MobileUserType">
 				<xs:sequence>
-					<xs:element name="IdentityIssuer" type="mss:MeshMemberType" minOccurs="0"/>
-					<xs:element name="UserIdentifier" type="xs:string" minOccurs="0"/>
-					<xs:element name="HomeMSSP" type="mss:MeshMemberType" minOccurs="0"/>
 					<xs:element name="MSISDN" type="xs:string" minOccurs="0"/>
 				</xs:sequence>
 			</xs:complexType>
@@ -818,62 +319,27 @@
 					</xs:extension>
 				</xs:simpleContent>
 			</xs:complexType>
-			<xs:simpleType name="SignatureProfileComparisonType">
-				<xs:restriction base="xs:string">
-					<xs:enumeration value="exact"/>
-					<xs:enumeration value="minimum"/>
-					<xs:enumeration value="better"/>
-				</xs:restriction>
-			</xs:simpleType>
 			<xs:simpleType name="MessagingModeType">
 				<xs:restriction base="xs:string">
 					<xs:enumeration value="synch"/>
 					<xs:enumeration value="asynchClientServer"/>
-					<xs:enumeration value="asynchServerServer"/>
 				</xs:restriction>
 			</xs:simpleType>
-			<xs:complexType name="DigestAlgAndValueType">
-				<xs:sequence>
-					<xs:element name="DigestMethod" type="ds:DigestMethodType" minOccurs="0"/>
-					<xs:element name="DigestValue" type="ds:DigestValueType"/>
-				</xs:sequence>
-			</xs:complexType>
 			<xs:complexType name="mssURIType">
 				<xs:sequence>
 					<xs:element name="mssURI" type="xs:anyURI"/>
-					<xs:element name="DigestAlgAndValue" type="mss:DigestAlgAndValueType"
-						minOccurs="0"/>
 					<xs:any namespace="##other" processContents="lax" minOccurs="0"
 						maxOccurs="unbounded"/>
 				</xs:sequence>
 			</xs:complexType>
 			<xs:complexType name="MeshMemberType">
 				<xs:sequence>
-					<xs:element name="DNSName" type="xs:string" minOccurs="0"/>
-					<xs:element name="IPAddress" type="xs:string" minOccurs="0"/>
 					<xs:element name="URI" type="xs:anyURI" minOccurs="0"/>
-					<xs:element name="IdentifierString" type="xs:string" minOccurs="0"/>
-				</xs:sequence>
-			</xs:complexType>
-			<xs:complexType name="KeyReferenceType">
-				<xs:sequence>
-					<xs:element name="CertificateURL" type="xs:anyURI" minOccurs="0"
-						maxOccurs="unbounded"/>
-					<xs:element name="CertificateIssuerDN" type="xs:string" minOccurs="0"
-						maxOccurs="unbounded"/>
-					<xs:element name="HashOfUsersPublicKey" type="mss:DigestAlgAndValueType"
-						minOccurs="0" maxOccurs="unbounded"/>
-					<xs:element name="HashOfCAPublicKey" type="mss:DigestAlgAndValueType"
-						minOccurs="0" maxOccurs="unbounded"/>
-					<xs:any namespace="##other" processContents="lax"/>
 				</xs:sequence>
 			</xs:complexType>
 			<xs:complexType name="SignatureType">
 				<xs:choice>
-					<xs:element name="XMLSignature" type="ds:SignatureType"/>
 					<xs:element name="Base64Signature" type="xs:base64Binary"/>
-					<xs:any namespace="##other" processContents="lax" minOccurs="0"/>
-					<!-- this can also be an advanced XML Signature-->
 				</xs:choice>
 			</xs:complexType>
 			<xs:element name="MSS_MessageSignature">
@@ -881,19 +347,14 @@
 					<xs:sequence>
 						<xs:element ref="ds:Signature"/>
 					</xs:sequence>
-					<xs:attribute ref="soapenv:role" use="required"/>
-					<xs:attribute ref="soapenv:mustUnderstand" use="required"/>
 				</xs:complexType>
 			</xs:element>
 			<xs:complexType name="AdditionalServiceType">
 				<xs:sequence>
 					<xs:element name="Description" type="mss:mssURIType"/>
-					<xs:element name="Entity" type="mss:MeshMemberType" minOccurs="0"/>
-					<!-- The following choice is a manual Ficom addition; see Ficom 1.1 -->
 					<xs:choice minOccurs="0" maxOccurs="unbounded">
 						<xs:element ref="fi:UserLang"/>
 					</xs:choice>
-					<!--<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>-->
 				</xs:sequence>
 			</xs:complexType>
 			<xs:complexType name="StatusType">
@@ -910,17 +371,10 @@
 				<xs:attribute name="Value" type="xs:integer" use="required"/>
 			</xs:complexType>
 			<xs:complexType name="StatusDetailType">
-				<!-- Kiuru-specific addition -->
 				<xs:choice minOccurs="0" maxOccurs="unbounded">
-					<!-- <xs:element ref="fi:ServiceResponses"/> -->
 					<xs:element ref="sco:ReceiptRequestExtension"/>
 					<xs:element ref="sco:ReceiptResponseExtension"/>
 				</xs:choice>
-				<!--
-				<xs:sequence>
-					<xs:any namespace="##any" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
-				</xs:sequence>
-			-->
 			</xs:complexType>
 		</xs:schema>
 		<xs:schema targetNamespace="http://www.w3.org/XML/1998/namespace" xml:lang="en">
