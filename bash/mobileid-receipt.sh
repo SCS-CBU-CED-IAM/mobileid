@@ -45,7 +45,7 @@ done
 shift $((OPTIND-1))                             # Remove the options
 
 if [ $# -lt 4 ]; then                           # Parse the rest of the arguments
-  echo "Usage: $0 <args> mobile transID \"message\" userlang <pubCert>"
+  echo "Usage: $0 <args> mobile transID 'message' userlang <pubCert>"
   echo "  -v       - verbose output"
   echo "  -d       - debug mode"
   echo "  mobile   - mobile number"

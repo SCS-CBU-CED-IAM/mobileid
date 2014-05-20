@@ -11,7 +11,7 @@ Contains a script to invoke the:
 * Profile Query Request
 
 ```
-Usage: ./mobileid-sign.sh <args> mobile "message" userlang <receipt>
+Usage: ./mobileid-sign.sh <args> mobile 'message' userlang <receipt>
   -v       - verbose output
   -d       - debug mode
   -e       - encrypted receipt
@@ -26,7 +26,7 @@ Usage: ./mobileid-sign.sh <args> mobile "message" userlang <receipt>
 ```
 
 ```
-Usage: ./mobileid-receipt.sh <args> mobile transID "message" userlang <pubCert>
+Usage: ./mobileid-receipt.sh <args> mobile transID 'message' userlang <pubCert>
   -v       - verbose output
   -d       - debug mode
   mobile   - mobile number
