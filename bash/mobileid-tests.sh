@@ -4,9 +4,6 @@
 # Generic test script against Swisscom Mobile ID service
 # Dependencies: mobileid-sign.sh
 #
-# Change Log:
-#  1.0 27.09.2013: Initial version
-#  1.1 16.10.2013: Updated version
 
 # Fault codes with specific MSISDN’s
 echo "> Fault codes with specific MSISDN’s"
