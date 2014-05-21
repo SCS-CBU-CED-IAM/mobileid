@@ -1,0 +1,583 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:tns="http://swisscom.com/esauth/wsdl/mss.wsdl"
+	xmlns:apachesoap="http://xml.apache.org/xml-soap"
+	xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#"
+	xmlns:wsoap12="http://schemas.xmlsoap.org/wsdl/soap12/"
+	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+	xmlns:soapenv="http://www.w3.org/2003/05/soap-envelope"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+	xmlns:xenc="http://www.w3.org/2001/04/xmlenc#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+	xmlns:xml="http://www.w3.org/XML/1998/namespace" name="MSS"
+	targetNamespace="http://swisscom.com/esauth/wsdl/mss.wsdl">
+	<wsdl:types>
+		<xs:schema targetNamespace="http://www.w3.org/2001/04/xmlenc#"
+			xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+			xmlns:xs="http://www.w3.org/2001/XMLSchema"
+			xmlns:env="http://www.w3.org/2003/05/soap-envelope" version="1.0"
+			elementFormDefault="qualified">
+			<xs:import namespace="http://www.w3.org/2000/09/xmldsig#"/>
+		</xs:schema>
+		<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+			xmlns:sco="http://www.swisscom.ch/TS102204/ext/v1.0.0"
+			targetNamespace="http://www.swisscom.ch/TS102204/ext/v1.0.0"
+			elementFormDefault="qualified">
+
+			<xs:element name="ReceiptRequestExtension" type="sco:ReceiptExtensionType"/>
+
+			<xs:complexType name="ReceiptExtensionType">
+				<xs:sequence>
+					<xs:element name="ReceiptProfile" type="sco:ReceiptProfileType" minOccurs="0"
+						maxOccurs="1"/>
+				</xs:sequence>
+				<xs:attribute name="ReceiptMessagingMode" type="sco:ReceiptMessagingModeType"
+					use="required"/>
+				<xs:attribute name="TimeOut" type="xs:positiveInteger" use="optional"/>
+				<xs:attribute name="RetryTimeOut" type="xs:positiveInteger" use="optional"/>
+				<xs:attribute name="NextRetry" type="xs:positiveInteger" use="optional"/>
+				<xs:attribute name="UserAck" type="xs:boolean" use="optional"/>
+				<xs:attribute name="UserResponse" type="xs:string" use="optional"/>
+				<xs:attribute name="FaultMessage" type="xs:string" use="optional"/>
+				<xs:anyAttribute namespace="##other" processContents="lax"/>
+			</xs:complexType>
+
+			<xs:complexType name="ReceiptProfileType">
+				<xs:sequence>
+					<xs:element name="ReceiptProfileURI" type="xs:anyURI"/>
+					<xs:any namespace="##other" processContents="lax" minOccurs="0"
+						maxOccurs="unbounded"/>
+				</xs:sequence>
+				<xs:attribute name="Language" type="xs:string" use="optional"/>
+				<xs:anyAttribute namespace="##other" processContents="lax"/>
+			</xs:complexType>
+
+			<xs:simpleType name="ReceiptMessagingModeType">
+				<xs:restriction base="xs:string">
+					<xs:enumeration value="synch"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:schema>
+		<xs:schema targetNamespace="http://mss.ficom.fi/TS102204/v1.0.0#"
+			xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+			xmlns:xenc="http://www.w3.org/2001/04/xmlenc#"
+			xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#"
+			xmlns:fi="http://mss.ficom.fi/TS102204/v1.0.0#"
+			xmlns:mreg="http://www.methics.fi/MSSPRegistration/v1.0.0#"
+			xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"
+			xmlns:xs="http://www.w3.org/2001/XMLSchema"
+			xmlns:env="http://www.w3.org/2003/05/soap-envelope" elementFormDefault="qualified">
+			<xs:element name="UserLang" type="xs:string" default="de"/>
+		</xs:schema>
+		<xs:schema targetNamespace="http://www.w3.org/2000/09/xmldsig#"
+			xmlns:xs="http://www.w3.org/2001/XMLSchema" version="0.1" elementFormDefault="qualified">
+			<xs:simpleType name="CryptoBinary">
+				<xs:restriction base="xs:base64Binary"> </xs:restriction>
+			</xs:simpleType>
+			<!-- Start Signature -->
+			<xs:element name="Signature" type="ds:SignatureType"/>
+			<xs:complexType name="SignatureType">
+				<xs:sequence>
+					<xs:element ref="ds:SignatureValue"/>
+				</xs:sequence>
+			</xs:complexType>
+			<xs:element name="SignatureValue" type="ds:SignatureValueType"/>
+			<xs:complexType name="SignatureValueType">
+				<xs:simpleContent>
+					<xs:extension base="xs:base64Binary"/>
+				</xs:simpleContent>
+			</xs:complexType>
+		</xs:schema>
+		<xs:schema targetNamespace="http://www.w3.org/2003/05/soap-envelope"
+			elementFormDefault="qualified">
+			<xs:import namespace="http://www.w3.org/XML/1998/namespace"/>
+			<!-- Envelope, header and body -->
+			<xs:element name="Envelope" type="soapenv:Envelope"/>
+			<xs:complexType name="Envelope">
+				<xs:sequence>
+					<xs:element ref="soapenv:Header" minOccurs="0"/>
+					<xs:element ref="soapenv:Body" minOccurs="1"/>
+				</xs:sequence>
+				<xs:anyAttribute namespace="##other" processContents="lax"/>
+			</xs:complexType>
+			<xs:element name="Header" type="soapenv:Header"/>
+			<xs:complexType name="Header">
+				<xs:sequence>
+					<xs:any namespace="##any" processContents="lax" minOccurs="0"
+						maxOccurs="unbounded"/>
+				</xs:sequence>
+				<xs:anyAttribute namespace="##other" processContents="lax"/>
+			</xs:complexType>
+			<xs:element name="Body" type="soapenv:Body"/>
+			<xs:complexType name="Body">
+				<xs:sequence>
+					<xs:any namespace="##any" processContents="lax" minOccurs="0"
+						maxOccurs="unbounded"/>
+				</xs:sequence>
+				<xs:anyAttribute namespace="##other" processContents="lax"/>
+			</xs:complexType>
+			<xs:attribute name="encodingStyle" type="xs:anyURI"/>
+			<xs:element name="Fault" type="soapenv:Fault"/>
+			<xs:complexType name="Fault" final="extension">
+				<xs:sequence>
+					<xs:element name="Code" type="soapenv:faultcode"/>
+					<xs:element name="Reason" type="soapenv:faultreason"/>
+					<xs:element name="Node" type="xs:anyURI" minOccurs="0"/>
+					<xs:element name="Role" type="xs:anyURI" minOccurs="0"/>
+					<xs:element name="Detail" type="soapenv:detail" minOccurs="0"/>
+				</xs:sequence>
+			</xs:complexType>
+			<xs:complexType name="faultreason">
+				<xs:sequence>
+					<xs:element name="Text" type="soapenv:reasontext" minOccurs="1"
+						maxOccurs="unbounded"/>
+				</xs:sequence>
+			</xs:complexType>
+			<xs:complexType name="reasontext">
+				<xs:simpleContent>
+					<xs:extension base="xs:string">
+						<xs:attribute ref="xml:lang" use="required"/>
+					</xs:extension>
+				</xs:simpleContent>
+			</xs:complexType>
+			<xs:complexType name="faultcode">
+				<xs:sequence>
+					<xs:element name="Value" type="soapenv:faultcodeEnum"/>
+					<xs:element name="Subcode" type="soapenv:subcode" minOccurs="0"/>
+				</xs:sequence>
+			</xs:complexType>
+			<xs:simpleType name="faultcodeEnum">
+				<xs:restriction base="xs:QName">
+					<xs:enumeration value="soapenv:DataEncodingUnknown"/>
+					<xs:enumeration value="soapenv:MustUnderstand"/>
+					<xs:enumeration value="soapenv:Receiver"/>
+					<xs:enumeration value="soapenv:Sender"/>
+					<xs:enumeration value="soapenv:VersionMismatch"/>
+				</xs:restriction>
+			</xs:simpleType>
+			<xs:complexType name="subcode">
+				<xs:sequence>
+					<xs:element name="Value" type="xs:QName"/>
+					<xs:element name="Subcode" type="soapenv:subcode" minOccurs="0"/>
+				</xs:sequence>
+			</xs:complexType>
+			<xs:complexType name="detail">
+				<xs:sequence>
+					<xs:any namespace="##any" processContents="lax" minOccurs="0"
+						maxOccurs="unbounded"/>
+				</xs:sequence>
+				<xs:anyAttribute namespace="##other" processContents="lax"/>
+			</xs:complexType>
+		</xs:schema>
+		<xs:schema targetNamespace="http://uri.etsi.org/TS102204/v1.1.2#"
+			xmlns:xenc="http://www.w3.org/2001/04/xmlenc#"
+			xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#"
+			xmlns:fi="http://mss.ficom.fi/TS102204/v1.0.0#"
+			xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+			xmlns:sco="http://www.swisscom.ch/TS102204/ext/v1.0.0" elementFormDefault="qualified">
+			<xs:import namespace="http://www.w3.org/2003/05/soap-envelope"/>
+			<xs:import namespace="http://www.w3.org/2000/09/xmldsig#"/>
+			<xs:import namespace="http://www.w3.org/2001/04/xmlenc#"/>
+			<xs:import namespace="http://www.swisscom.ch/TS102204/ext/v1.0.0"/>
+			<xs:import namespace="http://mss.ficom.fi/TS102204/v1.0.0#"/>
+			<xs:complexType name="MessageAbstractType" abstract="true">
+				<xs:sequence>
+					<xs:element name="AP_Info">
+						<xs:complexType>
+							<xs:attribute name="AP_ID" type="xs:anyURI" use="required"/>
+							<xs:attribute name="AP_PWD" type="xs:string" use="required"/>
+							<xs:attribute name="AP_TransID" type="xs:NCName" use="required"/>
+							<xs:attribute name="Instant" type="xs:dateTime" use="required"/>
+						</xs:complexType>
+					</xs:element>
+					<xs:element name="MSSP_Info">
+						<xs:complexType>
+							<xs:sequence>
+								<xs:element name="MSSP_ID" type="mss:MeshMemberType"/>
+							</xs:sequence>
+							<xs:attribute name="Instant" type="xs:dateTime" use="optional"/>
+						</xs:complexType>
+					</xs:element>
+				</xs:sequence>
+				<xs:attribute name="MajorVersion" type="xs:integer" use="required"/>
+				<xs:attribute name="MinorVersion" type="xs:integer" use="required"/>
+			</xs:complexType>
+			<xs:element name="MSS_SignatureReq" type="mss:MSS_SignatureReqType"/>
+			<xs:complexType name="MSS_SignatureReqType">
+				<xs:complexContent>
+					<xs:extension base="mss:MessageAbstractType">
+						<xs:sequence>
+							<xs:element name="MobileUser" type="mss:MobileUserType"/>
+							<xs:element name="DataToBeSigned" type="mss:DataType"/>
+							<xs:element name="SignatureProfile" type="mss:mssURIType" minOccurs="0"/>
+							<xs:element name="AdditionalServices" minOccurs="0">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="Service" type="mss:AdditionalServiceType"
+											maxOccurs="unbounded"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="MSS_Format" type="mss:mssURIType" minOccurs="0"/>
+						</xs:sequence>
+						<xs:attribute name="TimeOut" type="xs:positiveInteger" use="optional"/>
+						<xs:attribute name="MessagingMode" type="mss:MessagingModeType"
+							use="required"/>
+					</xs:extension>
+				</xs:complexContent>
+			</xs:complexType>
+			<xs:element name="MSS_SignatureResp" type="mss:MSS_SignatureRespType"/>
+			<xs:complexType name="MSS_SignatureRespType">
+				<xs:complexContent>
+					<xs:extension base="mss:MessageAbstractType">
+						<xs:sequence>
+							<xs:element name="MobileUser" type="mss:MobileUserType"/>
+							<xs:element name="MSS_Signature" type="mss:SignatureType" minOccurs="0"/>
+							<xs:element name="SignatureProfile" type="mss:mssURIType" minOccurs="0"/>
+							<xs:element name="Status" type="mss:StatusType"/>
+						</xs:sequence>
+						<xs:attribute name="MSSP_TransID" type="xs:NCName" use="required"/>
+					</xs:extension>
+				</xs:complexContent>
+			</xs:complexType>
+			<xs:element name="MSS_StatusReq" type="mss:MSS_StatusReqType"/>
+			<xs:complexType name="MSS_StatusReqType">
+				<xs:complexContent>
+					<xs:extension base="mss:MessageAbstractType">
+						<xs:attribute name="MSSP_TransID" type="xs:NCName" use="required"/>
+					</xs:extension>
+				</xs:complexContent>
+			</xs:complexType>
+			<xs:element name="MSS_StatusResp" type="mss:MSS_StatusRespType"/>
+			<xs:complexType name="MSS_StatusRespType">
+				<xs:complexContent>
+					<xs:extension base="mss:MessageAbstractType">
+						<xs:sequence>
+							<xs:element name="MobileUser" type="mss:MobileUserType"/>
+							<xs:element name="MSS_Signature" type="mss:SignatureType" minOccurs="0"/>
+							<xs:element name="Status" type="mss:StatusType"/>
+						</xs:sequence>
+					</xs:extension>
+				</xs:complexContent>
+			</xs:complexType>
+			<xs:element name="MSS_ProfileReq" type="mss:MSS_ProfileReqType"/>
+			<xs:complexType name="MSS_ProfileReqType">
+				<xs:complexContent>
+					<xs:extension base="mss:MessageAbstractType">
+						<xs:sequence>
+							<xs:element name="MobileUser" type="mss:MobileUserType"/>
+						</xs:sequence>
+					</xs:extension>
+				</xs:complexContent>
+			</xs:complexType>
+			<xs:element name="MSS_ProfileResp" type="mss:MSS_ProfileRespType"/>
+			<xs:complexType name="MSS_ProfileRespType">
+				<xs:complexContent>
+					<xs:extension base="mss:MessageAbstractType">
+						<xs:sequence>
+							<xs:element name="SignatureProfile" type="mss:mssURIType" minOccurs="0"
+								maxOccurs="unbounded"/>
+							<xs:element name="Status" type="mss:StatusType"/>
+						</xs:sequence>
+					</xs:extension>
+				</xs:complexContent>
+			</xs:complexType>
+			<xs:element name="MSS_ReceiptReq" type="mss:MSS_ReceiptReqType"/>
+			<xs:complexType name="MSS_ReceiptReqType">
+				<xs:complexContent>
+					<xs:extension base="mss:MessageAbstractType">
+						<xs:sequence>
+							<xs:element name="MobileUser" type="mss:MobileUserType"/>
+							<xs:element name="Status" type="mss:StatusType" minOccurs="0"/>
+							<xs:element name="Message" type="mss:DataType" minOccurs="0"/>
+						</xs:sequence>
+						<xs:attribute name="MSSP_TransID" type="xs:NCName" use="required"/>
+					</xs:extension>
+				</xs:complexContent>
+			</xs:complexType>
+			<xs:element name="MSS_ReceiptResp" type="mss:MSS_ReceiptRespType"/>
+			<xs:complexType name="MSS_ReceiptRespType">
+				<xs:complexContent>
+					<xs:extension base="mss:MessageAbstractType">
+						<xs:sequence>
+							<xs:element name="Status" type="mss:StatusType"/>
+						</xs:sequence>
+					</xs:extension>
+				</xs:complexContent>
+			</xs:complexType>
+			<xs:complexType name="MobileUserType">
+				<xs:sequence>
+					<xs:element name="MSISDN" type="xs:string" minOccurs="0"/>
+				</xs:sequence>
+			</xs:complexType>
+			<xs:complexType name="DataType">
+				<xs:simpleContent>
+					<xs:extension base="xs:string">
+						<xs:attribute name="MimeType" type="xs:string" use="optional"/>
+						<xs:attribute name="Encoding" type="xs:string" use="optional"/>
+					</xs:extension>
+				</xs:simpleContent>
+			</xs:complexType>
+			<xs:simpleType name="MessagingModeType">
+				<xs:restriction base="xs:string">
+					<xs:enumeration value="synch"/>
+					<xs:enumeration value="asynchClientServer"/>
+				</xs:restriction>
+			</xs:simpleType>
+			<xs:complexType name="mssURIType">
+				<xs:sequence>
+					<xs:element name="mssURI" type="xs:anyURI"/>
+					<xs:any namespace="##other" processContents="lax" minOccurs="0"
+						maxOccurs="unbounded"/>
+				</xs:sequence>
+			</xs:complexType>
+			<xs:complexType name="MeshMemberType">
+				<xs:sequence>
+					<xs:element name="URI" type="xs:anyURI" minOccurs="0"/>
+				</xs:sequence>
+			</xs:complexType>
+			<xs:complexType name="SignatureType">
+				<xs:choice>
+					<xs:element name="Base64Signature" type="xs:base64Binary"/>
+				</xs:choice>
+			</xs:complexType>
+			<xs:element name="MSS_MessageSignature">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element ref="ds:Signature"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:complexType name="AdditionalServiceType">
+				<xs:sequence>
+					<xs:element name="Description" type="mss:mssURIType"/>
+					<xs:choice minOccurs="0" maxOccurs="unbounded">
+						<xs:element ref="fi:UserLang"/>
+					</xs:choice>
+				</xs:sequence>
+			</xs:complexType>
+			<xs:complexType name="StatusType">
+				<xs:sequence>
+					<xs:element name="StatusCode" type="mss:StatusCodeType"/>
+					<xs:element name="StatusMessage" type="xs:string" minOccurs="0"/>
+					<xs:element name="StatusDetail" type="mss:StatusDetailType" minOccurs="0"/>
+				</xs:sequence>
+			</xs:complexType>
+			<xs:complexType name="StatusCodeType">
+				<xs:sequence>
+					<xs:element name="StatusCode" type="mss:StatusCodeType" minOccurs="0"/>
+				</xs:sequence>
+				<xs:attribute name="Value" type="xs:integer" use="required"/>
+			</xs:complexType>
+			<xs:complexType name="StatusDetailType">
+				<xs:choice minOccurs="0" maxOccurs="unbounded">
+					<xs:element ref="sco:ReceiptRequestExtension"/>
+				</xs:choice>
+			</xs:complexType>
+		</xs:schema>
+		<xs:schema targetNamespace="http://www.w3.org/XML/1998/namespace" xml:lang="en">
+			<xs:attribute name="lang">
+				<xs:simpleType>
+					<xs:union memberTypes="xs:language">
+						<xs:simpleType>
+							<xs:restriction base="xs:string">
+								<xs:enumeration value=""/>
+							</xs:restriction>
+						</xs:simpleType>
+					</xs:union>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="space">
+				<xs:simpleType>
+					<xs:restriction base="xs:NCName">
+						<xs:enumeration value="default"/>
+						<xs:enumeration value="preserve"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="base" type="xs:anyURI"> </xs:attribute>
+			<xs:attribute name="id" type="xs:ID"> </xs:attribute>
+			<xs:attributeGroup name="specialAttrs">
+				<xs:attribute ref="xml:base"/>
+				<xs:attribute ref="xml:lang"/>
+				<xs:attribute ref="xml:space"/>
+				<xs:attribute ref="xml:id"/>
+			</xs:attributeGroup>
+		</xs:schema>
+		<xs:schema
+			targetNamespace="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+			xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+			xmlns:xs="http://www.w3.org/2001/XMLSchema"
+			xmlns="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+			elementFormDefault="qualified" attributeFormDefault="unqualified" version="0.1">
+			<!-- // Fault Codes /////////////////////////////////////////// -->
+			<xs:simpleType name="tTimestampFault">
+				<xs:restriction base="xs:QName">
+					<xs:enumeration value="wsu:MessageExpired"/>
+				</xs:restriction>
+			</xs:simpleType>
+			<!-- // Global attributes //////////////////////////////////// -->
+			<xs:attribute name="Id" type="xs:ID"> </xs:attribute>
+			<xs:attributeGroup name="commonAtts">
+				<xs:attribute ref="wsu:Id" use="optional"/>
+				<xs:anyAttribute namespace="##other" processContents="lax"/>
+			</xs:attributeGroup>
+			<!-- // Utility types //////////////////////////////////////// -->
+			<xs:complexType name="AttributedDateTime">
+				<xs:simpleContent>
+					<xs:extension base="xs:string">
+						<xs:attributeGroup ref="wsu:commonAtts"/>
+					</xs:extension>
+				</xs:simpleContent>
+			</xs:complexType>
+			<xs:complexType name="AttributedURI">
+				<xs:simpleContent>
+					<xs:extension base="xs:anyURI">
+						<xs:attributeGroup ref="wsu:commonAtts"/>
+					</xs:extension>
+				</xs:simpleContent>
+			</xs:complexType>
+			<!-- // Timestamp header components /////////////////////////// -->
+			<xs:complexType name="TimestampType">
+				<xs:sequence>
+					<xs:element ref="wsu:Created" minOccurs="0"/>
+					<xs:element ref="wsu:Expires" minOccurs="0"/>
+					<xs:choice minOccurs="0" maxOccurs="unbounded">
+						<xs:any namespace="##other" processContents="lax"/>
+					</xs:choice>
+				</xs:sequence>
+				<xs:attributeGroup ref="wsu:commonAtts"/>
+			</xs:complexType>
+			<xs:element name="Timestamp" type="wsu:TimestampType"> </xs:element>
+			<!-- global element decls to allow individual elements to appear anywhere -->
+			<xs:element name="Expires" type="wsu:AttributedDateTime"> </xs:element>
+			<xs:element name="Created" type="wsu:AttributedDateTime"> </xs:element>
+		</xs:schema>
+	</wsdl:types>
+	<wsdl:message name="MSS_SignatureOutput">
+		<wsdl:part name="MSS_SignatureResp" type="mss:MSS_SignatureRespType"> </wsdl:part>
+	</wsdl:message>
+	<wsdl:message name="MSS_SignatureInput">
+		<wsdl:part name="MSS_SignatureReq" type="mss:MSS_SignatureReqType"> </wsdl:part>
+	</wsdl:message>
+	<wsdl:message name="MSS_StatusQueryInput">
+		<wsdl:part name="MSS_StatusReq" type="mss:MSS_StatusReqType"/>
+	</wsdl:message>
+	<wsdl:message name="MSS_StatusQueryOutput">
+		<wsdl:part name="MSS_StatusResp" type="mss:MSS_StatusRespType"/>
+	</wsdl:message>
+	<wsdl:message name="MSS_ReceiptInput">
+		<wsdl:part name="MSS_ReceiptReq" type="mss:MSS_ReceiptReqType"/>
+	</wsdl:message>
+	<wsdl:message name="MSS_ReceiptOutput">
+		<wsdl:part name="MSS_ReceiptResp" type="mss:MSS_ReceiptRespType"/>
+	</wsdl:message>
+	<wsdl:message name="MSS_ProfileInput">
+		<wsdl:part name="MSS_ProfileReq" type="mss:MSS_ProfileReqType"/>
+	</wsdl:message>
+	<wsdl:message name="MSS_ProfileOutput">
+		<wsdl:part name="MSS_ProfileResp" type="mss:MSS_ProfileRespType"/>
+	</wsdl:message>
+	<wsdl:message name="MSS_FaultMessage">
+		<wsdl:part name="MSS_Fault" element="soapenv:Fault"> </wsdl:part>
+	</wsdl:message>
+	<wsdl:portType name="MSS_SignatureType">
+		<wsdl:operation name="MSS_Signature">
+			<wsdl:input message="tns:MSS_SignatureInput"/>
+			<wsdl:output message="tns:MSS_SignatureOutput"/>
+			<wsdl:fault name="FaultPart" message="tns:MSS_FaultMessage"/>
+		</wsdl:operation>
+	</wsdl:portType>
+	<wsdl:portType name="MSS_StatusQueryType">
+		<wsdl:operation name="MSS_StatusQuery">
+			<wsdl:input message="tns:MSS_StatusQueryInput"/>
+			<wsdl:output message="tns:MSS_StatusQueryOutput"/>
+			<wsdl:fault name="FaultPart" message="tns:MSS_FaultMessage"/>
+		</wsdl:operation>
+	</wsdl:portType>
+	<wsdl:portType name="MSS_ReceiptType">
+		<wsdl:operation name="MSS_Receipt">
+			<wsdl:input message="tns:MSS_ReceiptInput"/>
+			<wsdl:output message="tns:MSS_ReceiptOutput"/>
+			<wsdl:fault name="FaultPart" message="tns:MSS_FaultMessage"/>
+		</wsdl:operation>
+	</wsdl:portType>
+	<wsdl:portType name="MSS_ProfileType">
+		<wsdl:operation name="MSS_ProfileQuery">
+			<wsdl:input message="tns:MSS_ProfileInput"/>
+			<wsdl:output message="tns:MSS_ProfileOutput"/>
+			<wsdl:fault name="FaultPart" message="tns:MSS_FaultMessage"/>
+		</wsdl:operation>
+	</wsdl:portType>
+	<wsdl:binding name="MSS_SignatureBinding" type="tns:MSS_SignatureType">
+		<wsoap12:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+		<wsdl:operation name="MSS_Signature">
+			<wsoap12:operation soapActionRequired="false" style="rpc"/>
+			<wsdl:input>
+				<wsoap12:body parts="MSS_SignatureReq" use="literal" namespace="http://uri.etsi.org/TS102204/v1.1.2#"/>
+			</wsdl:input>
+			<wsdl:output>
+				<wsoap12:body parts="MSS_SignatureResp" use="literal" namespace="http://uri.etsi.org/TS102204/v1.1.2#"/>
+			</wsdl:output>
+		</wsdl:operation>
+	</wsdl:binding>
+	<wsdl:binding name="MSS_StatusQueryBinding" type="tns:MSS_StatusQueryType">
+		<wsoap12:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+		<wsdl:operation name="MSS_StatusQuery">
+			<wsoap12:operation soapActionRequired="false" style="rpc"/>
+			<wsdl:input>
+				<wsoap12:body parts="MSS_StatusReq" use="literal" namespace="http://uri.etsi.org/TS102204/v1.1.2#"/>
+			</wsdl:input>
+			<wsdl:output>
+				<wsoap12:body parts="MSS_StatusResp" use="literal" namespace="http://uri.etsi.org/TS102204/v1.1.2#"/>
+			</wsdl:output>
+		</wsdl:operation>
+	</wsdl:binding>
+	<wsdl:binding name="MSS_ReceiptBinding" type="tns:MSS_ReceiptType">
+		<wsoap12:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+		<wsdl:operation name="MSS_Receipt">
+			<wsoap12:operation soapActionRequired="false" style="rpc"/>
+			<wsdl:input>
+				<wsoap12:body parts="MSS_ReceiptReq" use="literal" namespace="http://uri.etsi.org/TS102204/v1.1.2#"/>
+			</wsdl:input>
+			<wsdl:output>
+				<wsoap12:body parts="MSS_ReceiptResp" use="literal" namespace="http://uri.etsi.org/TS102204/v1.1.2#"/>
+			</wsdl:output>
+		</wsdl:operation>
+	</wsdl:binding>
+	<wsdl:binding name="MSS_ProfileQueryBinding" type="tns:MSS_ProfileType">
+		<wsoap12:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+		<wsdl:operation name="MSS_ProfileQuery">
+			<wsoap12:operation soapActionRequired="false" style="rpc"/>
+			<wsdl:input>
+				<wsoap12:body parts="MSS_ProfileReq" use="literal" namespace="http://uri.etsi.org/TS102204/etsi204-kiuru.wsdl"/>
+			</wsdl:input>
+			<wsdl:output>
+				<wsoap12:body parts="MSS_ProfileResp" use="literal" namespace="http://uri.etsi.org/TS102204/etsi204-kiuru.wsdl"/>
+			</wsdl:output>
+		</wsdl:operation>
+	</wsdl:binding>
+	<wsdl:service name="MSS_SignatureService">
+		<wsdl:port name="MSS_SignaturePort" binding="tns:MSS_SignatureBinding">
+			<wsoap12:address
+				location="https://soap.mobileid.swisscom.com/soap/services/MSS_SignaturePort"/>
+		</wsdl:port>
+	</wsdl:service>
+	<wsdl:service name="MSS_StatusService">
+		<wsdl:port name="MSS_StatusQueryPort" binding="tns:MSS_StatusQueryBinding">
+			<wsoap12:address
+				location="https://soap.mobileid.swisscom.com/soap/services/StatusQueryPort"/>
+		</wsdl:port>
+	</wsdl:service>
+	<wsdl:service name="MSS_ReceiptService">
+		<wsdl:port name="MSS_ReceiptPort" binding="tns:MSS_ReceiptBinding">
+			<wsoap12:address
+				location="https://soap.mobileid.swisscom.com/soap/services/MSS_ReceiptPort"/>
+		</wsdl:port>
+	</wsdl:service>
+	<wsdl:service name="MSS_ProfileService">
+		<wsdl:port name="MSS_ProfilePort" binding="tns:MSS_ProfileQueryBinding">
+			<wsoap12:address
+				location="https://soap.mobileid.swisscom.com/soap/services/MSS_ProfilePort"/>
+		</wsdl:port>
+	</wsdl:service>
+</wsdl:definitions>
