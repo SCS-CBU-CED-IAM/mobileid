@@ -1,34 +1,9 @@
 #!/bin/sh
-# mobileid-sign.sh - 2.6
+# mobileid-sign.sh - 2.7
 #
 # Generic script using curl to invoke Swisscom Mobile ID service.
 # Dependencies: curl, openssl, base64, sed, date, xmllint
 #
-# Change Log:
-#  1.0 13.09.2012: Initial version with signature validation
-#  1.1 27.09.2012: Revocation checks of the signers certificate
-#                  Signed message verification
-#                  Best practice response handling in the status details
-#  1.2 10.10.2012: Cleanup and correction for TRANSID
-#                  Optional parameters for language, debugging and verbose
-#  1.3 17.10.2012: Timeout settings for process and request
-#                  Mandatory language
-#  1.4 21.02.2013: Removal of the optional backend signature validation
-#  1.5 05.04.2013: Switching from wget to curl
-#                  Better error handling
-#  1.6 08.05.2013: Options for sending normal/encrypted receipt
-#  1.7 03.06.2013: Updated usage details
-#  1.8 07.06.2013: Time to sign implementation
-#  1.9 12.08.2013: Instant with timezone
-#  2.0 18.10.2013: Format the xml results in debug mode
-#                  Dependency checker
-#  2.1 13.11.2013: Switched from xmlindent to xmllint
-#  2.2 19.11.2013: Remove of unnecessary exports
-#  2.3 20.11.2013: Improved signature response status code checks
-#  2.4 25.11.2013: Removal of time to sign implementation
-#  2.5 12.12.2013: Get the OCSP uri out of the signers certificate
-#  2.6 21.02.2014: Dynamic issuer for OCSP verification
-#                  Additional CRL verification
 
 ######################################################################
 # User configurable options
@@ -92,7 +67,8 @@ CERT_KEY=$PWD/mycert.key                        # The related key of the certifi
 AP_PWD=disabled                                 # AP Password must be present but is not validated
 
 # Swisscom SDCS elements
-CERT_CA=$PWD/swisscom-ca.crt                    # Bag file with the server/client issuing and root certificates
+CA_SSL=$PWD/mobileid-ca-ssl.crt                 # CA file for the HTTPS connection
+CA_MID=$PWD/mobileid-ca-signature.crt           # CA file for the signature response validation
 
 # Create temporary SOAP request
 #  Synchron with timeout
@@ -150,7 +126,8 @@ cat > $TMP.req <<End
 End
 
 # Check existence of needed files
-[ -r "$CERT_CA" ]   || error "CA certificate/chain file ($CERT_CA) missing or not readable"
+[ -r "$CA_SSL" ]    || error "CA certificate/chain file ($CA_SSL) missing or not readable"
+[ -r "$CA_MID" ]    || error "CA certificate/chain file ($CA_MID) missing or not readable"
 [ -r "$CERT_KEY" ]  || error "SSL key file ($CERT_KEY) missing or not readable"
 [ -r "$CERT_FILE" ] || error "SSL certificate file ($CERT_FILE) missing or not readable"
 
@@ -159,7 +136,7 @@ SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_SignaturePort
 CURL_OPTIONS="--silent"
 http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS --data @$TMP.req \
     --header "Content-Type: text/xml; charset=utf-8" \
-    --cert $CERT_FILE --cacert $CERT_CA --key $CERT_KEY \
+    --cert $CERT_FILE --cacert $CA_SSL --key $CERT_KEY \
     --output $TMP.rsp --trace-ascii $TMP.curl.log \
     --connect-timeout $TIMEOUT_CON \
     $SOAP_URL)
@@ -184,7 +161,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   openssl pkcs7 -inform der -in $TMP.sig.der -out $TMP.sig.cert.pem -print_certs
   [ -s "$TMP.sig.cert.pem" ] || error "Unable to extract signers certificate from signature"
   # Add the CA file as chain until provided by the response
-  cat $CERT_CA >> $TMP.sig.cert.pem
+  cat $CA_MID >> $TMP.sig.cert.pem
 
   # Split the certificate list into separate files
   awk -v tmp=$TMP.sig.certs.level -v c=-1 '/-----BEGIN CERTIFICATE-----/{inc=1;c++} inc {print > (tmp c ".pem")}/---END CERTIFICATE-----/{inc=0}' $TMP.sig.cert.pem
@@ -213,7 +190,6 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   done
 
   # Verify the certificate and revocation status over CRL
-  RES_CERT_STATUS_CRL="Not yet implemented"
   if [ -n "$CRL_URL" ]; then
     # Get the CRL and convert from der to pem
     curl $CURL_OPTIONS --connect-timeout $TIMEOUT_CON $CRL_URL | openssl crl -inform DER  -out $TMP.crl.pem > /dev/null 2>&1
@@ -237,19 +213,19 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
         RES_CERT_STATUS_CRL="revoked"
       fi
      else                                               # -> check not ok
-      RES_CERT_STATUS_CRL"error, status $CRL_ERR"           # Details for verification
+      RES_CERT_STATUS_CRL="error, status $CRL_ERR"          # Details for verification
     fi
    else
     RES_CERT_STATUS_CRL="No CRL information found in the signers certificate"
   fi
   if [ "$RES_CERT_STATUS_CRL" = "revoked" ]; then       # Force Revoked certificate
-    RES_ID=501
+    RES_RC=501
   fi
 
   # Verify the revocation status over OCSP
   # -no_cert_verify: don't verify the OCSP response signers certificate at all
   if [ -n "$OCSP_URL" -a -n "$ISSUER" ]; then
-    openssl ocsp -CAfile $CERT_CA -issuer $ISSUER -nonce -out $TMP.sig.cert.checkocsp -url $OCSP_URL -cert $TMP.sig.certs.level0.pem -no_cert_verify > /dev/null 2>&1
+    openssl ocsp -CAfile $CA_MID -issuer $ISSUER -nonce -out $TMP.sig.cert.checkocsp -url $OCSP_URL -cert $TMP.sig.certs.level0.pem -no_cert_verify > /dev/null 2>&1
     OCSP_ERR=$?                                         # Keep related errorlevel
     if [ "$OCSP_ERR" = "0" ]; then                      # Revocation check completed
       RES_CERT_STATUS_OCSP=$(sed -n -e 's/.*.sig.certs.level0.pem: //p' $TMP.sig.cert.checkocsp)
@@ -260,22 +236,22 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
     RES_CERT_STATUS_OCSP="No OCSP information found in the signers certificate"
   fi
   if [ "$RES_CERT_STATUS_OCSP" = "revoked" ]; then      # Force Revoked certificate
-    RES_ID=501
+    RES_RC=501
   fi
 
   # Extract the PKCS7 and validate the signature
-  openssl cms -verify -inform der -in $TMP.sig.der -out $TMP.sig.txt -CAfile $CERT_CA -purpose sslclient > /dev/null 2>&1
+  openssl cms -verify -inform der -in $TMP.sig.der -out $TMP.sig.txt -CAfile $CA_MID -purpose sslclient > /dev/null 2>&1
   if [ "$?" = "0" ]; then                               # Decoding without any error
     RES_MSG=$(cat $TMP.sig.txt)                            # Decoded message is in this file
     RES_MSG_STATUS="success"                                    # Details of verification
    else                                                 # -> error in decoding
     RES_MSG=$(cat $TMP.sig.txt)                            # Decoded message is in this file
     RES_MSG_STATUS="failed, status $?"                          # Details of verification
-    RES_ID=503                                                  # Force the Invalid signature status
+    RES_RC=503                                                  # Force the Invalid signature status
   fi
 
   # Status codes
-  case "$RES_ID" in
+  case "$RES_RC" in
     "500" ) RC=0 ;;                                     # Signature constructed
     "501" ) RC=1 ;;                                     # Revoked certificate
     "502" ) RC=0 ;;                                     # Valid signature
