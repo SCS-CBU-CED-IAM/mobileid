@@ -1,15 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<wsdl:definitions xmlns:tns="http://swisscom.com/esauth/wsdl/mss.wsdl"
+<wsdl:definitions 
 	xmlns:apachesoap="http://xml.apache.org/xml-soap"
-	xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#"
 	xmlns:wsoap12="http://schemas.xmlsoap.org/wsdl/soap12/"
-	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" 
+	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
 	xmlns:soapenv="http://www.w3.org/2003/05/soap-envelope"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema"
 	xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
-	xmlns:xenc="http://www.w3.org/2001/04/xmlenc#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
-	xmlns:xml="http://www.w3.org/XML/1998/namespace" name="MSS"
-	targetNamespace="http://swisscom.com/esauth/wsdl/mss.wsdl">
+	xmlns:xenc="http://www.w3.org/2001/04/xmlenc#" 
+	xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+	xmlns:xml="http://www.w3.org/XML/1998/namespace" 
+	xmlns:tns="http://uri.etsi.org/TS102204/etsi204-kiuru.wsdl"
+	xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#"  
+	name="KIURU"
+	targetNamespace="http://uri.etsi.org/TS102204/etsi204-kiuru.wsdl">
+	
 	<wsdl:types>
 		<xs:schema targetNamespace="http://www.w3.org/2001/04/xmlenc#"
 			xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
@@ -24,6 +29,7 @@
 			elementFormDefault="qualified">
 
 			<xs:element name="ReceiptRequestExtension" type="sco:ReceiptExtensionType"/>
+			<xs:element name="ReceiptResponseExtension" type="sco:ReceiptExtensionType"/>
 
 			<xs:complexType name="ReceiptExtensionType">
 				<xs:sequence>
@@ -70,9 +76,6 @@
 		</xs:schema>
 		<xs:schema targetNamespace="http://www.w3.org/2000/09/xmldsig#"
 			xmlns:xs="http://www.w3.org/2001/XMLSchema" version="0.1" elementFormDefault="qualified">
-			<xs:simpleType name="CryptoBinary">
-				<xs:restriction base="xs:base64Binary"> </xs:restriction>
-			</xs:simpleType>
 			<!-- Start Signature -->
 			<xs:element name="Signature" type="ds:SignatureType"/>
 			<xs:complexType name="SignatureType">
@@ -371,6 +374,7 @@
 			<xs:complexType name="StatusDetailType">
 				<xs:choice minOccurs="0" maxOccurs="unbounded">
 					<xs:element ref="sco:ReceiptRequestExtension"/>
+					<xs:element ref="sco:ReceiptResponseExtension"/>
 				</xs:choice>
 			</xs:complexType>
 		</xs:schema>
@@ -394,8 +398,8 @@
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:attribute>
-			<xs:attribute name="base" type="xs:anyURI"> </xs:attribute>
-			<xs:attribute name="id" type="xs:ID"> </xs:attribute>
+			<xs:attribute name="base" type="xs:anyURI"/> 
+			<xs:attribute name="id" type="xs:ID"/> 
 			<xs:attributeGroup name="specialAttrs">
 				<xs:attribute ref="xml:base"/>
 				<xs:attribute ref="xml:lang"/>
@@ -416,7 +420,7 @@
 				</xs:restriction>
 			</xs:simpleType>
 			<!-- // Global attributes //////////////////////////////////// -->
-			<xs:attribute name="Id" type="xs:ID"> </xs:attribute>
+			<xs:attribute name="Id" type="xs:ID"/> 
 			<xs:attributeGroup name="commonAtts">
 				<xs:attribute ref="wsu:Id" use="optional"/>
 				<xs:anyAttribute namespace="##other" processContents="lax"/>
@@ -447,17 +451,17 @@
 				</xs:sequence>
 				<xs:attributeGroup ref="wsu:commonAtts"/>
 			</xs:complexType>
-			<xs:element name="Timestamp" type="wsu:TimestampType"> </xs:element>
+			<xs:element name="Timestamp" type="wsu:TimestampType"/> 
 			<!-- global element decls to allow individual elements to appear anywhere -->
-			<xs:element name="Expires" type="wsu:AttributedDateTime"> </xs:element>
-			<xs:element name="Created" type="wsu:AttributedDateTime"> </xs:element>
+			<xs:element name="Expires" type="wsu:AttributedDateTime"/> 
+			<xs:element name="Created" type="wsu:AttributedDateTime"/> 
 		</xs:schema>
 	</wsdl:types>
 	<wsdl:message name="MSS_SignatureOutput">
-		<wsdl:part name="MSS_SignatureResp" type="mss:MSS_SignatureRespType"> </wsdl:part>
+		<wsdl:part name="MSS_SignatureResp" type="mss:MSS_SignatureRespType"/> 
 	</wsdl:message>
 	<wsdl:message name="MSS_SignatureInput">
-		<wsdl:part name="MSS_SignatureReq" type="mss:MSS_SignatureReqType"> </wsdl:part>
+		<wsdl:part name="MSS_SignatureReq" type="mss:MSS_SignatureReqType"/> 
 	</wsdl:message>
 	<wsdl:message name="MSS_StatusQueryInput">
 		<wsdl:part name="MSS_StatusReq" type="mss:MSS_StatusReqType"/>
@@ -478,7 +482,7 @@
 		<wsdl:part name="MSS_ProfileResp" type="mss:MSS_ProfileRespType"/>
 	</wsdl:message>
 	<wsdl:message name="MSS_FaultMessage">
-		<wsdl:part name="MSS_Fault" element="soapenv:Fault"> </wsdl:part>
+		<wsdl:part name="MSS_Fault" element="soapenv:Fault"/> 
 	</wsdl:message>
 	<wsdl:portType name="MSS_SignatureType">
 		<wsdl:operation name="MSS_Signature">
@@ -513,10 +517,10 @@
 		<wsdl:operation name="MSS_Signature">
 			<wsoap12:operation soapActionRequired="false" style="rpc"/>
 			<wsdl:input>
-				<wsoap12:body parts="MSS_SignatureReq" use="literal" namespace="http://uri.etsi.org/TS102204/v1.1.2#"/>
+				<wsoap12:body parts="MSS_SignatureReq" use="literal"/>
 			</wsdl:input>
 			<wsdl:output>
-				<wsoap12:body parts="MSS_SignatureResp" use="literal" namespace="http://uri.etsi.org/TS102204/v1.1.2#"/>
+				<wsoap12:body parts="MSS_SignatureResp" use="literal"/>
 			</wsdl:output>
 		</wsdl:operation>
 	</wsdl:binding>
@@ -525,10 +529,10 @@
 		<wsdl:operation name="MSS_StatusQuery">
 			<wsoap12:operation soapActionRequired="false" style="rpc"/>
 			<wsdl:input>
-				<wsoap12:body parts="MSS_StatusReq" use="literal" namespace="http://uri.etsi.org/TS102204/v1.1.2#"/>
+				<wsoap12:body parts="MSS_StatusReq" use="literal"/>
 			</wsdl:input>
 			<wsdl:output>
-				<wsoap12:body parts="MSS_StatusResp" use="literal" namespace="http://uri.etsi.org/TS102204/v1.1.2#"/>
+				<wsoap12:body parts="MSS_StatusResp" use="literal"/>
 			</wsdl:output>
 		</wsdl:operation>
 	</wsdl:binding>
@@ -537,10 +541,10 @@
 		<wsdl:operation name="MSS_Receipt">
 			<wsoap12:operation soapActionRequired="false" style="rpc"/>
 			<wsdl:input>
-				<wsoap12:body parts="MSS_ReceiptReq" use="literal" namespace="http://uri.etsi.org/TS102204/v1.1.2#"/>
+				<wsoap12:body parts="MSS_ReceiptReq" use="literal"/>
 			</wsdl:input>
 			<wsdl:output>
-				<wsoap12:body parts="MSS_ReceiptResp" use="literal" namespace="http://uri.etsi.org/TS102204/v1.1.2#"/>
+				<wsoap12:body parts="MSS_ReceiptResp" use="literal"/>
 			</wsdl:output>
 		</wsdl:operation>
 	</wsdl:binding>
@@ -549,10 +553,10 @@
 		<wsdl:operation name="MSS_ProfileQuery">
 			<wsoap12:operation soapActionRequired="false" style="rpc"/>
 			<wsdl:input>
-				<wsoap12:body parts="MSS_ProfileReq" use="literal" namespace="http://uri.etsi.org/TS102204/etsi204-kiuru.wsdl"/>
+				<wsoap12:body parts="MSS_ProfileReq" use="literal"/>
 			</wsdl:input>
 			<wsdl:output>
-				<wsoap12:body parts="MSS_ProfileResp" use="literal" namespace="http://uri.etsi.org/TS102204/etsi204-kiuru.wsdl"/>
+				<wsoap12:body parts="MSS_ProfileResp" use="literal"/>
 			</wsdl:output>
 		</wsdl:operation>
 	</wsdl:binding>
@@ -565,7 +569,7 @@
 	<wsdl:service name="MSS_StatusService">
 		<wsdl:port name="MSS_StatusQueryPort" binding="tns:MSS_StatusQueryBinding">
 			<wsoap12:address
-				location="https://soap.mobileid.swisscom.com/soap/services/StatusQueryPort"/>
+				location="https://soap.mobileid.swisscom.com/soap/services/MSS_StatusQueryPort"/>
 		</wsdl:port>
 	</wsdl:service>
 	<wsdl:service name="MSS_ReceiptService">

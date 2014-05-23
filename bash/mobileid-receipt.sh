@@ -1,19 +1,9 @@
 #!/bin/sh
-# mobileid-receipt.sh - 2.3
+# mobileid-receipt.sh - 2.4
 #
 # Generic script using curl to invoke Swisscom Mobile ID service.
 # Dependencies: curl, openssl, base64, sed, date, iconv, xmllint, xxd
 #
-# Change Log:
-#  1.0 08.05.2013: Initial version
-#  1.1 30.05.2013: Proper encoding for encrypted receipts
-#  1.2 03.05.2013: Conditional encoding for encrypted receipts based on content
-#  1.3 12.08.2013: Instant with timezone
-#  2.0 18.10.2013: Format the xml results in debug mode
-#                  Dependency checker
-#  2.1 13.11.2013: Switched from xmlindent to xmllint
-#  2.2 19.11.2013: Remove of unnecessary exports
-#  2.3 20.11.2013: Changed interpreter from bash to sh & use of xxd instead of "echo -e"
 
 ######################################################################
 # User configurable options
@@ -74,7 +64,7 @@ CERT_KEY=$PWD/mycert.key                        # The related key of the certifi
 AP_PWD=disabled                                 # AP Password must be present but is not validated
 
 # Swisscom SDCS elements
-CERT_CA=$PWD/swisscom-ca.crt                    # Bag file with the server/client issuing and root certificates
+CA_SSL=$PWD/mobileid-ca-ssl.crt                 # CA file for the HTTPS connection
 
 # Create temporary SOAP request
 RANDOM=$$                                       # Seeds the random number generator from PID of script
@@ -142,7 +132,7 @@ cat > $SOAP_REQ <<End
 End
 
 # Check existence of needed files
-[ -r "${CERT_CA}" ]   || error "CA certificate/chain file ($CERT_CA) missing or not readable"
+[ -r "${CA_SSL}" ]    || error "CA certificate/chain file ($CA_SSL) missing or not readable"
 [ -r "${CERT_KEY}" ]  || error "SSL key file ($CERT_KEY) missing or not readable"
 [ -r "${CERT_FILE}" ] || error "SSL certificate file ($CERT_FILE) missing or not readable"
 
@@ -151,7 +141,7 @@ SOAP_URL=https://soap.mobileid.swisscom.com/soap/services/MSS_ReceiptPort
 CURL_OPTIONS="--silent"
 http_code=$(curl --write-out '%{http_code}\n' $CURL_OPTIONS \
     --data "@${SOAP_REQ}" --header "Content-Type: text/xml; charset=utf-8" \
-    --cert $CERT_FILE --cacert $CERT_CA --key $CERT_KEY \
+    --cert $CERT_FILE --cacert $CA_SSL --key $CERT_KEY \
     --output $SOAP_REQ.res --trace-ascii $SOAP_REQ.log \
     --connect-timeout $TIMEOUT_CON \
     $SOAP_URL)
