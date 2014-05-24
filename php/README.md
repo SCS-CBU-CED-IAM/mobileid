@@ -13,7 +13,7 @@ The class is using:
 
 * SoapClient class (http://www.php.net/manual/en/class.soapclient.php) in the WSDL mode
 * OpenSSL package and class (http://www.php.net/manual/en/openssl.requirements.php)
-* mobileid.wsdl (Version: mobileid-mss-wsdl-reduced_v2.6.wsdl, based on mink-kiuru-mss-wsdl-2014-05-08)
+* mobileid.wsdl
 
 ## Client based certificate authentication
 
