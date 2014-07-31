@@ -83,13 +83,13 @@ MSG_TYPE='MimeType="text/plain" Encoding="UTF-8"'
 if [ "$PUB_CERT" != "" ]; then                  # Message to be encrypted
   [ -r "${PUB_CERT}" ] || error "Public certificate for encoding the message ($PUB_CERT) missing or not readable"
   MSG_TYPE='MimeType="application/alauda-rsamessage" Encoding="BASE64"'
-  MSG_ASCI=$(echo -n $MSG_TXT | iconv -s -f UTF-8 -t US-ASCII//TRANSLIT)
+  MSG_ASCI=$(printf $MSG_TXT | iconv -s -f UTF-8 -t US-ASCII//TRANSLIT)
   if [ "$MSG_TXT" = "$MSG_ASCI" ]; then         # Message does not contain special chars
-    echo -n "$MSG_TXT" | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
+    printf "$MSG_TXT" | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
     [ -f "$SOAP_REQ.msg" ] && MSG_TXT=$(base64 $SOAP_REQ.msg)
   else                                          # -> GSM11.14 STK commands do not support UTF8, either UCS-2 or GSMDA
     # Encrypt UCS-2 prefixed with Hex 80 over cmd as vars are not properly encoding
-    (echo 80 | xxd -r -p ; echo -n "$MSG_TXT" | iconv -s -f UTF-8 -t UCS-2BE) | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
+    (echo 80 | xxd -r -p ; printf "$MSG_TXT" | iconv -s -f UTF-8 -t UCS-2BE) | openssl rsautl -encrypt -inkey $PUB_CERT -out $SOAP_REQ.msg -certin > /dev/null 2>&1
     [ -f "$SOAP_REQ.msg" ] && MSG_TXT=$(base64 $SOAP_REQ.msg)
   fi
 fi
