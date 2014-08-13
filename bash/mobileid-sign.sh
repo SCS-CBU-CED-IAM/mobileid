@@ -259,21 +259,22 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   esac 
 
   if [ "$VERBOSE" = "1" ]; then                         # Verbose details
+    if [ "$RES_TRANSID" = "$AP_TRANSID" ] ; then RES_TRANSID_DETAIL="-> same as in request" ; else RES_TRANSID_DETAIL="-> different as in request!" ; fi
+    if [ "$RES_MSISDNID" = "$SEND_TO" ] ; then RES_MSISDNID_DETAIL="-> same as in request" ; else RES_MSISDNID_DETAIL="-> different as in request!" ; fi
+    if [ "$RES_MSG" = "$SEND_MSG" ] ; then RES_MSG_DETAIL="same as in request" ; else RES_MSG_DETAIL="different as in request!" ; fi
+
     echo "OK with following details and checks:"
-    echo -n " 1) Transaction ID : $RES_TRANSID"
-      if [ "$RES_TRANSID" = "$AP_TRANSID" ] ; then echo " -> same as in request" ; else echo " -> different as in request!" ; fi
-    echo    "    MSSP TransID   : $RES_MSSPID"
-    echo -n " 2) Signed by      : $RES_MSISDNID"
-      if [ "$RES_MSISDNID" = "$SEND_TO" ] ; then echo " -> same as in request" ; else echo " -> different as in request!" ; fi
-    echo    " 3) Signer         : $RES_CERT_SUBJ"
-    echo    "                     $RES_CERT_ISSUER"
-    echo    "                     validity= $RES_CERT_START $RES_CERT_END"
-    echo    "                     CRL check= $RES_CERT_STATUS_CRL"
-    echo    "                     OCSP check= $RES_CERT_STATUS_OCSP"
-    echo -n " 4) Signed Data    : $RES_MSG -> Decode and verify: $RES_MSG_STATUS and "
-      if [ "$RES_MSG" = "$SEND_MSG" ] ; then echo "same as in request" ; else echo "different as in request!" ; fi
-    echo    " 5) Status code    : $RES_RC with exit $RC"
-    echo    "    Status details : $RES_ST"
+    echo " 1) Transaction ID : $RES_TRANSID $RES_TRANSID_DETAIL"
+    echo "    MSSP TransID   : $RES_MSSPID"
+    echo " 2) Signed by      : $RES_MSISDNID $RES_MSISDNID_DETAIL"
+    echo " 3) Signer         : $RES_CERT_SUBJ"
+    echo "                     $RES_CERT_ISSUER"
+    echo "                     validity= $RES_CERT_START $RES_CERT_END"
+    echo "                     CRL check= $RES_CERT_STATUS_CRL"
+    echo "                     OCSP check= $RES_CERT_STATUS_OCSP"
+    echo " 4) Signed Data    : $RES_MSG -> Decode and verify: $RES_MSG_STATUS and $RES_MSG_DETAIL"
+    echo " 5) Status code    : $RES_RC with exit $RC"
+    echo "    Status details : $RES_ST"
   fi
  else
   CURL_ERR=$RC                                          # Keep related error
