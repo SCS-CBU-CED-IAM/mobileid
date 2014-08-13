@@ -12,3 +12,9 @@ Thumbs.db
 .idea
 .idea/*.*
 *.jardesc
+
+.gitignore
+
+
+bash/mycert.key
+bash/mycert.crt
