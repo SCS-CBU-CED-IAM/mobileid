@@ -10,49 +10,56 @@ Contains a script to invoke the:
 * Receipt Request
 * Profile Query Request
 
+#### Configuration
+The file `mobileid.properties` contains the most relevant configuration properties that need to be adjusted before the scripts are used.
+Note that the files `mycert.crt`and `mycert.key` are placeholders without any valid content. Be sure to adjust them with your client certificate content in order to connect to the Mobile ID service.
+
+Refer to the "Mobile ID - SOAP client reference guide" document (see http://goo.gl/FXIMEa) from Swisscom for more details.
+
+
 ```
 Usage: ./mobileid-sign.sh <args> mobile 'message' userlang <receipt>
-  -v       - verbose output
-  -d       - debug mode
-  -e       - encrypted receipt
-  mobile   - mobile number
-  message  - message to be signed
-  userlang - user language (one of en, de, fr, it)
-  receipt  - optional success receipt message
+  -t value   - message type (SOAP, JSON); default SOAP
+  -v         - verbose output
+  -d         - debug mode
+  -e         - encrypted receipt
+  mobile     - mobile number
+  message    - message to be signed
+  userlang   - user language (one of en, de, fr, it)
+  receipt    - optional success receipt message
 
   Example ./mobileid-sign.sh -v +41792080350 'Do you want to login to corporate VPN?' en
+          ./mobileid-sign.sh -t JSON -v +41792080350 'Do you want to login to corporate VPN?' en
           ./mobileid-sign.sh -v +41792080350 'Do you want to login to corporate VPN?' en 'Successful login into VPN'
           ./mobileid-sign.sh -v -e +41792080350 'Do you need a new password?' en 'Temporary password: 123456'
 ```
 
 ```
 Usage: ./mobileid-receipt.sh <args> mobile transID 'message' userlang <pubCert>
-  -v       - verbose output
-  -d       - debug mode
-  mobile   - mobile number
-  transID  - transaction id of the related signature request
-  message  - message to be displayed
-  userlang - user language (one of en, de, fr, it)
-  pubCert  - optional public certificate file of the mobile user to encode the message
+  -t value   - message type (SOAP, JSON); default SOAP
+  -v         - verbose output
+  -d         - debug mode
+  mobile     - mobile number
+  transID    - transaction id of the related signature request
+  message    - message to be displayed
+  userlang   - user language (one of en, de, fr, it)
+  pubCert    - optional public certificate file of the mobile user to encode the message
 
   Example ./mobileid-receipt.sh -v +41792080350 h29ah1 'Successful login into VPN' en
+          ./mobileid-receipt.sh -t JSON -v +41792080350 h29ah1 'Successful login into VPN' en
           ./mobileid-receipt.sh -v +41792080350 h29ah1 'Temporary password: 123456' en /tmp/_tmp.8OVlwv.sig.cert
 ```
 
 ```
 Usage: ./mobileid-query.sh <args> mobile
-  -v       - verbose output
-  -d       - debug mode
-  mobile   - mobile number
+  -t value   - message type (SOAP, JSON); default SOAP
+  -v         - verbose output
+  -d         - debug mode
+  mobile     - mobile number
 
   Example ./mobileid-query.sh -v +41792080350
+          ./mobileid-query.sh -t JSON -v +41792080350
 ````
-
-
-The files `mycert.crt`and `mycert.key` are placeholders without any valid content. Be sure to adjust them with your client certificate content in order to connect to the Mobile ID service.
-
-Refer to the "Mobile ID - SOAP client reference guide" document from Swisscom for more details.
-
 
 Example of verbose outputs:
 ```
