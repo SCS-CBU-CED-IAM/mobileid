@@ -87,18 +87,19 @@ sub post_auth {
     $mssapi->setapinfo(APID, APPASS);
     &radiusd::radlog(L_INFO, "$0::MSS_Signature $msisdn '$msg' $lang");
     my $status = $mssapi->MSS_Signature($msisdn, $msg, $lang, 80);
+	my $status_detail = $mssapi->{_faultresult}->{subcode};
+	$mssapi = undef;
 
     # Result handling
-    $mssapi = undef;
-    if ($status == 1) {
+	if ($status == 1) {
         &radiusd::radlog(L_INFO, "$0::post_auth RLM_MODULE_OK");
         return RLM_MODULE_OK;
     } else {
         &radiusd::radlog(L_ERR, "$0::MSS_Signature (status=$status)");
         &radiusd::radlog(L_ERR, "$0::post_auth RLM_MODULE_REJECT");
+		$RAD_REPLY{'Reply-Message'} = "MobileID: $status_detail";
         return RLM_MODULE_REJECT;
     }
-
 }
 
 # Unused subroutines called by FreeRadius. Must leave them here.
