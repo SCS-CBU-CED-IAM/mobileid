@@ -14,6 +14,6 @@
 #    LD_PRELOAD=/usr/lib/libperl.so start-stop-daemon –start –quiet –pidfile $PIDFILE –exec $PROGRAM — $FREERADIUS_OPTIONS ...
 
 perl mobileid {
-    module = /opt/mobileid/mobileid-radius.pl
+    module = /opt/mobileid/mobileid-perl.pl
     perl_flags = -I/opt/mobileid
 }
