@@ -370,7 +370,7 @@ if [ "$DEBUG" != "" ]; then
 fi
 
 # Need a receipt?
-if [ "$RC" -lt "2" -a "$RECEIPT_MSG" != "" ]; then           # Request ok and need to send a reciept
+if [ "$RC" -lt "1" -a "$RECEIPT_MSG" != "" ]; then           # Request ok and need to send a reciept
   OPTS=
   if [ "$MSGTYPE" = "JSON" ]; then OPTS="$OPTS -t JSON" ; fi # Keep the options
   if [ "$VERBOSE" = "1" ]; then OPTS="$OPTS -v" ; fi
