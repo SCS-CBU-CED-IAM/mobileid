@@ -188,7 +188,7 @@ sub MSS_Signature { # MSISDN, Message, UserLang, Timeout
     $self->{SIGNDATA}    = shift;
     $self->{userlang}    = shift;
     $self->{timeout}     = shift;
-    $self->{SOAPport}    = 'https://soap.mobileid.swisscom.com/soap/services/MSS_SignaturePort'; 
+    $self->{SOAPport}    = 'https://mobileid.swisscom.com/soap/services/MSS_SignaturePort'; 
     $self->{signprofile} = 'http://mid.swisscom.ch/MID/v1/AuthProfile1';
 
     $self->{soapclient} = new SOAP::Lite
