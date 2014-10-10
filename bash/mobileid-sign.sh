@@ -228,26 +228,36 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   
   # Split the certificate list into separate files
   awk -v tmp=$TMP.sig.certs.level -v c=-1 '/-----BEGIN CERTIFICATE-----/{inc=1;c++} inc {print > (tmp c ".pem")}/---END CERTIFICATE-----/{inc=0}' $TMP.sig.cert.pem
-  # Signers certificate is in level0
-  [ -s "$TMP.sig.certs.level0.pem" ] || error "Unable to extract signers certificate from the list"
-  RES_CERT_SUBJ=$(openssl x509 -subject -nameopt utf8 -nameopt sep_comma_plus -noout -in $TMP.sig.certs.level0.pem)
-  RES_CERT_ISSUER=$(openssl x509 -issuer -nameopt utf8 -nameopt sep_comma_plus -noout -in $TMP.sig.certs.level0.pem)
-  RES_CERT_START=$(openssl x509 -startdate -noout -in $TMP.sig.certs.level0.pem)
-  RES_CERT_END=$(openssl x509 -enddate -noout -in $TMP.sig.certs.level0.pem)
+  # Find the signers certificate based on the SerialNumber in the Subject (DN)
+  SIGNER=
+  for i in $TMP.sig.certs.level?.pem; do
+    if [ -s "$i" ]; then
+      RES_TMP=$(openssl x509 -subject -nameopt utf8 -nameopt sep_comma_plus -noout -in $i)
+      RES_TMP=$(echo "$RES_TMP" | sed -n -e "/serialNumber=/p")
+      if [ "$RES_TMP" != "" ]; then SIGNER=$i; fi
+    fi
+  done
+  [ -s "$SIGNER" ] || error "Unable to extract signers certificate from the list"
+
+  # Get the details from the signers certificate
+  RES_CERT_SUBJ=$(openssl x509 -subject -nameopt utf8 -nameopt sep_comma_plus -noout -in $SIGNER)
+  RES_CERT_ISSUER=$(openssl x509 -issuer -nameopt utf8 -nameopt sep_comma_plus -noout -in $SIGNER)
+  RES_CERT_START=$(openssl x509 -startdate -noout -in $SIGNER)
+  RES_CERT_END=$(openssl x509 -enddate -noout -in $SIGNER)
 
   # Get CRL uri from the signers certificate
-  CRL_URL=$(openssl x509 -in $TMP.sig.certs.level0.pem -text -noout | grep crl)
-  CRL_URL=$(echo "$CRL_URL" | sed -e 's/URI://')
+  CRL_URL=$(openssl x509 -in $SIGNER -text -noout | grep crl)
+  CRL_URL=$(echo "$CRL_URL" | sed -n -e 's/URI://')
 
   # Get OCSP uri from the signers certificate
-  OCSP_URL=$(openssl x509 -in $TMP.sig.certs.level0.pem -ocsp_uri -noout)
+  OCSP_URL=$(openssl x509 -in $SIGNER -ocsp_uri -noout)
 
   # Find the proper issuer certificate in the list
   ISSUER=
   for i in $TMP.sig.certs.level?.pem; do
     if [ -s "$i" ]; then
       RES_TMP=$(openssl x509 -subject -nameopt utf8 -nameopt sep_comma_plus -noout -in $i)
-      RES_TMP=$(echo "$RES_TMP" | sed -e 's/subject= /issuer= /')
+      RES_TMP=$(echo "$RES_TMP" | sed -n -e 's/subject= /issuer= /')
       if [ "$RES_TMP" = "$RES_CERT_ISSUER" ]; then ISSUER=$i; fi
     fi
   done
@@ -263,15 +273,15 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
       fi
     done
     # Verify the revocation status over CRL
-    openssl verify -CAfile $TMP.crl.pem -crl_check $TMP.sig.certs.level0.pem > $TMP.sig.cert.checkcrl
+    openssl verify -CAfile $TMP.crl.pem -crl_check $SIGNER > $TMP.sig.cert.checkcrl
     CRL_ERR=$?                                          # Keep related errorlevel
     if [ "$CRL_ERR" = "0" ]; then                       # Revocation check completed
       # if the certificate is revoked it will be in the .checkcrl as:
       #  /tmp/_tmp.DLIV9M.sig.certs.level0.pem: serialNumber = MIDCHEP1YYDBMA59, CN = MIDCHEP1YYDBMA59:PN, C = CH
       #  error 23 at 0 depth lookup:certificate revoked
       # we need get the line, remove all spaces and compare with the subject itself
-      RES_CERT_STATUS_CRL=$(sed -n -e 's/.*.sig.certs.level0.pem: //p' $TMP.sig.cert.checkcrl)
-      RES_CERT_STATUS_CRL=$(echo "$RES_CERT_STATUS_CRL" | sed -e 's/ //g')
+      RES_CERT_STATUS_CRL=$(sed -n -e 's/$SIGNER: //p' $TMP.sig.cert.checkcrl)
+      RES_CERT_STATUS_CRL=$(echo "$RES_CERT_STATUS_CRL" | sed -n -e 's/ //g')
       if [ "subject= $RES_CERT_STATUS_CRL" = "$RES_CERT_SUBJ" ]; then
         RES_CERT_STATUS_CRL="revoked"
       fi
@@ -288,10 +298,10 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   # Verify the revocation status over OCSP
   # -no_cert_verify: don't verify the OCSP response signers certificate at all
   if [ -n "$OCSP_URL" -a -n "$ISSUER" ]; then
-    openssl ocsp -CAfile $CERT_CA_MID -issuer $ISSUER -nonce -out $TMP.sig.cert.checkocsp -url $OCSP_URL -cert $TMP.sig.certs.level0.pem -no_cert_verify > /dev/null 2>&1
+    openssl ocsp -CAfile $CERT_CA_MID -issuer $ISSUER -nonce -out $TMP.sig.cert.checkocsp -url $OCSP_URL -cert $SIGNER -no_cert_verify > /dev/null 2>&1
     OCSP_ERR=$?                                         # Keep related errorlevel
     if [ "$OCSP_ERR" = "0" ]; then                      # Revocation check completed
-      RES_CERT_STATUS_OCSP=$(sed -n -e 's/.*.sig.certs.level0.pem: //p' $TMP.sig.cert.checkocsp)
+      RES_CERT_STATUS_OCSP=$(sed -n -e 's/.*.$SIGNER: //p' $TMP.sig.cert.checkocsp)
      else                                               # -> check not ok
       RES_CERT_STATUS_OCSP="error, status $OCSP_ERR"    # Details for verification
     fi
@@ -376,7 +386,7 @@ if [ "$RC" -lt "1" -a "$RECEIPT_MSG" != "" ]; then           # Request ok and ne
   if [ "$VERBOSE" = "1" ]; then OPTS="$OPTS -v" ; fi
   if [ "$DEBUG"   = "1" ]; then OPTS="$OPTS -d" ; fi
   if [ "$ENCRYPT" = "1" ]; then                              # Encrypted Receipt
-    ./mobileid-receipt.sh $OPTS $MSISDN $RES_MSSPID "$RECEIPT_MSG" "$USERLANG" $TMP.sig.certs.level0.pem
+    ./mobileid-receipt.sh $OPTS $MSISDN $RES_MSSPID "$RECEIPT_MSG" "$USERLANG" $SIGNER
    else                                                      # Plain Receipt
     ./mobileid-receipt.sh $OPTS $MSISDN $RES_MSSPID "$RECEIPT_MSG" "$USERLANG"
   fi
