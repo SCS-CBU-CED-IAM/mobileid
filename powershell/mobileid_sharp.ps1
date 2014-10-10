@@ -45,7 +45,7 @@ namespace Swisscom
 {
   public class SwisscomMobileID
   {
-    private const string SWISSCOM_SERVICE_URL = "https://soap.mobileid.swisscom.com/soap/services/MSS_SignaturePort";
+    private const string SWISSCOM_SERVICE_URL = "https://mobileid.swisscom.com/soap/services/MSS_SignaturePort";
     private const string CRLF = "\r\n";
     private const int RETURN_OK=0;      // mid request sent and accepted
     private const int RETURN_REJECT=1;  // mid request rejected/aborted
