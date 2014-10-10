@@ -564,25 +564,25 @@
 	<wsdl:service name="MSS_SignatureService">
 		<wsdl:port name="MSS_SignaturePort" binding="tns:MSS_SignatureBinding">
 			<wsoap12:address
-				location="https://soap.mobileid.swisscom.com/soap/services/MSS_SignaturePort"/>
+				location="https://mobileid.swisscom.com/soap/services/MSS_SignaturePort"/>
 		</wsdl:port>
 	</wsdl:service>
 	<wsdl:service name="MSS_StatusService">
 		<wsdl:port name="MSS_StatusQueryPort" binding="tns:MSS_StatusQueryBinding">
 			<wsoap12:address
-				location="https://soap.mobileid.swisscom.com/soap/services/MSS_StatusQueryPort"/>
+				location="https://mobileid.swisscom.com/soap/services/MSS_StatusQueryPort"/>
 		</wsdl:port>
 	</wsdl:service>
 	<wsdl:service name="MSS_ReceiptService">
 		<wsdl:port name="MSS_ReceiptPort" binding="tns:MSS_ReceiptBinding">
 			<wsoap12:address
-				location="https://soap.mobileid.swisscom.com/soap/services/MSS_ReceiptPort"/>
+				location="https://mobileid.swisscom.com/soap/services/MSS_ReceiptPort"/>
 		</wsdl:port>
 	</wsdl:service>
 	<wsdl:service name="MSS_ProfileService">
 		<wsdl:port name="MSS_ProfilePort" binding="tns:MSS_ProfileQueryBinding">
 			<wsoap12:address
-				location="https://soap.mobileid.swisscom.com/soap/services/MSS_ProfilePort"/>
+				location="https://mobileid.swisscom.com/soap/services/MSS_ProfilePort"/>
 		</wsdl:port>
 	</wsdl:service>
 </wsdl:definitions>
