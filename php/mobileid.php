@@ -68,7 +68,7 @@ class mobileid {
         if (!file_exists($cafile))  trigger_error('mobileid::construct: file not found ' . $cafile, E_USER_WARNING);
 
         /* SOAP client with Mobile ID MSS service */
-        $this->setBaseURL('https://soap.mobileid.swisscom.com');
+        $this->setBaseURL('https://mobileid.swisscom.com');
         $this->client = new SoapClient(dirname(__FILE__) . '/' . self::WSDL, $options);
     }
 
