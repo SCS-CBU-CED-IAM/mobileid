@@ -247,7 +247,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
 
   # Get CRL uri from the signers certificate
   CRL_URL=$(openssl x509 -in $SIGNER -text -noout | grep crl)
-  CRL_URL=$(echo "$CRL_URL" | sed -n -e 's/URI://')
+  CRL_URL=$(echo "$CRL_URL" | sed -e 's/URI://')
 
   # Get OCSP uri from the signers certificate
   OCSP_URL=$(openssl x509 -in $SIGNER -ocsp_uri -noout)
@@ -257,7 +257,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   for i in $TMP.sig.certs.level?.pem; do
     if [ -s "$i" ]; then
       RES_TMP=$(openssl x509 -subject -nameopt utf8 -nameopt sep_comma_plus -noout -in $i)
-      RES_TMP=$(echo "$RES_TMP" | sed -n -e 's/subject= /issuer= /')
+      RES_TMP=$(echo "$RES_TMP" | sed -e 's/subject= /issuer= /')
       if [ "$RES_TMP" = "$RES_CERT_ISSUER" ]; then ISSUER=$i; fi
     fi
   done
