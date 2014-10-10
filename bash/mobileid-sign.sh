@@ -280,8 +280,9 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
       #  /tmp/_tmp.DLIV9M.sig.certs.level0.pem: serialNumber = MIDCHEP1YYDBMA59, CN = MIDCHEP1YYDBMA59:PN, C = CH
       #  error 23 at 0 depth lookup:certificate revoked
       # we need get the line, remove all spaces and compare with the subject itself
-      RES_CERT_STATUS_CRL=$(sed -n -e 's/$SIGNER: //p' $TMP.sig.cert.checkcrl)
-      RES_CERT_STATUS_CRL=$(echo "$RES_CERT_STATUS_CRL" | sed -n -e 's/ //g')
+      # as $SIGNER contains a file name with / sed must be done with | instead of /
+      RES_CERT_STATUS_CRL=$(sed -n -e 's|'$SIGNER': ||p' $TMP.sig.cert.checkcrl)
+      RES_CERT_STATUS_CRL=$(echo "$RES_CERT_STATUS_CRL" | sed -e 's/ //g')
       if [ "subject= $RES_CERT_STATUS_CRL" = "$RES_CERT_SUBJ" ]; then
         RES_CERT_STATUS_CRL="revoked"
       fi
@@ -301,7 +302,8 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
     openssl ocsp -CAfile $CERT_CA_MID -issuer $ISSUER -nonce -out $TMP.sig.cert.checkocsp -url $OCSP_URL -cert $SIGNER -no_cert_verify > /dev/null 2>&1
     OCSP_ERR=$?                                         # Keep related errorlevel
     if [ "$OCSP_ERR" = "0" ]; then                      # Revocation check completed
-      RES_CERT_STATUS_OCSP=$(sed -n -e 's/.*.$SIGNER: //p' $TMP.sig.cert.checkocsp)
+      # as $SIGNER contains a file name with / sed must be done with | instead of /
+      RES_CERT_STATUS_OCSP=$(sed -n -e 's|'$SIGNER': ||p' $TMP.sig.cert.checkocsp)
      else                                               # -> check not ok
       RES_CERT_STATUS_OCSP="error, status $OCSP_ERR"    # Details for verification
     fi
