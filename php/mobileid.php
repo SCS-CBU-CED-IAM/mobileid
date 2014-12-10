@@ -39,7 +39,7 @@ class mobileid {
      * #params     array     Additional SOAP client options
      * @return     null
      */
-	public function __construct($ap_id, $ap_pwd, $ap_cert, $cafile, $myOpts = null) {
+    public function __construct($ap_id, $ap_pwd, $ap_cert, $cafile, $myOpts = null) {
         /* Set the AP Infos */
         $this->ap_id = $ap_id;
         $this->ap_pwd = $ap_pwd;
@@ -126,12 +126,12 @@ class mobileid {
         }
     }
 
-	/**
-	 * profileQuery request
+    /**
+     * profileQuery request
      * #params     string    phone number
-	 * @return     boolean   true on success, false on failure
-	 */
-	public function profileQuery($phoneNumber) {
+     * @return     boolean   true on success, false on failure
+     */
+    public function profileQuery($phoneNumber) {
         $params = array(
             'MajorVersion' => 1,
             'MinorVersion' => 1,
@@ -153,7 +153,7 @@ class mobileid {
         $ok = $this->__doCall('MSS_ProfileQuery', $params);
 
         return($ok);
-	}
+    }
 
     /**
      * signature request
@@ -309,10 +309,10 @@ class mobileid {
      * @return     string
      */
     private function __createAPTransID() {
-		$ap_trans_id = 'AP.PHP.'.rand(89999, 10000).'.'.rand(8999, 1000);
+        $ap_trans_id = 'AP.PHP.'.rand(89999, 10000).'.'.rand(8999, 1000);
         
         return($ap_trans_id);
-	}
+    }
 
     /**
      * __createInstant - Creates a unique AP Instant
