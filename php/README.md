@@ -59,7 +59,7 @@ error_reporting(E_ALL);
 $certandkey = dirname(__FILE__) . '/mycertandkey.crt';
 $ca_ssl     = dirname(__FILE__) . '/mobileid-ca-ssl.crt';
 $ca_mid     = dirname(__FILE__) . '/mobileid-ca-signature.crt';
-$apid       = 'mid://myid";
+$apid       = 'mid://myid';
 $appwd      = 'disabled';
 
 /* New instance of the Mobile ID class */
