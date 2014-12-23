@@ -197,11 +197,11 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   case "$MSGTYPE" in
     SOAP)
       # Parse the response xml
-      RES_TRANSID=$(sed -n -e 's/.*AP_TransID="\(.*\)" AP_.*/\1/p' $TMP.rsp)
+      RES_TRANSID=$(sed -n -e 's/.*AP_TransID="\([^"]*\).*/\1/p' $TMP.rsp)
       RES_MSISDNID=$(sed -n -e 's/.*<mss:MSISDN>\(.*\)<\/mss:MSISDN>.*/\1/p' $TMP.rsp)
-      RES_RC=$(sed -n -e 's/.*<mss:StatusCode Value="\(.*\)"\/>.*/\1/p' $TMP.rsp)
+      RES_RC=$(sed -n -e 's/.*<mss:StatusCode Value="\([^"]*\).*/\1/p' $TMP.rsp)
       RES_ST=$(sed -n -e 's/.*<mss:StatusMessage>\(.*\)<\/mss:StatusMessage>.*/\1/p' $TMP.rsp)
-      RES_MSSPID=$(sed -n -e 's/.*MSSP_TransID="\(.*\)" xmlns:mss.*/\1/p' $TMP.rsp)
+      RES_MSSPID=$(sed -n -e 's/.*MSSP_TransID="\([^"]*\).*/\1/p' $TMP.rsp)
       sed -n -e 's/.*<mss:Base64Signature>\(.*\)<\/mss:Base64Signature>.*/\1/p' $TMP.rsp > $TMP.sig.base64
       ;;
     JSON)

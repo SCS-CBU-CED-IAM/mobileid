@@ -154,7 +154,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   case "$MSGTYPE" in
     SOAP)
       # Parse the response xml
-      RES_RC=$(sed -n -e 's/.*<mss:StatusCode Value="\(.*\)"\/>.*/\1/p' $TMP.rsp)
+      RES_RC=$(sed -n -e 's/.*<mss:StatusCode Value="\([^"]*\).*/\1/p' $TMP.rsp)
       RES_ST=$(sed -n -e 's/.*<mss:StatusMessage>\(.*\)<\/mss:StatusMessage>.*/\1/p' $TMP.rsp)
       ;;
     JSON)
