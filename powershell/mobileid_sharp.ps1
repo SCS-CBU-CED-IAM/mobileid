@@ -66,8 +66,6 @@ namespace Swisscom
 
     private string ap_pwd = string.Empty;
     private string cert_ca = string.Empty;
-    private string ocsp_cert = string.Empty;
-    private string ocsp_url = string.Empty;
 
     private string ap_transID = string.Empty;
     private string ap_instant = string.Empty;
@@ -139,8 +137,6 @@ namespace Swisscom
 
       // Swisscom Certificates
       cert_ca = System.IO.Path.Combine(workingFolder, "swisscom-ca.crt");
-      ocsp_cert = System.IO.Path.Combine(workingFolder, "swisscom-ocsp.crt");
-      ocsp_url = "http://ocsp.swissdigicert.ch/sdcs-rubin2";
     }
     #endregion
 
@@ -420,7 +416,7 @@ namespace Swisscom
         if (res_msisdnid == phoneNumber) sb.Append(" -> same as in request" + CRLF);
         else sb.Append(" -> different as in request!" + CRLF);
         sb.Append(" 3) Time to sign   : <Not verified>" + CRLF);
-        sb.Append(" 4) Signer         : [" + res_id_cert + "] -> OCSP check: [" + res_msg_status + "]" + CRLF);
+        sb.Append(" 4) Signer         : [" + res_id_cert + "]" + CRLF);
         sb.Append(" 5) Signed Data    : [" + res_msg + "] -> Decode and verify: [" + res_msg_status + "] and ");
         if (res_msisdnid == phoneNumber) sb.Append(" -> same as in request" + CRLF);
         else sb.Append(" -> different as in request!" + CRLF);
