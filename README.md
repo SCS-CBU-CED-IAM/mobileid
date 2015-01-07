@@ -25,14 +25,15 @@ Usage: ./mobileid-sign.sh <args> mobile 'message' userlang <receipt>
   -d         - debug mode
   -e         - encrypted receipt
   mobile     - mobile number
-  message    - message to be signed
+  message    - message to be signed (and displayed)
+               A placeholder #TRANSID# may be used anywhere in the message to include a unique transaction id
   userlang   - user language (one of en, de, fr, it)
   receipt    - optional success receipt message
 
-  Example ./mobileid-sign.sh -v +41792080350 'Do you want to login to corporate VPN?' en
-          ./mobileid-sign.sh -t JSON -v +41792080350 'Do you want to login to corporate VPN?' en
-          ./mobileid-sign.sh -v +41792080350 'Do you want to login to corporate VPN?' en 'Successful login into VPN'
-          ./mobileid-sign.sh -v -e +41792080350 'Do you need a new password?' en 'Temporary password: 123456'
+  Example ./mobileid-sign.sh -v +41792080350 'test.com: Do you want to login to corporate VPN? (#TRANSID#)' en
+          ./mobileid-sign.sh -t JSON -v +41792080350 'test.com: Do you want to login to corporate VPN? (#TRANSID#)' en
+          ./mobileid-sign.sh -v +41792080350 'test.com: Do you want to login to corporate VPN? (#TRANSID#)' en 'test.com: Successful login into VPN'
+          ./mobileid-sign.sh -v -e +41792080350 'test.com: Do you need a new password? (#TRANSID#)' en 'test.com: Temporary password is 123456'
 ```
 
 ###### Receipt Request

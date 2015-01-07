@@ -2,7 +2,7 @@
 # mobileid-sign.sh
 #
 # Generic script using curl to invoke Swisscom Mobile ID service.
-# Dependencies: curl, openssl, base64, sed, date, xmllint, python
+# Dependencies: curl openssl base64 sed date xmllint awk python head
 #
 
 # set current working path to the path of the script
@@ -40,20 +40,21 @@ if [ $# -lt 3 ]; then                           # Parse the rest of the argument
   echo "  -d         - debug mode"
   echo "  -e         - encrypted receipt"
   echo "  mobile     - mobile number"
-  echo "  message    - message to be signed"
+  echo "  message    - message to be signed (and displayed)"
+  echo "               A placeholder #TRANSID# may be used anywhere in the message to include a unique transaction id"
   echo "  userlang   - user language (one of en, de, fr, it)"
   echo "  receipt    - optional success receipt message"
   echo
-  echo "  Example $0 -v +41792080350 'Do you want to login to corporate VPN?' en"
-  echo "          $0 -t JSON -v +41792080350 'Do you want to login to corporate VPN?' en"
-  echo "          $0 -v +41792080350 'Do you want to login to corporate VPN?' en 'Successful login into VPN'"
-  echo "          $0 -v -e +41792080350 'Do you need a new password?' en 'Temporary password: 123456'"
+  echo "  Example $0 -v +41792080350 'test.com: Do you want to login to corporate VPN? (#TRANSID#)' en"
+  echo "          $0 -t JSON -v +41792080350 'test.com: Do you want to login to corporate VPN? (#TRANSID#)' en"
+  echo "          $0 -v +41792080350 'test.com: Do you want to login to corporate VPN? (#TRANSID#)' en 'test.com: Successful login into VPN'"
+  echo "          $0 -v -e +41792080350 'test.com: Do you need a new password? (#TRANSID#)' en 'test.com: Temporary password is 123456'"
   echo 
   exit 1
 fi
 
 # Check the dependencies
-for cmd in curl openssl base64 sed date xmllint awk python; do
+for cmd in curl openssl base64 sed date xmllint awk python head; do
   hash $cmd &> /dev/null
   if [ $? -eq 1 ]; then error "Dependency error: '$cmd' not found" ; fi
 done
@@ -71,6 +72,12 @@ USERLANG=$3                                     # User language
 RECEIPT_MSG=$4                                  # Optional Receipt Message
 TIMEOUT=80                                      # Value of Timeout
 TIMEOUT_CON=90                                  # Timeout of the client connection
+
+# Generate a unique transaction id
+TRANSID=$(LC_CTYPE=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 6)
+
+# Include unique transaction id into the DTBS message (if requested)
+DTBS=$(echo "$DTBS" | sed -e "s/#TRANSID#/${TRANSID}/g")
 
 case "$MSGTYPE" in
   # MessageType is SOAP. Define the Request
@@ -382,7 +389,7 @@ if [ "$DEBUG" != "" ]; then
 fi
 
 # Need a receipt?
-if [ "$RC" -lt "1" -a "$RECEIPT_MSG" != "" ]; then           # Request ok and need to send a reciept
+if [ "$RC" -lt "1" -a "$RECEIPT_MSG" != "" ]; then           # Request ok and need to send a receipt
   OPTS=
   if [ "$MSGTYPE" = "JSON" ]; then OPTS="$OPTS -t JSON" ; fi # Keep the options
   if [ "$VERBOSE" = "1" ]; then OPTS="$OPTS -v" ; fi
