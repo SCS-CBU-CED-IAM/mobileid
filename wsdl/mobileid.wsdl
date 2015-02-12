@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Description="Swisscom Mobile ID SOAP Interface WSDL" Version="2.7" -->
+<!-- Description="Swisscom Mobile ID SOAP Interface WSDL" Version="2.7.1" -->
 <wsdl:definitions 
 	xmlns:apachesoap="http://xml.apache.org/xml-soap"
 	xmlns:wsoap12="http://schemas.xmlsoap.org/wsdl/soap12/"
@@ -362,6 +362,7 @@
 			<xs:simpleType name="MessagingModeType">
 				<xs:restriction base="xs:string">
 					<xs:enumeration value="synch"/>
+          <xs:enumeration value="asynchClientServer"/>
 				</xs:restriction>
 			</xs:simpleType>
 			<xs:complexType name="mssURIType">
