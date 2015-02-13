@@ -1,0 +1,63 @@
+Apache CXF 3.0.0 Release Notes
+
+1. Overview
+
+The 3.0.0 version of Apache CXF is a significant new version of CXF 
+that provides several new features and enhancements.  
+
+New features include: 
+Full JAX-RS 2.0 support
+New streaming based WS-Security implementation
+Bean Validation 1.1
+Much easier feature configuration options for JAX-WS
+New CXF code generator frontend
+Enhanced Reliable-Messaging 1.1 support
+
+As part of the 3.0 refactoring, the runtime has been made smaller, 
+many API’s have changed or where relocated, much duplicate 
+functionality has been removed, etc…  Thus, 3.0 is not completely
+compatible with CXF 2.x and some migration efforts may be required.
+
+Users are encourage to review the migration guide at:
+http://cxf.apache.org/docs/30-migration-guide.html
+for further information and requirements for upgrading from 2.7.x.
+
+
+2. Installation Prerequisites 
+
+Before installing Apache CXF, make sure the following products,
+with the specified versions, are installed on your system:
+
+    * Java 6 Development Kit
+    * Apache Maven 3.x to build the samples
+
+
+3.  Integrating CXF Into You Application
+
+If you use Maven to build your application, you need merely add
+appropriate dependencies. See the pom.xml files in the samples.
+
+If you don't use Maven, you'll need to add one or more jars to your
+classpath. The file lib/WHICH_JARS should help you decide which 
+jars you need.
+
+4. Building the Samples
+
+Building the samples included in the binary distribution is easy. Change to
+the samples directory and follow the build instructions in the README.txt file 
+included with each sample.
+
+5. Reporting Problems
+
+If you have any problems or want to send feedback of any kind, please e-mail the
+CXF dev list, dev@cxf.apache.org.  You can also file issues in JIRA at:
+
+http://issues.apache.org/jira/browse/CXF
+
+6. Migration notes:
+
+See the migration guide at:
+http://cxf.apache.org/docs/30-migration-guide.html
+for caveats when upgrading from CXF 2.7.x to 3.0.0
+
+

@@ -13,8 +13,13 @@ Thumbs.db
 .idea/*.*
 *.jardesc
 
-.gitignore
+# Compiled source #
+###################
+*.class
 
+# Other #
+###################
+*~*
 
 bash/mycert.key
 bash/mycert.crt
