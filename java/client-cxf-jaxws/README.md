@@ -17,7 +17,8 @@ You will need your own AP_ID, DTBS-Prefix and SSL Key.
 
 Run the class `ch.swisscom.mid.client.Test_Client`. 
 The class will invoke all the basic Mobile ID requests and parse the response. To keep the implementation simple,
-it does only very little parsing of the response content, i.e. it does not further validate the CMS Signature object.
+it does only very little parsing of the response content, i.e. it does not further validate the CMS Signature content.
+You may refer to the GitHub signature verifier sample at http://git.io/NF1w how to verify the CMS Signature content.
 
 1. **MSS_ProfileQuery** Check the existence of the User (MSISDN)
 

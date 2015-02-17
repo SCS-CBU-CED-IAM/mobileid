@@ -14,7 +14,8 @@ You will need your own AP_ID, DTBS-Prefix and SSL Key.
 ##### Usage
 
 The client will invoke an MSS Signature requests and parse the response. To keep the implementation simple,
-it does only very little parsing of the response content, i.e. it does not further validate the CMS Signature object.
+it does only very little parsing of the response content, i.e. it does not further validate the CMS Signature content.
+You may refer to the GitHub signature verifier sample at http://git.io/NF1w how to verify the CMS Signature content.
 
 ```
 Usage: com.swisscom.mid.client.MobileidSign [OPTIONS]
