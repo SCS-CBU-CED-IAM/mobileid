@@ -21,12 +21,12 @@ The file that must be specified in the initialisation refers to the local_cert a
 
 Example of content:
 ````
------BEGIN PRIVATE KEY-----
-...
------END PRIVATE KEY-----
 -----BEGIN CERTIFICATE-----
 ...
 -----END CERTIFICATE-----
+-----BEGIN PRIVATE KEY-----
+...
+-----END PRIVATE KEY-----
 ````
 
 
