@@ -4,6 +4,9 @@
 # Generic script using curl to invoke Swisscom Mobile ID service.
 # Dependencies: curl openssl base64 sed date xmllint awk python head
 #
+# License: Licensed under the Apache License, Version 2.0 or later; see LICENSE.md
+# Author: Swisscom (Schweiz) AG
+#
 
 # set current working path to the path of the script
 cd "$(dirname "$0")"

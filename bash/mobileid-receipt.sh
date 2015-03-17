@@ -5,6 +5,9 @@
 # Dependencies: curl, openssl, base64, sed, date, iconv, xmllint, xxd,
 #               python
 #
+# License: Licensed under the Apache License, Version 2.0 or later; see LICENSE.md
+# Author: Swisscom (Schweiz) AG
+#
 
 # set current working path to the path of the script
 cd "$(dirname "$0")"
