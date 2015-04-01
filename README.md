@@ -117,31 +117,31 @@ OK with following details and checks:
 ###### Failed Signature
 ```
 ./mobileid-sign.sh -v +41792204080 'Hello' en
-FAILED with mss:_105 (Unknown user) and exit 2
+FAILED on +41792204080 with error 105 (UNKNOWN_CLIENT: MSISDN is unknown) and exit 2
 
-./mobileid-sign.sh -v +41792204080 'Hello' en
-FAILED with mss:_104 (Wrong SSL credentials) and exit 2
+./mobileid-sign.sh -v +4179abcdef 'Hello' en
+FAILED on +4179abcdef with error 101 (WRONG_PARAM: Illegal msisdn) and exit 2
 
-./mobileid-sign.sh -v +4179220408012312312 'Hello' en
-FAILED with mss:_101 (Illegal msisdn) and exit 2
-
-./mobileid-sign.sh -v +41792080350 'Hello' en
-FAILED with mss:_401 (User Cancelled the request) and exit 2
+./mobileid-sign.sh -v +41793015146 'Hello' en
+FAILED on +41793015146 with error 401 (USER_CANCEL: User Cancelled the request) and exit 2
 ```
 
 ###### Failed Receipt
 ```
 ./mobileid-receipt.sh -v +41792080350 h2ed05 en 'Successful login into VPN'
-FAILED with mss:_101 (Receipt already sent for this transaction. Only one receipt allowed per transaction.) and exit 2
+FAILED on +41792080350 with mss:_101 (Receipt already sent for this transaction. Only one receipt allowed per transaction.) and exit 2
 
 ./mobileid-receipt.sh -v +41792080350 h2ed01 en 'Successful login into VPN'
-FAILED with mss:_101 (There is no such transaction.) and exit 2
+FAILED on +41792080350 with mss:_101 (There is no such transaction.) and exit 2
 ```
 
 ###### Failed Profile Query
 ````
 ./mobileid-query.sh -v +41798440457
-FAILED on +41798440457 with mss:_105 (UNKNOWN_CLIENT: User MSISDN unknown, no such user.) and exit 2
+FAILED on +41798440457 with error 105 (UNKNOWN_CLIENT: MSISDN is unknown) and exit 2
+
+$ ./mobileid-query.sh -v +41796691873
+FAILED on +41796691873 with error 404 (NO_KEY_FOUND: Mobile user account needs to be activated) and exit 2
 ````
 
 ## FreeRADIUS
