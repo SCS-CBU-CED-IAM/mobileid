@@ -24,6 +24,8 @@ class mobileid {
     public $statuscode;                    // Status code
     public $statusmessage;                 // Status message
     public $statusdetail;                  // Status detail
+    private $statusUserAssistanceURL;      // Status User Assistance Portal URL
+
     public $mid_certificate;               // Mobile ID certificate related to signature
     public $mid_serialnumber;              // Mobile ID serial number in the DN of the certificate
 
@@ -76,6 +78,7 @@ class mobileid {
         $this->statuscode = '';
         $this->statusmessage = '';
         $this->statusdetail = '';
+        $this->statusUserAssistanceURL = '';
         try {
             /* Call the SOAP function */
             $this->response = $this->client->__soapCall($request, array('parameters' => $params));
@@ -109,6 +112,10 @@ class mobileid {
                     else
                         $this->statusdetail = (string)$this->response->detail->detail;
                 }
+
+                /* Get the User Assistance Portal URL */
+                if (isset($this->response->detail->UserAssistance->PortalUrl))
+                    $this->statusUserAssistanceURL = (string)$this->response->detail->UserAssistance->PortalUrl;
 
                 return(false);
             }
@@ -364,6 +371,31 @@ class mobileid {
      */
     public function getLastMSSPtransID() {
         return($this->mid_MSSPtransID);
+    }
+
+    /**
+     * getUserAssistance - Returns user assistance URL
+     * #params     boolean   Format to HTML
+     * #params     boolean   Default if not set
+     * @return     string
+     */
+    public function getUserAssistance($toHTML = false, $defaultIfNotSet = true) {
+        assert('is_bool($toHTML)');
+        assert('is_bool($defaultIfNotSet)');
+
+        /* Get the URL and set to default if needed */
+        $url = $this->statusUserAssistanceURL;
+        if ($url == '' && $defaultIfNotSet)
+            $url = 'http://mobileid.ch';
+
+        /* Replace the &amp; with & */
+        $url = str_replace('&amp;', '&', $url);
+
+        /* Format to HTML? */
+        if ($toHTML)
+            $url = "<a href='" . $url . "' target='_blank'>" . $url . "</a>";
+
+        return($url);
     }
 
     /**

@@ -72,20 +72,35 @@ $language = 'en';
 /* MSS_ProfileQuery */ 
 echo('== MSS_ProfileQuery ==' . PHP_EOL);
 $status = $mobileID->profileQuery($msisdn);
-  var_dump($status, $mobileID->statuscode, $mobileID->statusmessage, $mobileID->statusdetail);
+echo('Status Code: ' . $mobileID->statuscode . PHP_EOL);
+echo('Status Message: ' . $mobileID->statusmessage . PHP_EOL);
+if (! $status) {
+  echo('Status detail: ' . $mobileID->statusdetail . PHP_EOL);
+  echo('User assistance: ' . $mobileID->getUserAssistance(false, false) . PHP_EOL);
+}
 
 /* MSS_Signature */
 echo('== MSS_Signature ==' . PHP_EOL);
 $status = $mobileID->signature($msisdn, $message, $language, $ca_mid);
-var_dump($status, $mobileID->statuscode, $mobileID->statusmessage, $mobileID->statusdetail);
-if ($status)
-  var_dump($mobileID->mid_certificate, $mobileID->mid_serialnumber);
+echo('Status Code: ' . $mobileID->statuscode . PHP_EOL);
+echo('Status Message: ' . $mobileID->statusmessage . PHP_EOL);
+if ($status) {
+  echo('Signer certificate: ' . PHP_EOL . $mobileID->mid_certificate);
+  echo('MID serial number: ' . $mobileID->mid_serialnumber . PHP_EOL);
+} else {
+  echo('Status detail: ' . $mobileID->statusdetail . PHP_EOL);
+  echo('User assistance: ' . $mobileID->getUserAssistance(false, false) . PHP_EOL);
+}
 
 /* MSS_Receipt */ 
 if ($status) {
   echo('== MSS_Receipt ==' . PHP_EOL);
-  $status = $mobileID->receipt($msisdn, $mobileID->getLastMSSPtransID(), 'Temporary Password', $language, $mobileID->mid_certificate);
-  var_dump($status, $mobileID->statuscode, $mobileID->statusmessage, $mobileID->statusdetail);
+  $status = $mobileID->receipt($msisdn, $mobileID->getLastMSSPtransID(), 'Temporary Password: ZX67!', $language, $mobileID->mid_certificate);
+  echo('Status Code: ' . $mobileID->statuscode . PHP_EOL);
+  echo('Status Message: ' . $mobileID->statusmessage . PHP_EOL);
+  if (! $status) {
+    echo('Status detail: ' . $mobileID->statusdetail . PHP_EOL);
+  }
 }
 
 ?>
