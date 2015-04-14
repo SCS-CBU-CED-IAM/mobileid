@@ -375,12 +375,12 @@ class mobileid {
 
     /**
      * getUserAssistance - Returns user assistance URL
-     * #params     boolean   Format to HTML
-     * #params     boolean   Default if not set
+     * #params     string    Format to HTML and use this as hyperlink name
+     * #params     boolean   Return default URL if not present
      * @return     string
      */
-    public function getUserAssistance($toHTML = false, $defaultIfNotSet = true) {
-        assert('is_bool($toHTML)');
+    public function getUserAssistance($hyperlink = '', $defaultIfNotSet = true) {
+        assert('is_string($hyperlink)');
         assert('is_bool($defaultIfNotSet)');
 
         /* Get the URL and set to default if needed */
@@ -392,8 +392,8 @@ class mobileid {
         $url = str_replace('&amp;', '&', $url);
 
         /* Format to HTML if not empty? */
-        if ($toHTML && $url !== '')
-            $url = "<a href='" . $url . "' target='_blank'>" . $url . "</a>";
+        if ($hyperlink !== '' && $url !== '')
+            $url = "<a href='" . $url . "' target='_blank'>" . $hyperlink . "</a>";
 
         return($url);
     }

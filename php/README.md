@@ -76,7 +76,7 @@ echo('Status Code: ' . $mobileID->statuscode . PHP_EOL);
 echo('Status Message: ' . $mobileID->statusmessage . PHP_EOL);
 if (! $status) {
   echo('Status detail: ' . $mobileID->statusdetail . PHP_EOL);
-  echo('User assistance: ' . $mobileID->getUserAssistance(false, false) . PHP_EOL);
+  echo('User assistance: ' . $mobileID->getUserAssistance('', false) . PHP_EOL);
 }
 
 /* MSS_Signature */
@@ -89,7 +89,7 @@ if ($status) {
   echo('MID serial number: ' . $mobileID->mid_serialnumber . PHP_EOL);
 } else {
   echo('Status detail: ' . $mobileID->statusdetail . PHP_EOL);
-  echo('User assistance: ' . $mobileID->getUserAssistance(false, false) . PHP_EOL);
+  echo('User assistance: ' . $mobileID->getUserAssistance('', false) . PHP_EOL);
 }
 
 /* MSS_Receipt */ 
