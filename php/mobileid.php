@@ -391,8 +391,8 @@ class mobileid {
         /* Replace the &amp; with & */
         $url = str_replace('&amp;', '&', $url);
 
-        /* Format to HTML? */
-        if ($toHTML)
+        /* Format to HTML if not empty? */
+        if ($toHTML && $url !== '')
             $url = "<a href='" . $url . "' target='_blank'>" . $url . "</a>";
 
         return($url);
