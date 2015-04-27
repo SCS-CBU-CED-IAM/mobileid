@@ -29,6 +29,7 @@ Example of content:
 -----END PRIVATE KEY-----
 ````
 
+Important notice: please review the content of your `mycertandkey.crt` file and be sure that the `-----BEGIN PRIVATE KEY-----` is starting on a new line.
 
 ## Connection options
 
@@ -90,6 +91,7 @@ if ($status) {
 } else {
   echo('Status detail: ' . $mobileID->statusdetail . PHP_EOL);
   echo('User assistance: ' . $mobileID->getUserAssistance('', false) . PHP_EOL);
+  echo('Subscriber Info: 1901=' . $mobileID->getSubscriberInfo('1901'));
 }
 
 /* MSS_Receipt */ 
