@@ -272,13 +272,6 @@ sub MSS_Signature { # MSISDN, Message, UserLang, Timeout
 		    );
     } 
 
-    # Add the format
-	push @mss_elts, SOAP::Data
-	    -> name('mss:MSS_Format' => \SOAP::Data
-		    -> name('mss:mssURI' => 'http://uri.etsi.org/TS102204/v1.1.2#PKCS7')
-		    -> type('')
-		    );
-
     # Build the final SOAP request 
     my %aset = $self->_build_reqattrs( 'MessagingMode', $self->{msgingmode}, 
 				       'MSSP_TransID', $self->{'MSSP_TransID'} );

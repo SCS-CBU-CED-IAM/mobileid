@@ -1,6 +1,6 @@
 <?php
 /**
- * @version        2.0.0
+ * @version        2.0.1
  * @package        mobileid
  * @copyright      Copyright (C) 2014. All rights reserved.
  * @license        Licensed under the Apache License, Version 2.0 or later; see LICENSE.md
@@ -207,8 +207,7 @@ class mobileid {
                     'Description' => array('mssURI' => 'http://mss.ficom.fi/TS102204/v1.0.0#userLang'),
                     'UserLang' => $userlang,
                 ),
-            ),
-            'MSS_Format' => array('mssURI' => 'http://uri.etsi.org/TS102204/v1.1.2#PKCS7')
+            )
         );
 
         $this->client->__setLocation($this->base_url . '/soap/services/MSS_SignaturePort');
@@ -380,9 +379,6 @@ class mobileid {
      * @return     string
      */
     public function getUserAssistance($hyperlink = '', $defaultIfNotSet = true) {
-        assert('is_string($hyperlink)');
-        assert('is_bool($defaultIfNotSet)');
-
         /* Get the URL and set to default if needed */
         $url = $this->statusUserAssistanceURL;
         if ($url == '' && $defaultIfNotSet)
