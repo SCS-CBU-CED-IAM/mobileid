@@ -1,7 +1,7 @@
-mobileid-cmd
-============
+mobileid
+========
 
-Mobile ID command line tools
+Mobile ID example clients and tools
 
 ## Bash Scripts
 
