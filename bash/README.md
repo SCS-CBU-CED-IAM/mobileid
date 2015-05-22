@@ -1,23 +1,20 @@
-mobileid-cmd
+bash-mobileid
 ============
 
-Mobile ID command line tools
+Contains shell scripts to invoke a:
 
-## Bash Scripts
-
-The folder `bash` contains shell scripts to invoke a:
 * Signature Request
 * Receipt Request
 * Profile Query Request
 
-#### Configuration
+## Configuration
 The file `mobileid.properties` contains the most relevant configuration properties that need to be adjusted before the scripts are used.
 Note that you will require the valid SSL certificate files `mycert.crt` and `mycert.key` in order to connect to the Mobile ID service.
 
 For technical details about the Mobile ID Service refer to the "Mobile ID - Client Reference Guide" document from Swisscom (see http://goo.gl/FXIMEa).
 
-#### Usage 
-###### Signature Request
+## Usage 
+### Signature Request
 ```
 Usage: ./mobileid-sign.sh <args> mobile 'message' userlang <receipt>
   -t value   - message type (SOAP, JSON); default SOAP
@@ -36,7 +33,7 @@ Usage: ./mobileid-sign.sh <args> mobile 'message' userlang <receipt>
           ./mobileid-sign.sh -v -e +41792080350 'test.com: Do you need a new password? (#TRANSID#)' en 'test.com: Temporary password is 123456'
 ```
 
-###### Receipt Request
+### Receipt Request
 ```
 Usage: ./mobileid-receipt.sh <args> mobile transID 'message' userlang <pubCert>
   -t value   - message type (SOAP, JSON); default SOAP
@@ -53,7 +50,7 @@ Usage: ./mobileid-receipt.sh <args> mobile transID 'message' userlang <pubCert>
           ./mobileid-receipt.sh -v +41792080350 h29ah1 'Temporary password: 123456' en /tmp/_tmp.8OVlwv.sig.cert
 ```
 
-###### Profile Query Request
+### Profile Query Request
 ```
 Usage: ./mobileid-query.sh <args> mobile
   -t value   - message type (SOAP, JSON); default SOAP
@@ -65,8 +62,8 @@ Usage: ./mobileid-query.sh <args> mobile
           ./mobileid-query.sh -t JSON -v +41792080350
 ````
 
-#### Example Outputs (verbose mode)
-###### Successful Signature
+## Example Outputs (verbose mode)
+### Successful Signature
 
 ```
 ./mobileid-sign.sh -v +41791234567 'Do you want to login?' en
@@ -84,7 +81,7 @@ OK with following details and checks:
     Status details : SIGNATURE
 ```
 
-###### Successful Signature + Receipt
+### Successful Signature + Receipt
 ```
 ./mobileid-sign.sh -v +41791234567 'Do you want to login to corporate VPN?' en 'Successful login into VPN'
 OK with following details and checks:
@@ -106,7 +103,7 @@ OK with following details and checks:
  User Response  : "status":"OK"    
 ```
 
-###### Successful Profile Query
+### Successful Profile Query
 ````
  ./mobileid-query.sh -v +41792454029
 OK with following details and checks:
@@ -114,7 +111,7 @@ OK with following details and checks:
  Status details : REQUEST_OK
 ````
 
-###### Failed Signature
+### Failed Signature
 ```
 ./mobileid-sign.sh -v +41792204080 'Hello' en
 FAILED on +41792204080 with error 105 (UNKNOWN_CLIENT: MSISDN is unknown) and exit 2
@@ -126,7 +123,7 @@ FAILED on +4179abcdef with error 101 (WRONG_PARAM: Illegal msisdn) and exit 2
 FAILED on +41793015146 with error 401 (USER_CANCEL: User Cancelled the request) and exit 2
 ```
 
-###### Failed Receipt
+### Failed Receipt
 ```
 ./mobileid-receipt.sh -v +41792080350 h2ed05 en 'Successful login into VPN'
 FAILED on +41792080350 with mss:_101 (Receipt already sent for this transaction. Only one receipt allowed per transaction.) and exit 2
@@ -135,7 +132,7 @@ FAILED on +41792080350 with mss:_101 (Receipt already sent for this transaction.
 FAILED on +41792080350 with mss:_101 (There is no such transaction.) and exit 2
 ```
 
-###### Failed Profile Query
+### Failed Profile Query
 ````
 ./mobileid-query.sh -v +41798440457
 FAILED on +41798440457 with error 105 (UNKNOWN_CLIENT: MSISDN is unknown) and exit 2
@@ -143,26 +140,6 @@ FAILED on +41798440457 with error 105 (UNKNOWN_CLIENT: MSISDN is unknown) and ex
 $ ./mobileid-query.sh -v +41796691873
 FAILED on +41796691873 with error 404 (NO_KEY_FOUND: Mobile user account needs to be activated) and exit 2
 ````
-
-## FreeRADIUS
-
-`mobileid-radius.sh` wrapper script for rlm_exec module and the Signature Request bash script.
-
-Refer to the "Mobile ID - RADIUS integration guide" document from Swisscom for more details.
-
-
-## PowerShell
-
-Contains a script to invoke the Signature Request service.
-
-Requires PowerShell 2.0 or higher as it contains an encapsulated C# class.
-The code is unsigned and requires the `Set-ExecutionPolicy Unrestricted`.
-
-The file `mycert.pfx ` is a placeholder without any valid content. Be sure to adjust it with your client certificate content in order to connect to the Mobile ID service. The file format is PKCS#12 without any password. For improved security, it is also possible to use a certificate with private key stored in the user certificate store. If you want to use a certificate from the Windows certificate store, please export the certificate as .CER file and configure the script to use the .CER file instead of the .PFX file.
-
-Open tasks:
-- Validation of the signature and certificate in the response
-- Move from response exception error handling to proper error parsing
 
 ## Known Issues
 
