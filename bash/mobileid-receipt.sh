@@ -78,7 +78,7 @@ if [ "$PUB_CERT" != "" ]; then                  # Message to be encrypted
   [ -r "${PUB_CERT}" ] || error "Public certificate for encoding the message ($PUB_CERT) missing or not readable"
   MIME_TYPE="application/alauda-rsamessage"
   ENCODING="BASE64"
-  MSG_ASCI=$(printf $MSG_TXT | iconv -s -f UTF-8 -t US-ASCII//TRANSLIT)
+  MSG_ASCI=$(printf "$MSG_TXT" | iconv -s -f UTF-8 -t US-ASCII//TRANSLIT)
   if [ "$MSG_TXT" = "$MSG_ASCI" ]; then         # Message does not contain special chars
     printf "$MSG_TXT" | openssl rsautl -encrypt -inkey $PUB_CERT -out $TMP.msg -certin > /dev/null 2>&1
     [ -f "$TMP.msg" ] && MSG_TXT=$(base64 $TMP.msg)
