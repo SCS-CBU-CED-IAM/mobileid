@@ -1,4 +1,4 @@
-php-mobileid
+mobileid: php
 ============
 
 Contains a PHP class for the Mobile ID service to invoke:

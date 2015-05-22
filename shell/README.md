@@ -1,4 +1,4 @@
-bash-mobileid
+mobileid: shell
 ============
 
 Contains shell scripts to invoke a:
