@@ -11,8 +11,6 @@ Contains shell scripts to invoke a:
 The file `mobileid.properties` contains the most relevant configuration properties that need to be adjusted before the scripts are used.
 Note that you will require the valid SSL certificate files `mycert.crt` and `mycert.key` in order to connect to the Mobile ID service.
 
-For technical details about the Mobile ID Service refer to the "Mobile ID - Client Reference Guide" document from Swisscom (see http://goo.gl/FXIMEa).
-
 ## Usage 
 ### Signature Request
 ```

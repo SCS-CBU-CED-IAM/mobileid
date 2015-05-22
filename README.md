@@ -8,4 +8,5 @@ Set of tools and scripts for the Swisscom Mobile ID Service:
 * powershell: Powershell script and C# class for the service
 * wsdl: WSDL service description files
 
-Refer to the "Mobile ID client reference guide" document from Swisscom for more details.
+
+For technical details about the Mobile ID Service refer to the "Mobile ID - Client Reference Guide" document from Swisscom (see http://goo.gl/FXIMEa).
