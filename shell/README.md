@@ -141,7 +141,30 @@ FAILED on +41796691873 with error 404 (NO_KEY_FOUND: Mobile user account needs t
 
 ## Known Issues
 
-**OS X 10.x: Requests always fail with MSS error 104: _Wrong SSL credentials_.**
+### curl: Unable to load client cert -8018
+
+curl was compiled with NSS, which you can see by checking the version:
+
+```
+$ curl -V
+curl 7.19.7 (x86_64-redhat-linux-gnu) libcurl/7.19.7 NSS/3.14.3.0 zlib/1.2.3 libidn/1.18 libssh2/1.4.2
+Protocols: tftp ftp telnet dict ldap ldaps http file https ftps scp sftp 
+Features: GSS-Negotiate IDN IPv6 Largefile NTLM SSL libz
+```
+
+The solution is to provide curl with a reference to the NSS database that stores the client certificate you want to use.
+
+```
+mkdir /home/user/nss
+certutil -N -d /home/user/nss
+pk12util -i /home/user/mobileid-cmd/shell/mykey.p12 -d /home/user/nss
+export SSL_DIR=/home/user/nss
+certutil -L -d /home/user/nss -n alias
+```
+
+Finally, change the curl command to use `--cert alias`
+
+### OS X 10.x: Requests always fail with MSS error 104: _Wrong SSL credentials_.
 
 The `curl` shipped with OS X uses their own Secure Transport engine, which broke the --cert option, see: http://curl.haxx.se/mail/archive-2013-10/0036.html
 
