@@ -206,8 +206,10 @@ namespace Swisscom
       X509Certificate certificateCA = X509Certificate.CreateFromCertFile(cert_ca);
       friendly_error_msg = string.Empty;
 
-      // SSL V3
-      ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3;
+      ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
+        | SecurityProtocolType.Tls11
+        | SecurityProtocolType.Tls12
+        | SecurityProtocolType.Ssl3;
       HttpWebRequest request = (HttpWebRequest)WebRequest.Create(SWISSCOM_SERVICE_URL);
 
       #region Web request
