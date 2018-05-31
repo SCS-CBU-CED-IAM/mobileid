@@ -1,4 +1,3 @@
-#
 # Generic script to invoke Swisscom Mobile ID service.
 # Minimum PowerShell version : 2.0
 #
@@ -7,13 +6,9 @@
 # Second part - C# class SwisscomMobileID.cs
 # Third part  - Processing
 #
-# REM Copyright (C) 2013 - Swisscom (Schweiz) AG
-#
-# Licensed under the Apache License, Version 2.0 or later; see LICENSE.md
- 
+# Licensed under the Apache License, Version 2.0 or later
 
 param([switch]$Verbose, [switch]$Debug, [string]$PhoneNumber = "", [string]$Message = "", [string]$Language = "")
-
 
 ################################################################################
 # SwisscomMobileID.cs
@@ -132,7 +127,7 @@ namespace Swisscom
     #region InitializeApplicationProviderInfos
     private void InitializeApplicationProviderInfos()
     {
-      ap_id = "http://iam.swisscom.ch";
+      ap_id = "mid://dev.swisscom.ch";
       ap_pwd = "disabled";
 
       System.Random rndNumber = new System.Random();
@@ -151,13 +146,17 @@ namespace Swisscom
           xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" 
           soap:encodingStyle=""http://schemas.xmlsoap.org/soap/encoding/"" 
           xmlns:soapenv=""http://www.w3.org/2003/05/soap-envelope"" 
-          xmlns:soap=""http://schemas.xmlsoap.org/soap/envelope/"">
+          xmlns:soap=""http://schemas.xmlsoap.org/soap/envelope/""
+		  xmlns:mss=""http://uri.etsi.org/TS102204/v1.1.2#""
+		  xmlns:fi=""http://mss.ficom.fi/TS102204/v1.0.0#"">
         <soapenv:Body>
-          <MSS_Signature xmlns="""">
-            <mss:MSS_SignatureReq MinorVersion=""1"" MajorVersion=""1"" xmlns:mss=""http://uri.etsi.org/TS102204/v1.1.2#"" MessagingMode=""synch"" TimeOut=""80"" xmlns:fi=""http://mss.ficom.fi/TS102204/v1.0.0#"">
-              <mss:AP_Info AP_PWD=""disabled"" AP_TransID=""{0}"" Instant=""{1}"" AP_ID=""{2}"" />
+          <MSS_Signature>
+            <mss:MSS_SignatureReq MinorVersion=""1"" MajorVersion=""1"" xmlns:mss=""http://uri.etsi.org/TS102204/v1.1.2#"" MessagingMode=""synch"" TimeOut=""80"">
+              <mss:AP_Info AP_PWD=""disabled"" AP_TransID=""{0}"" Instant=""{1}"" AP_ID=""{2}""/>
               <mss:MSSP_Info>
-                <mss:MSSP_ID/>
+                <mss:MSSP_ID>
+                  <mss:URI>http://mid.swisscom.ch/</mss:URI>
+                </mss:MSSP_ID>
               </mss:MSSP_Info>
               <mss:MobileUser>
                 <mss:MSISDN>{3}</mss:MSISDN>
@@ -169,19 +168,11 @@ namespace Swisscom
               <mss:AdditionalServices>
                 <mss:Service>
                   <mss:Description>
-                    <mss:mssURI>http://uri.etsi.org/TS102204/v1.1.2#validate</mss:mssURI>
-                  </mss:Description>
-                </mss:Service>
-                <mss:Service>
-                  <mss:Description>
                     <mss:mssURI>http://mss.ficom.fi/TS102204/v1.0.0#userLang</mss:mssURI>
                   </mss:Description>
                   <fi:UserLang>{5}</fi:UserLang>
                 </mss:Service>
               </mss:AdditionalServices>
-              <mss:MSS_Format>
-                <mss:mssURI>http://uri.etsi.org/TS102204/v1.1.2#PKCS7</mss:mssURI>
-              </mss:MSS_Format>
             </mss:MSS_SignatureReq>
           </MSS_Signature>
         </soapenv:Body>
@@ -190,7 +181,6 @@ namespace Swisscom
       string rawXml = sb.ToString();
       rawXml = string.Format(rawXml, ap_transID, ap_instant, ap_id, phoneNumber, message, language);
       
-
       soap_xml_post = rawXml;
 
       return soap_xml_post;
@@ -206,6 +196,7 @@ namespace Swisscom
       X509Certificate certificateCA = X509Certificate.CreateFromCertFile(cert_ca);
       friendly_error_msg = string.Empty;
 
+      // SSL V3
       ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
         | SecurityProtocolType.Tls11
         | SecurityProtocolType.Tls12
@@ -386,7 +377,6 @@ namespace Swisscom
       {
         rc = RETURN_FAIL;
         friendly_error_msg = "Cryptographic exception";
-        res_msg_status = ex.Message;
         return false;
       }
     }
@@ -403,15 +393,10 @@ namespace Swisscom
         sb.Append(" 1) Transaction ID : [" + res_transID + "]");
         if (res_transID == ap_transID) sb.Append(" -> same as in request" + CRLF);
         else sb.Append(" -> different as in request!" + CRLF);
-        sb.Append(" 2) Signed by      : [" + res_msisdnid + "]");
-        if (res_msisdnid == phoneNumber) sb.Append(" -> same as in request" + CRLF);
-        else sb.Append(" -> different as in request!" + CRLF);
-        sb.Append(" 3) Time to sign   : <Not verified>" + CRLF);
-        sb.Append(" 4) Signer         : [" + res_id_cert + "]" + CRLF);
-        sb.Append(" 5) Signed Data    : [" + res_msg + "] -> Decode and verify: [" + res_msg_status + "] and ");
-        if (res_msisdnid == phoneNumber) sb.Append(" -> same as in request" + CRLF);
-        else sb.Append(" -> different as in request!" + CRLF);
-        sb.Append(" 6) Status code    : [" + res_rc + "] with exit [" + res_rc + "]" + CRLF);
+        sb.Append(" 2) Signed by      : [" + res_msisdnid + "]" + CRLF);
+        sb.Append(" 3) Signer subject : [" + res_id_cert + "]" + CRLF);
+        sb.Append(" 4) Signed message : [" + res_msg + "]" + CRLF);
+        sb.Append(" 5) Status code    : [" + res_rc + "]" + CRLF);
         sb.Append("    Status details : [" + res_st + "]" + CRLF);
       }
 
@@ -448,32 +433,32 @@ namespace Swisscom
 
 if ($PhoneNumber -ne "" -and $Message -ne "" -and $Language -ne "")
 {
-  try {
-    $Assem = ("System.Xml", "System.Security") 
-    Add-Type -TypeDefinition $source -ReferencedAssemblies $Assem -IgnoreWarnings
+	try {
+		$Assem = ("System.Xml", "System.Security") 
+		Add-Type -TypeDefinition $source -ReferencedAssemblies $Assem -IgnoreWarnings
 
-    $currentPath = $(Split-Path $myInvocation.MyCommand.Path)
-    $mid = New-Object Swisscom.SwisscomMobileID($Verbose, $Debug, $PhoneNumber, $Message, $Language, $currentPath)
-    Write-Host $mid.Execute()
-    $intReturn=$mid.rc
-  }
-  catch {
-    if ($verbose -or $debug) { $error[0] }
-    $intReturn=2
-  }
-  finally {
-    if ($mid) { remove-variable mid }
-  }
+		$currentPath = $(Split-Path $myInvocation.MyCommand.Path)
+		$mid = New-Object Swisscom.SwisscomMobileID($Verbose, $Debug, $PhoneNumber, $Message, $Language, $currentPath)
+		Write-Host $mid.Execute()
+		$intReturn = $mid.rc
+	}
+	catch {
+		if ($verbose -or $debug) { $error[0] }
+		$intReturn = 2
+	}
+	finally {
+		if ($mid) { remove-variable mid }
+	}
 }
 else
 {
-  $scriptName = $myInvocation.MyCommand.Name 
-  Write-Host "Usage: $scriptName <args> -PhoneNumber <mobileNumber> -Message ""Message to be signed"" -Language <userlang>"
-  Write-Host " -Verbose     : verbose output"
-  Write-Host " -Debug       : debug output"
-  Write-Host " -Language    : user language (one of en, de, fr, it)"
-  Write-Host
-  Write-Host "Example $scriptName -Verbose -PhoneNumber +41792080401 -Message ""Do you want to login to corporate VPN?"" -Language en"
-  $intReturn=5
+	$scriptName = $myInvocation.MyCommand.Name 
+	Write-Host "Usage: $scriptName <args> -PhoneNumber <mobileNumber> -Message ""Message to be signed"" -Language <userlang>"
+	Write-Host " -Verbose     : verbose output"
+	Write-Host " -Debug       : debug output"
+	Write-Host " -Language    : user language (one of en, de, fr, it)"
+	Write-Host
+	Write-Host "Usage: .\$scriptName -Verbose -PhoneNumber +41792080401 -Message ""Do you want to login?"" -Language en"
+	$intReturn = 5
 }
 exit $intReturn
