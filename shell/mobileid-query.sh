@@ -85,6 +85,10 @@ case "$MSGTYPE" in
               <mss:MobileUser>
                 <mss:MSISDN>'$MSISDN'</mss:MSISDN>
               </mss:MobileUser>
+              <mss:GetAutoActivation>false</mss:GetAutoActivation>
+              <mss:GetServerSideSignature>false</mss:GetServerSideSignature>
+              <mss:GetRecoveryCodeCreated>true</mss:GetRecoveryCodeCreated>
+              <mss:GetCertificates>false</mss:GetCertificates>
             </mss:MSS_ProfileReq>
           </MSS_ProfileQuery>
         </soapenv:Body>
@@ -111,7 +115,11 @@ case "$MSGTYPE" in
           },
           "MobileUser": {
             "MSISDN": "'$MSISDN'"
-          }
+          },
+          "GetAutoActivation": false,
+          "GetServerSideSignature": false,
+          "GetRecoveryCodeCreated": true,
+          "GetCertificates": false
         }
       }'
     # store into file
