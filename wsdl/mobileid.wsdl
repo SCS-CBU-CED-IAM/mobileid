@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Description="Swisscom Mobile ID SOAP Interface WSDL" Version="2.7.1" -->
+<!-- Description="Swisscom Mobile ID SOAP Interface WSDL" Version="2.8.0" -->
 <wsdl:definitions 
 	xmlns:apachesoap="http://xml.apache.org/xml-soap"
 	xmlns:wsoap12="http://schemas.xmlsoap.org/wsdl/soap12/"
@@ -13,6 +13,7 @@
 	xmlns:xml="http://www.w3.org/XML/1998/namespace" 
 	xmlns:tns="http://uri.etsi.org/TS102204/etsi204-kiuru.wsdl"
 	xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#"  
+	xmlns:mcs="http://www.methics.fi/TS102204/ext/v1.0.0"
 	name="KIURU"
 	targetNamespace="http://uri.etsi.org/TS102204/etsi204-kiuru.wsdl">
 	
@@ -99,7 +100,7 @@
 			<xs:import namespace="http://mid.swisscom.ch/TS102204/as/v1.0"/>
 			<xs:import namespace="http://uri.etsi.org/TS102204/v1.1.2#"/>
 			<xs:element name="UserLang" type="xs:string" default="de"/>
-			<xs:element name="ServiceResponses">       
+			<xs:element name="ServiceResponses">	   
 				<xs:complexType> 
 					<xs:sequence> 
 						<xs:element name="ServiceResponse" minOccurs="0" maxOccurs="unbounded"> 
@@ -216,7 +217,9 @@
 			xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#"
 			xmlns:fi="http://mss.ficom.fi/TS102204/v1.0.0#"
 			xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
-			xmlns:sco="http://www.swisscom.ch/TS102204/ext/v1.0.0" elementFormDefault="qualified">
+			xmlns:sco="http://www.swisscom.ch/TS102204/ext/v1.0.0"
+			xmlns:mcs="http://www.methics.fi/TS102204/ext/v1.0.0"
+			elementFormDefault="qualified">
 			<xs:import namespace="http://www.w3.org/2003/05/soap-envelope"/>
 			<xs:import namespace="http://www.w3.org/2000/09/xmldsig#"/>
 			<xs:import namespace="http://www.w3.org/2001/04/xmlenc#"/>
@@ -307,6 +310,13 @@
 					<xs:extension base="mss:MessageAbstractType">
 						<xs:sequence>
 							<xs:element name="MobileUser" type="mss:MobileUserType"/>
+	  <xs:choice minOccurs="0" maxOccurs="unbounded">		   <!-- Not originally in ETSI'204 --> 
+	    <xs:element name="GetAutoActivation"      type="xs:boolean" /> <!-- Not originally in ETSI'204 --> 
+	    <xs:element name="GetServerSideSignature" type="xs:boolean" /> <!-- Not originally in ETSI'204 --> 
+	    <xs:element name="GetRecoveryCodeCreated" type="xs:boolean" /> <!-- Not originally in ETSI'204 --> 
+	    <xs:element name="GetCertificates"	      type="xs:boolean" /> <!-- Not originally in ETSI'204 --> 
+	    <xs:any namespace="##other" processContents="lax"/>		   <!-- Not originally in ETSI'204 -->
+	  </xs:choice>							   <!-- Not originally in ETSI'204 --> 
 						</xs:sequence>
 					</xs:extension>
 				</xs:complexContent>
@@ -362,7 +372,7 @@
 			<xs:simpleType name="MessagingModeType">
 				<xs:restriction base="xs:string">
 					<xs:enumeration value="synch"/>
-          <xs:enumeration value="asynchClientServer"/>
+	  <xs:enumeration value="asynchClientServer"/>
 				</xs:restriction>
 			</xs:simpleType>
 			<xs:complexType name="mssURIType">
@@ -415,6 +425,9 @@
 					<xs:element ref="fi:ServiceResponses"/>
 					<xs:element ref="sco:ReceiptRequestExtension"/>
 					<xs:element ref="sco:ReceiptResponseExtension"/>
+					<xs:element ref="mcs:ProfileQueryExtension"/>
+					<!-- Original ETSI'204 any -->
+					<xs:any namespace="##other" processContents="lax" />
 				</xs:choice>
 			</xs:complexType>
 		</xs:schema>
@@ -496,6 +509,26 @@
 			<xs:element name="Expires" type="wsu:AttributedDateTime"/> 
 			<xs:element name="Created" type="wsu:AttributedDateTime"/> 
 		</xs:schema>
+		<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+			   xmlns:mcs="http://www.methics.fi/TS102204/ext/v1.0.0"
+			   xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+			   targetNamespace="http://www.methics.fi/TS102204/ext/v1.0.0"
+			   elementFormDefault="qualified">
+		  <xs:element name="ProfileQueryExtension">
+		    <xs:complexType>
+		      <xs:sequence>
+			<xs:element name="MobileUserCertificate"
+				    type="ds:X509DataType"
+				    minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="AutoActivation"      type="xs:boolean" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="ServerSideSignature" type="xs:boolean" minOccurs="0" maxOccurs="1"/>
+			<xs:element name="RecoveryCodeCreated" type="xs:boolean" minOccurs="0" maxOccurs="1"/>
+			<xs:any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+		      </xs:sequence>
+		    </xs:complexType>
+		  </xs:element>
+		  <xs:element name="RecoveryCode" type="xs:string"/>
+		</xs:schema>
 	</wsdl:types>
 	<wsdl:message name="MSS_SignatureOutput">
 		<wsdl:part name="MSS_SignatureResp" type="mss:MSS_SignatureRespType"/> 
@@ -521,35 +554,28 @@
 	<wsdl:message name="MSS_ProfileOutput">
 		<wsdl:part name="MSS_ProfileResp" type="mss:MSS_ProfileRespType"/>
 	</wsdl:message>
-	<wsdl:message name="MSS_FaultMessage">
-		<wsdl:part name="MSS_Fault" element="soapenv:Fault"/> 
-	</wsdl:message>
 	<wsdl:portType name="MSS_SignatureType">
 		<wsdl:operation name="MSS_Signature">
 			<wsdl:input message="tns:MSS_SignatureInput"/>
 			<wsdl:output message="tns:MSS_SignatureOutput"/>
-			<wsdl:fault name="FaultPart" message="tns:MSS_FaultMessage"/>
 		</wsdl:operation>
 	</wsdl:portType>
 	<wsdl:portType name="MSS_StatusQueryType">
 		<wsdl:operation name="MSS_StatusQuery">
 			<wsdl:input message="tns:MSS_StatusQueryInput"/>
 			<wsdl:output message="tns:MSS_StatusQueryOutput"/>
-			<wsdl:fault name="FaultPart" message="tns:MSS_FaultMessage"/>
 		</wsdl:operation>
 	</wsdl:portType>
 	<wsdl:portType name="MSS_ReceiptType">
 		<wsdl:operation name="MSS_Receipt">
 			<wsdl:input message="tns:MSS_ReceiptInput"/>
 			<wsdl:output message="tns:MSS_ReceiptOutput"/>
-			<wsdl:fault name="FaultPart" message="tns:MSS_FaultMessage"/>
 		</wsdl:operation>
 	</wsdl:portType>
 	<wsdl:portType name="MSS_ProfileType">
 		<wsdl:operation name="MSS_ProfileQuery">
 			<wsdl:input message="tns:MSS_ProfileInput"/>
 			<wsdl:output message="tns:MSS_ProfileOutput"/>
-			<wsdl:fault name="FaultPart" message="tns:MSS_FaultMessage"/>
 		</wsdl:operation>
 	</wsdl:portType>
 	<wsdl:binding name="MSS_SignatureBinding" type="tns:MSS_SignatureType">
