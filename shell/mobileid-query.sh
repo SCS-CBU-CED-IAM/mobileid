@@ -166,7 +166,6 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
       # Parse the response json
       RES_RC=$(sed -n -e 's/^.*"Value":"\([^"]*\)".*$/\1/p' $TMP.rsp)
       RES_ST=$(sed -n -e 's/^.*"StatusMessage":"\([^"]*\)".*$/\1/p' $TMP.rsp)
-      RES_SP=$(sed -n -e 's/.*<mss:mssURI>\(.*\)<\/mss:mssURI>.*/\1/p' $TMP.rsp)
       ;;
   esac 
   
