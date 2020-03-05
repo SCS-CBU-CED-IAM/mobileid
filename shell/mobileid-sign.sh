@@ -23,15 +23,15 @@ error()
 
 # Check command line
 MSGTYPE=SOAP                                    # Default is SOAP
+SIGPROFILE=http://mid.swisscom.ch/MID/v1/AuthProfile1
 DEBUG=
 VERBOSE=
-ENCRYPT=
-while getopts "dvet:" opt; do                   # Parse the options
+while getopts "dvs:t:" opt; do                   # Parse the options
   case $opt in
     t) MSGTYPE=$OPTARG ;;                       # Message Type
+    s) SIGPROFILE=$OPTARG ;;                    # Signature Profile
     d) DEBUG=1 ;;                               # Debug
     v) VERBOSE=1 ;;                             # Verbose
-    e) ENCRYPT=1 ;;                             # Encrypt receipt
   esac
 done
 shift $((OPTIND-1))                             # Remove the options
@@ -39,9 +39,14 @@ shift $((OPTIND-1))                             # Remove the options
 if [ $# -lt 3 ]; then                           # Parse the rest of the arguments
   echo "Usage: $0 <args> mobile 'message' userlang <receipt>"
   echo "  -t value   - message type (SOAP, JSON); default SOAP"
+  echo "  -s value   - signature profile to select the authentication method; default http://mid.swisscom.ch/MID/v1/AuthProfile1"
+  echo "               possible values:"
+  echo "               http://mid.swisscom.ch/MID/v1/AuthProfile1 = alias of http://mid.swisscom.ch/STK-LoA4"
+  echo "               http://mid.swisscom.ch/Any-LoA4            = sim authentication preferred. fallback to app authentication method"
+  echo "               http://mid.swisscom.ch/STK-LoA4            = force sim authentication"
+  echo "               http://mid.swisscom.ch/Device-LoA4         = force app authentication"
   echo "  -v         - verbose output"
   echo "  -d         - debug mode"
-  echo "  -e         - encrypted receipt"
   echo "  mobile     - mobile number"
   echo "  message    - message to be signed (and displayed)"
   echo "               A placeholder #TRANSID# may be used anywhere in the message to include a unique transaction id"
@@ -50,8 +55,8 @@ if [ $# -lt 3 ]; then                           # Parse the rest of the argument
   echo
   echo "  Example $0 -v +41792080350 'test.com: Do you want to login to corporate VPN? (#TRANSID#)' en"
   echo "          $0 -t JSON -v +41792080350 'test.com: Do you want to login to corporate VPN? (#TRANSID#)' en"
+  echo "          $0 -s 'http://mid.swisscom.ch/Device-LoA4' -v +41792080350 'test.com: Do you want to login to corporate VPN? (#TRANSID#)' en"
   echo "          $0 -v +41792080350 'test.com: Do you want to login to corporate VPN? (#TRANSID#)' en 'test.com: Successful login into VPN'"
-  echo "          $0 -v -e +41792080350 'test.com: Do you need a new password? (#TRANSID#)' en 'test.com: Temporary password is 123456'"
   echo 
   exit 1
 fi
@@ -108,7 +113,7 @@ case "$MSGTYPE" in
               </mss:MobileUser>
               <mss:DataToBeSigned MimeType="text/plain" Encoding="UTF-8">'$DTBS'</mss:DataToBeSigned>
               <mss:SignatureProfile>
-                <mss:mssURI>http://mid.swisscom.ch/MID/v1/AuthProfile1</mss:mssURI>
+                <mss:mssURI>'$SIGPROFILE'</mss:mssURI>
               </mss:SignatureProfile>
               <mss:AdditionalServices>
                 <mss:Service>
@@ -130,7 +135,7 @@ case "$MSGTYPE" in
     REQ_JSON='{
       "MSS_SignatureReq": {
         "MajorVersion": "1",
-        "MinorVersion": "1",
+        "MinorVersion": "2",
         "AP_Info": {
           "AP_ID": "'$AP_ID'",
           "AP_PWD": "'$AP_PWD'",
@@ -152,7 +157,7 @@ case "$MSGTYPE" in
           "Data": "'$DTBS'"
         },
         "TimeOut":"'$TIMEOUT'",
-        "SignatureProfile": "http://mid.swisscom.ch/MID/v1/AuthProfile1",
+        "SignatureProfile": "'$SIGPROFILE'",
         "AdditionalServices": [
           {
             "Description": "http://mss.ficom.fi/TS102204/v1.0.0#userLang",
@@ -255,13 +260,6 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
   RES_CERT_START=$(openssl x509 -startdate -noout -in $SIGNER)
   RES_CERT_END=$(openssl x509 -enddate -noout -in $SIGNER)
 
-  # Get CRL uri from the signers certificate
-  CRL_URL=$(openssl x509 -in $SIGNER -text -noout | grep crl)
-  CRL_URL=$(echo "$CRL_URL" | sed -e 's/URI://')
-
-  # Get OCSP uri from the signers certificate
-  OCSP_URL=$(openssl x509 -in $SIGNER -ocsp_uri -noout)
-
   # Find the proper issuer certificate in the list
   ISSUER=
   for i in $TMP.sig.certs.level?.pem; do
@@ -271,58 +269,6 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
       if [ "$RES_TMP" = "$RES_CERT_ISSUER" ]; then ISSUER=$i; fi
     fi
   done
-
-  # Verify the certificate and revocation status over CRL
-  if [ -n "$CRL_URL" ]; then
-    # Get the CRL and convert from der to pem
-    curl $CURL_OPTIONS --connect-timeout $TIMEOUT_CON $CRL_URL | openssl crl -inform DER -out $TMP.crl.pem > /dev/null 2>&1
-    # Add the chain to the CRL
-    for i in $TMP.sig.certs.level?.pem; do
-      if [ -s "$i" ]; then
-        cat $i >> $TMP.crl.pem
-      fi
-    done
-    # Verify the revocation status over CRL
-    openssl verify -CAfile $TMP.crl.pem -crl_check $SIGNER > $TMP.sig.cert.checkcrl
-    CRL_ERR=$?                                          # Keep related errorlevel
-    if [ "$CRL_ERR" = "0" ]; then                       # Revocation check completed
-      # if the certificate is revoked it will be in the .checkcrl as:
-      #  /tmp/_tmp.DLIV9M.sig.certs.level0.pem: serialNumber = MIDCHEP1YYDBMA59, CN = MIDCHEP1YYDBMA59:PN, C = CH
-      #  error 23 at 0 depth lookup:certificate revoked
-      # we need get the line, remove all spaces and compare with the subject itself
-      # as $SIGNER contains a file name with / sed must be done with | instead of /
-      RES_CERT_STATUS_CRL=$(sed -n -e 's|'$SIGNER': ||p' $TMP.sig.cert.checkcrl)
-      RES_CERT_STATUS_CRL=$(echo "$RES_CERT_STATUS_CRL" | sed -e 's/ //g')
-      if [ "subject= $RES_CERT_STATUS_CRL" = "$RES_CERT_SUBJ" ]; then
-        RES_CERT_STATUS_CRL="revoked"
-      fi
-     else                                               # -> check not ok
-      RES_CERT_STATUS_CRL="error, status $CRL_ERR"      # Details for verification
-    fi
-   else
-    RES_CERT_STATUS_CRL="No CRL information found in the signers certificate"
-  fi
-  if [ "$RES_CERT_STATUS_CRL" = "revoked" ]; then       # Force Revoked certificate
-    RES_RC=501
-  fi
-
-  # Verify the revocation status over OCSP
-  # -no_cert_verify: don't verify the OCSP response signers certificate at all
-  if [ -n "$OCSP_URL" -a -n "$ISSUER" ]; then
-    openssl ocsp -CAfile $CERT_CA_MID -issuer $ISSUER -nonce -out $TMP.sig.cert.checkocsp -url $OCSP_URL -cert $SIGNER -no_cert_verify > /dev/null 2>&1
-    OCSP_ERR=$?                                         # Keep related errorlevel
-    if [ "$OCSP_ERR" = "0" ]; then                      # Revocation check completed
-      # as $SIGNER contains a file name with / sed must be done with | instead of /
-      RES_CERT_STATUS_OCSP=$(sed -n -e 's|'$SIGNER': ||p' $TMP.sig.cert.checkocsp)
-     else                                               # -> check not ok
-      RES_CERT_STATUS_OCSP="error, status $OCSP_ERR"    # Details for verification
-    fi
-   else
-    RES_CERT_STATUS_OCSP="No OCSP information found in the signers certificate"
-  fi
-  if [ "$RES_CERT_STATUS_OCSP" = "revoked" ]; then      # Force Revoked certificate
-    RES_RC=501
-  fi
 
   # Extract the PKCS7 and validate the signature
   openssl cms -verify -inform der -in $TMP.sig.der -out $TMP.sig.txt -CAfile $CERT_CA_MID -purpose sslclient > /dev/null 2>&1
@@ -355,8 +301,6 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
     echo " 3) Signer         : $RES_CERT_SUBJ"
     echo "                     $RES_CERT_ISSUER"
     echo "                     validity= $RES_CERT_START $RES_CERT_END"
-    echo "                     CRL check= $RES_CERT_STATUS_CRL"
-    echo "                     OCSP check= $RES_CERT_STATUS_OCSP"
     echo " 4) Signed Data    : $RES_MSG -> Decode and verify: $RES_MSG_STATUS and $RES_MSG_DETAIL"
     echo " 5) Status code    : $RES_RC with exit $RC"
     echo "    Status details : $RES_ST"
@@ -397,11 +341,8 @@ if [ "$RC" -lt "1" -a "$RECEIPT_MSG" != "" ]; then           # Request ok and ne
   if [ "$MSGTYPE" = "JSON" ]; then OPTS="$OPTS -t JSON" ; fi # Keep the options
   if [ "$VERBOSE" = "1" ]; then OPTS="$OPTS -v" ; fi
   if [ "$DEBUG"   = "1" ]; then OPTS="$OPTS -d" ; fi
-  if [ "$ENCRYPT" = "1" ]; then                              # Encrypted Receipt
-    ./mobileid-receipt.sh $OPTS $MSISDN $RES_MSSPID "$RECEIPT_MSG" "$USERLANG" $SIGNER
-   else                                                      # Plain Receipt
-    ./mobileid-receipt.sh $OPTS $MSISDN $RES_MSSPID "$RECEIPT_MSG" "$USERLANG"
-  fi
+  sleep 1 # wait a bit to ensure the signature transaction finished properly
+  ./mobileid-receipt.sh $OPTS $MSISDN $RES_MSSPID "$RECEIPT_MSG" "$USERLANG"
 fi
 
 # Cleanups if not DEBUG mode
@@ -414,9 +355,6 @@ if [ "$DEBUG" = "" ]; then
   [ -f "$TMP.sig.der" ] && rm $TMP.sig.der
   [ -f "$TMP.sig.cert.pem" ] && rm $TMP.sig.cert.pem
   for i in $TMP.sig.certs.level?.pem; do [ -f "$i" ] && rm $i; done
-  [ -f "$TMP.crl.pem" ] && rm $TMP.crl.pem
-  [ -f "$TMP.sig.cert.checkcrl" ] && rm $TMP.sig.cert.checkcrl
-  [ -f "$TMP.sig.cert.checkocsp" ] && rm $TMP.sig.cert.checkocsp
   [ -f "$TMP.sig.txt" ] && rm $TMP.sig.txt
 fi
 

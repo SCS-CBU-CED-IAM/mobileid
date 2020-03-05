@@ -36,7 +36,7 @@ done
 shift $((OPTIND-1))                             # Remove the options
 
 if [ $# -lt 4 ]; then                           # Parse the rest of the arguments
-  echo "Usage: $0 <args> mobile transID 'message' userlang <pubCert>"
+  echo "Usage: $0 <args> mobile transID 'message' userlang"
   echo "  -t value   - message type (SOAP, JSON); default SOAP"
   echo "  -v         - verbose output"
   echo "  -d         - debug mode"
@@ -44,11 +44,9 @@ if [ $# -lt 4 ]; then                           # Parse the rest of the argument
   echo "  transID    - transaction id of the related signature request"
   echo "  message    - message to be displayed"
   echo "  userlang   - user language (one of en, de, fr, it)"
-  echo "  pubCert    - optional public certificate file of the mobile user to encode the message"
   echo
   echo "  Example $0 -v +41792080350 h29ah1 'Successful login into VPN' en"
   echo "          $0 -t JSON -v +41792080350 h29ah1 'Successful login into VPN' en"
-  echo "          $0 -v +41792080350 h29ah1 'Temporary password: 123456' en /tmp/_tmp.8OVlwv.sig.cert"
   echo 
   exit 1
 fi
@@ -69,25 +67,10 @@ MSISDN=$1                                       # Destination phone number (MSIS
 TIMEOUT_CON=10                                  # Timeout of the client connection
 MSG_TXT=$3                                      # Message Content
 USERLANG=$4                                     # User language
-PUB_CERT=$5                                     # Public certificate for optional encryption
 
 # Define the message and format
 MIME_TYPE="text/plain"
 ENCODING="UTF-8"
-if [ "$PUB_CERT" != "" ]; then                  # Message to be encrypted
-  [ -r "${PUB_CERT}" ] || error "Public certificate for encoding the message ($PUB_CERT) missing or not readable"
-  MIME_TYPE="application/alauda-rsamessage"
-  ENCODING="BASE64"
-  MSG_ASCI=$(printf "$MSG_TXT" | iconv -s -f UTF-8 -t US-ASCII//TRANSLIT)
-  if [ "$MSG_TXT" = "$MSG_ASCI" ]; then         # Message does not contain special chars
-    printf "$MSG_TXT" | openssl rsautl -encrypt -inkey $PUB_CERT -out $TMP.msg -certin > /dev/null 2>&1
-    [ -f "$TMP.msg" ] && MSG_TXT=$(base64 $TMP.msg)
-  else                                          # -> GSM11.14 STK commands do not support UTF8, either UCS-2 or GSMDA
-    # Encrypt UCS-2 prefixed with Hex 80 over cmd as vars are not properly encoding
-    (echo 80 | xxd -r -p ; printf "$MSG_TXT" | iconv -s -f UTF-8 -t UCS-2BE) | openssl rsautl -encrypt -inkey $PUB_CERT -out $TMP.msg -certin > /dev/null 2>&1
-    [ -f "$TMP.msg" ] && MSG_TXT=$(base64 $TMP.msg)
-  fi
-fi
 
 case "$MSGTYPE" in
   # MessageType is SOAP. Define the Request
@@ -111,16 +94,6 @@ case "$MSGTYPE" in
               <mss:MobileUser>
                 <mss:MSISDN>'$MSISDN'</mss:MSISDN>
               </mss:MobileUser>
-              <mss:Status>
-                <mss:StatusCode Value="100"/>
-                <mss:StatusDetail>
-                  <sco:ReceiptRequestExtension ReceiptMessagingMode="synch" UserAck="true">
-                    <sco:ReceiptProfile Language="'$USERLANG'">
-                      <sco:ReceiptProfileURI>http://mss.swisscom.ch/synch</sco:ReceiptProfileURI>
-                    </sco:ReceiptProfile>
-                  </sco:ReceiptRequestExtension>
-                </mss:StatusDetail>
-              </mss:Status>
               <mss:Message MimeType="'$MIME_TYPE'" Encoding="'$ENCODING'">'$MSG_TXT'</mss:Message>
             </mss:MSS_ReceiptReq>
           </MSS_Receipt>
@@ -149,21 +122,6 @@ case "$MSGTYPE" in
         "MSSP_TransID": "'$MSSP_TRANSID'",
         "MobileUser": {
           "MSISDN": "'$MSISDN'"
-        },
-        "Status": {
-          "StatusCode": {
-            "Value": "100"
-          },
-          "StatusDetail": {
-            "ReceiptRequestExtension": {
-              "ReceiptMessagingMode": "synch",
-              "UserAck": "true",
-              "ReceiptProfile": {
-                "Language": "'$USERLANG'",
-                "ReceiptProfileURI": "http://mss.swisscom.ch/synch"
-              }
-            }
-          }
         },
         "Message": {
           "MimeType": "'$MIME_TYPE'",
@@ -217,14 +175,10 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
       # Parse the response xml
       RES_RC=$(sed -n -e 's/.*<mss:StatusCode Value="\([^"]*\).*/\1/p' $TMP.rsp)
       RES_ST=$(sed -n -e 's/.*<mss:StatusMessage>\(.*\)<\/mss:StatusMessage>.*/\1/p' $TMP.rsp)
-      RES_USR_ACK=$(sed -n -e 's/.*UserAck="\([^"]*\).*/\1/p' $TMP.rsp)
-      RES_USR_RSP=$(sed -n -e 's/.*UserResponse="{\(.*\)}.*/\1/p' $TMP.rsp | sed -e 's/\&quot\;/\"/g')
       ;;
     JSON)
       RES_RC=$(sed -n -e 's/^.*"Value":"\([^"]*\)".*$/\1/p' $TMP.rsp)
       RES_ST=$(sed -n -e 's/^.*"StatusMessage":"\([^"]*\)".*$/\1/p' $TMP.rsp)
-      RES_USR_ACK=$(sed -n -e 's/^.*"UserAck":"\([^"]*\)".*$/\1/p' $TMP.rsp)
-      RES_USR_RSP=$(sed -n -e 's/^.*"UserResponse":"{\(.*\)}".*$/\1/p' $TMP.rsp | sed 's/\\//g')
       ;;
   esac
   if [ "$VERBOSE" = "1" ]; then                         # Verbose details
@@ -232,11 +186,6 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
     echo    " MSSP TransID   : $MSSP_TRANSID"
     echo    " Status code    : $RES_RC with exit $RC"
     echo    " Status details : $RES_ST"
-    if [ "$RES_USR_ACK" = "true" -a "$RES_USR_RSP" != "" ]; then
-      echo    " User Response  : $RES_USR_RSP"          # User Response details
-     else
-      echo    " User Response  : n/a"                   # No User Response available
-    fi
   fi
  else
   CURL_ERR=$RC                                          # Keep related error

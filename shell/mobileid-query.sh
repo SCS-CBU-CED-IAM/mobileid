@@ -75,7 +75,7 @@ case "$MSGTYPE" in
           xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
         <soapenv:Body>
           <MSS_ProfileQuery>
-            <mss:MSS_ProfileReq MajorVersion="1" MinorVersion="1" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#">
+            <mss:MSS_ProfileReq MajorVersion="2" MinorVersion="0" xmlns:mss="http://uri.etsi.org/TS102204/v1.1.2#">
               <mss:AP_Info AP_PWD="'$AP_PWD'" AP_TransID="'$AP_TRANSID'" Instant="'$AP_INSTANT'" AP_ID="'$AP_ID'" />
               <mss:MSSP_Info>
                 <mss:MSSP_ID>
@@ -85,10 +85,7 @@ case "$MSGTYPE" in
               <mss:MobileUser>
                 <mss:MSISDN>'$MSISDN'</mss:MSISDN>
               </mss:MobileUser>
-              <mss:GetAutoActivation>false</mss:GetAutoActivation>
-              <mss:GetServerSideSignature>false</mss:GetServerSideSignature>
-              <mss:GetRecoveryCodeCreated>true</mss:GetRecoveryCodeCreated>
-              <mss:GetCertificates>false</mss:GetCertificates>
+              <mss:Params>sscds state certs pinstatus rcstatus aastatus</mss:Params>
             </mss:MSS_ProfileReq>
           </MSS_ProfileQuery>
         </soapenv:Body>
@@ -100,8 +97,8 @@ case "$MSGTYPE" in
   JSON)
     REQ_JSON='{
         "MSS_ProfileReq": {
-          "MajorVersion": "1",
-          "MinorVersion": "1",
+          "MajorVersion": "2",
+          "MinorVersion": "0",
           "AP_Info": {
             "AP_ID": "'$AP_ID'",
             "AP_PWD": "'$AP_PWD'",
@@ -116,10 +113,7 @@ case "$MSGTYPE" in
           "MobileUser": {
             "MSISDN": "'$MSISDN'"
           },
-          "GetAutoActivation": false,
-          "GetServerSideSignature": false,
-          "GetRecoveryCodeCreated": true,
-          "GetCertificates": false
+          "Params": "sscds state certs pinstatus rcstatus aastatus"
         }
       }'
     # store into file
@@ -172,6 +166,7 @@ if [ "$RC" = "0" -a "$http_code" -eq 200 ]; then
       # Parse the response json
       RES_RC=$(sed -n -e 's/^.*"Value":"\([^"]*\)".*$/\1/p' $TMP.rsp)
       RES_ST=$(sed -n -e 's/^.*"StatusMessage":"\([^"]*\)".*$/\1/p' $TMP.rsp)
+      RES_SP=$(sed -n -e 's/.*<mss:mssURI>\(.*\)<\/mss:mssURI>.*/\1/p' $TMP.rsp)
       ;;
   esac 
   
