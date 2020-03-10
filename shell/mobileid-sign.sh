@@ -122,6 +122,11 @@ case "$MSGTYPE" in
                   </mss:Description>
                   <fi:UserLang>'$USERLANG'</fi:UserLang>
                 </mss:Service>
+                <mss:Service>
+                  <mss:Description>
+                    <mss:mssURI>http://mid.swisscom.ch/as#subscriberInfo</mss:mssURI>
+                  </mss:Description>
+               </mss:Service>
               </mss:AdditionalServices>
             </mss:MSS_SignatureReq>
           </MSS_Signature>
@@ -159,6 +164,9 @@ case "$MSGTYPE" in
         "TimeOut":"'$TIMEOUT'",
         "SignatureProfile": "'$SIGPROFILE'",
         "AdditionalServices": [
+          {
+            "Description": "http://mid.swisscom.ch/as#subscriberInfo"
+          },
           {
             "Description": "http://mss.ficom.fi/TS102204/v1.0.0#userLang",
             "UserLang": {
