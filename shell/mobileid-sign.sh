@@ -121,17 +121,17 @@ case "$MSGTYPE" in
                     <mss:mssURI>http://uri.etsi.org/TS102204/v1.1.2#validate</mss:mssURI>
                   </mss:Description>
                 </mss:Service>
+              <mss:Service>
+                  <mss:Description>
+                    <mss:mssURI>http://mid.swisscom.ch/as#subscriberInfo</mss:mssURI>
+                  </mss:Description>
+               </mss:Service>
                 <mss:Service>
                   <mss:Description>
                     <mss:mssURI>http://mss.ficom.fi/TS102204/v1.0.0#userLang</mss:mssURI>
                   </mss:Description>
                   <fi:UserLang>'$USERLANG'</fi:UserLang>
                 </mss:Service>
-                <mss:Service>
-                  <mss:Description>
-                    <mss:mssURI>http://mid.swisscom.ch/as#subscriberInfo</mss:mssURI>
-                  </mss:Description>
-               </mss:Service>
               </mss:AdditionalServices>
             </mss:MSS_SignatureReq>
           </MSS_Signature>
@@ -169,6 +169,9 @@ case "$MSGTYPE" in
         "TimeOut":"'$TIMEOUT'",
         "SignatureProfile": "'$SIGPROFILE'",
         "AdditionalServices": [
+          {
+            "Description": "http://uri.etsi.org/TS102204/v1.1.2#validate"
+          },
           {
             "Description": "http://mid.swisscom.ch/as#subscriberInfo"
           },
