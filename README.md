@@ -1,0 +1,1 @@
+Repository moved, please use the new location at https://github.com/MobileID-Strong-Authentication
